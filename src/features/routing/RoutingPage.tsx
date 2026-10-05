@@ -6,17 +6,7 @@ import {
   ListBulletsIcon,
   WarningCircleIcon,
 } from '@phosphor-icons/react';
-import {
-  Badge,
-  Banner,
-  Empty,
-  LayerCard,
-  LinkButton,
-  Radio,
-  Table,
-  Text,
-  type BadgeVariant,
-} from '@cloudflare/kumo';
+import { Badge, Banner, LinkButton, Radio, Text, type BadgeVariant } from '@cloudflare/kumo';
 import { sidecarApi, type RouterMode } from '@/services/api/sidecar';
 import { useConfigStore } from '@/stores';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
@@ -32,6 +22,15 @@ import {
 import { PageHeader } from '@/features/overview/components/PageHeader';
 import { SectionHeader } from '@/features/overview/components/SectionHeader';
 import { ResetTime } from '@/features/overview/components/ResetTime';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/Table';
 
 const MODES: RouterMode[] = ['active', 'shadow', 'off'];
 const DECISION_LIMIT = 12;
@@ -176,73 +175,66 @@ export function RoutingPage() {
       <section className="flex flex-col gap-3">
         <SectionHeader title={t('routing.ranking_title')} description={t('routing.ranking_help')} />
         {ranking.length === 0 ? (
-          <LayerCard>
-            <LayerCard.Primary>
-              <Empty
-                size="sm"
-                icon={<ArrowsSplitIcon size={32} className="text-kumo-inactive" />}
-                title={t('overview.no_accounts')}
-              />
-            </LayerCard.Primary>
-          </LayerCard>
+          <Panel padding="none">
+            <PanelEmpty
+              icon={<ArrowsSplitIcon size={32} className="text-kumo-inactive" />}
+              title={t('overview.no_accounts')}
+            />
+          </Panel>
         ) : (
-          <LayerCard className="overflow-x-auto p-0">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>{t('routing.rank_col')}</Table.Head>
-                  <Table.Head>{t('overview.col_account')}</Table.Head>
-                  <Table.Head>{t('routing.weekly_reset')}</Table.Head>
-                  <Table.Head>{t('routing.eligibility')}</Table.Head>
-                  <Table.Head>{t('routing.current')}</Table.Head>
-                  <Table.Head>{t('routing.target')}</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {ranking.map((row, index) => {
-                  const changes = row.priority !== row.recommended_priority;
-                  return (
-                    <Table.Row key={row.auth_index}>
-                      <Table.Cell className="font-medium tabular-nums">
-                        {row.eligible ? `#${index + 1}` : '—'}
-                      </Table.Cell>
-                      <Table.Cell>
-                        <span className="font-medium text-kumo-default">
-                          {nameOf(row.auth_index, row.name)}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <ResetTime
-                          iso={row.seven_day_resets_at}
-                          now={now}
-                          className="text-sm text-kumo-default"
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex flex-col items-start gap-1">
-                          <Badge variant={row.eligible ? 'success' : 'warning'} appearance="dot">
-                            {row.eligible ? t('routing.eligible') : t('routing.skipped')}
-                          </Badge>
-                          {row.reason && row.reason !== 'eligible' ? (
-                            <span className="text-xs text-kumo-subtle">{row.reason}</span>
-                          ) : null}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="tabular-nums">{row.priority}</Table.Cell>
-                      <Table.Cell>
-                        <span className="flex items-center gap-2 tabular-nums">
-                          {row.recommended_priority}
-                          {changes ? (
-                            <Badge variant="info">{t('routing.will_change')}</Badge>
-                          ) : null}
-                        </span>
-                      </Table.Cell>
-                    </Table.Row>
-                  );
-                })}
-              </Table.Body>
-            </Table>
-          </LayerCard>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('routing.rank_col')}</TableHead>
+                <TableHead>{t('overview.col_account')}</TableHead>
+                <TableHead>{t('routing.weekly_reset')}</TableHead>
+                <TableHead>{t('routing.eligibility')}</TableHead>
+                <TableHead>{t('routing.current')}</TableHead>
+                <TableHead>{t('routing.target')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ranking.map((row, index) => {
+                const changes = row.priority !== row.recommended_priority;
+                return (
+                  <TableRow key={row.auth_index}>
+                    <TableCell className="font-medium tabular-nums">
+                      {row.eligible ? `#${index + 1}` : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium text-kumo-default">
+                        {nameOf(row.auth_index, row.name)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <ResetTime
+                        iso={row.seven_day_resets_at}
+                        now={now}
+                        className="text-sm text-kumo-default"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge variant={row.eligible ? 'success' : 'warning'} appearance="dot">
+                          {row.eligible ? t('routing.eligible') : t('routing.skipped')}
+                        </Badge>
+                        {row.reason && row.reason !== 'eligible' ? (
+                          <span className="text-xs text-kumo-subtle">{row.reason}</span>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell className="tabular-nums">{row.priority}</TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-2 tabular-nums">
+                        {row.recommended_priority}
+                        {changes ? <Badge variant="info">{t('routing.will_change')}</Badge> : null}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
       </section>
 
@@ -252,67 +244,59 @@ export function RoutingPage() {
           description={t('routing.decisions_help')}
         />
         {decisions.length === 0 ? (
-          <LayerCard>
-            <LayerCard.Primary>
-              <Empty
-                size="sm"
-                icon={<ListBulletsIcon size={32} className="text-kumo-inactive" />}
-                title={t('routing.no_decisions')}
-              />
-            </LayerCard.Primary>
-          </LayerCard>
+          <Panel padding="none">
+            <PanelEmpty
+              icon={<ListBulletsIcon size={32} className="text-kumo-inactive" />}
+              title={t('routing.no_decisions')}
+            />
+          </Panel>
         ) : (
-          <LayerCard className="overflow-x-auto p-0">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>{t('routing.decision_when')}</Table.Head>
-                  <Table.Head>{t('overview.col_account')}</Table.Head>
-                  <Table.Head>{t('routing.decision_action')}</Table.Head>
-                  <Table.Head>{t('routing.decision_priority')}</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {decisions.map((decision, index) => (
-                  <Table.Row key={`${decision.runId ?? 'run'}-${decision.authIndex}-${index}`}>
-                    <Table.Cell>
-                      <span
-                        className="text-sm text-kumo-subtle"
-                        title={formatDateTime(decision.ts)}
-                      >
-                        {formatRelative(decision.ts, now)}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('routing.decision_when')}</TableHead>
+                <TableHead>{t('overview.col_account')}</TableHead>
+                <TableHead>{t('routing.decision_action')}</TableHead>
+                <TableHead>{t('routing.decision_priority')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {decisions.map((decision, index) => (
+                <TableRow key={`${decision.runId ?? 'run'}-${decision.authIndex}-${index}`}>
+                  <TableCell>
+                    <span className="text-sm text-kumo-subtle" title={formatDateTime(decision.ts)}>
+                      {formatRelative(decision.ts, now)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-kumo-default">
+                        {nameOf(decision.authIndex, decision.name)}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-kumo-default">
-                          {nameOf(decision.authIndex, decision.name)}
-                        </span>
-                        <span className="text-xs text-kumo-subtle">
-                          {decision.rank
-                            ? t('routing.rank', { rank: decision.rank })
-                            : decision.reason}
-                        </span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-col items-start gap-1">
-                        <Badge variant={actionBadge(decision.action, decision.error)}>
-                          {decision.action}
-                        </Badge>
-                        {decision.error ? (
-                          <span className="text-xs text-kumo-danger">{decision.error}</span>
-                        ) : null}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {decision.previousPriority ?? '—'} → {decision.recommendedPriority ?? '—'}
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          </LayerCard>
+                      <span className="text-xs text-kumo-subtle">
+                        {decision.rank
+                          ? t('routing.rank', { rank: decision.rank })
+                          : decision.reason}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col items-start gap-1">
+                      <Badge variant={actionBadge(decision.action, decision.error)}>
+                        {decision.action}
+                      </Badge>
+                      {decision.error ? (
+                        <span className="text-xs text-kumo-danger">{decision.error}</span>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {decision.previousPriority ?? '—'} → {decision.recommendedPriority ?? '—'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
 
@@ -326,22 +310,20 @@ export function RoutingPage() {
             </LinkButton>
           }
         />
-        <LayerCard>
-          <LayerCard.Primary>
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-              {settings.map(([label, value]) => (
-                <div key={label} className="flex flex-col gap-0.5">
-                  <Text variant="secondary" size="xs" as="dt">
-                    {label}
-                  </Text>
-                  <Text as="dd" bold>
-                    {value === undefined || value === null || value === '' ? '—' : String(value)}
-                  </Text>
-                </div>
-              ))}
-            </dl>
-          </LayerCard.Primary>
-        </LayerCard>
+        <Panel>
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            {settings.map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <Text variant="secondary" size="xs" as="dt">
+                  {label}
+                </Text>
+                <Text as="dd" bold>
+                  {value === undefined || value === null || value === '' ? '—' : String(value)}
+                </Text>
+              </div>
+            ))}
+          </dl>
+        </Panel>
       </section>
     </div>
   );

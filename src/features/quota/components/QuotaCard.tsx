@@ -1,8 +1,8 @@
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayerCard } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Panel } from '@/components/ui/Panel';
 import { IconRefreshCw } from '@/components/ui/icons';
 import type { ResolvedTheme } from '@/types';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
@@ -80,19 +80,17 @@ export function QuotaCard(props: QuotaCardProps) {
     Boolean(adapter.canResetQuota?.(quota));
 
   return (
-    <LayerCard
-      render={<article />}
-      className={[
-        'flex flex-col gap-3 !overflow-visible p-4',
-        mountEntranceDelayMs === null ? '' : styles.cardEnter,
-      ]
+    <Panel
+      as="article"
+      padding="sm"
+      className={['flex flex-col gap-3', mountEntranceDelayMs === null ? '' : styles.cardEnter]
         .filter(Boolean)
         .join(' ')}
       style={entranceStyle}
     >
       <header className="flex min-w-0 items-center gap-2.5">
         <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-kumo-recessed ring ring-kumo-hairline"
+          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-kumo-recessed"
           title={typeLabel}
           style={
             isThemeSurfaceIconProvider(entry.type)
@@ -135,7 +133,7 @@ export function QuotaCard(props: QuotaCardProps) {
         {status === 'idle' ? (
           <button
             type="button"
-            className="flex min-h-19 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-kumo-line bg-transparent px-3 py-3 text-kumo-subtle transition-colors hover:border-solid hover:bg-kumo-tint hover:text-kumo-default focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-19 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg bg-transparent px-3 py-3 text-kumo-default transition-colors hover:bg-kumo-tint hover:text-kumo-default focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onRefresh}
             disabled={!canRefresh}
           >
@@ -154,7 +152,7 @@ export function QuotaCard(props: QuotaCardProps) {
           </div>
         ) : status === 'error' ? (
           <div
-            className="rounded-lg bg-kumo-danger-tint px-3 py-2 text-sm text-kumo-danger ring ring-kumo-danger/30 [overflow-wrap:anywhere]"
+            className="rounded-lg bg-kumo-danger-tint px-3 py-2 text-sm text-kumo-danger [overflow-wrap:anywhere]"
             role="alert"
           >
             {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
@@ -169,7 +167,7 @@ export function QuotaCard(props: QuotaCardProps) {
       </div>
 
       {status !== 'idle' && (
-        <footer className="mt-auto flex flex-wrap justify-end gap-2 border-t border-kumo-hairline pt-3">
+        <footer className="mt-auto flex flex-wrap justify-end gap-2 border-t border-kumo-line pt-3">
           {entry.type === 'claude' && (
             <Button
               variant="secondary"
@@ -206,6 +204,6 @@ export function QuotaCard(props: QuotaCardProps) {
           </Button>
         </footer>
       )}
-    </LayerCard>
+    </Panel>
   );
 }

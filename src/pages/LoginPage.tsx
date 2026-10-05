@@ -2,17 +2,9 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { WarningCircleIcon } from '@phosphor-icons/react';
-import {
-  Banner,
-  Button,
-  Checkbox,
-  Input,
-  LayerCard,
-  Loader,
-  SensitiveInput,
-  Text,
-} from '@cloudflare/kumo';
+import { Banner, Button, Checkbox, Input, Loader, SensitiveInput, Text } from '@cloudflare/kumo';
 import { BrandMark } from '@/components/layout/MainLayout';
+import { Panel } from '@/components/ui/Panel';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { detectApiBaseFromLocation, normalizeApiBase } from '@/utils/connection';
 import type { ApiError } from '@/types';
@@ -177,87 +169,83 @@ export function LoginPage() {
         </div>
 
         {showSplash ? (
-          <LayerCard>
-            <LayerCard.Primary className="flex flex-col items-center gap-3 py-10">
-              <Loader size="lg" />
-              <Text variant="heading" as="h1">
-                {t('login.restoring_title')}
-              </Text>
-              <Text variant="secondary">{t('login.restoring_subtitle')}</Text>
-            </LayerCard.Primary>
-          </LayerCard>
+          <Panel className="flex flex-col items-center gap-3 py-10 text-center">
+            <Loader size="lg" />
+            <Text variant="heading" as="h1">
+              {t('login.restoring_title')}
+            </Text>
+            <Text variant="secondary">{t('login.restoring_subtitle')}</Text>
+          </Panel>
         ) : (
-          <LayerCard>
-            <LayerCard.Secondary className="flex flex-col gap-0.5">
+          <Panel padding="none">
+            <div className="flex flex-col gap-0.5 border-b border-kumo-line p-5">
               <Text variant="heading" as="h1">
                 {t('login.title')}
               </Text>
               <Text variant="secondary" size="sm">
                 {t('login.subtitle')}
               </Text>
-            </LayerCard.Secondary>
-            <LayerCard.Primary>
-              <form
-                className="flex flex-col gap-5"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!loading) void handleSubmit();
-                }}
-              >
-                <div className="flex flex-col gap-1 rounded-lg bg-kumo-recessed px-3 py-2.5">
-                  <span className="text-xs text-kumo-subtle">{t('login.connection_current')}</span>
-                  <span className="font-mono text-sm break-all text-kumo-default">
-                    {apiBase || detectedBase}
-                  </span>
-                </div>
+            </div>
+            <form
+              className="flex flex-col gap-5 p-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!loading) void handleSubmit();
+              }}
+            >
+              <div className="flex flex-col gap-1 rounded-lg bg-kumo-recessed px-3 py-2.5">
+                <span className="text-xs text-kumo-subtle">{t('login.connection_current')}</span>
+                <span className="font-mono text-sm break-all text-kumo-default">
+                  {apiBase || detectedBase}
+                </span>
+              </div>
 
-                <Checkbox
-                  label={t('login.custom_connection_label')}
-                  checked={showCustomBase}
-                  onCheckedChange={(checked) => setShowCustomBase(checked === true)}
+              <Checkbox
+                label={t('login.custom_connection_label')}
+                checked={showCustomBase}
+                onCheckedChange={(checked) => setShowCustomBase(checked === true)}
+              />
+
+              {showCustomBase ? (
+                <Input
+                  label={t('login.custom_connection_input')}
+                  placeholder={t('login.custom_connection_placeholder')}
+                  value={apiBase}
+                  onChange={(e) => setApiBase(e.target.value)}
+                  description={t('login.custom_connection_hint')}
                 />
+              ) : null}
 
-                {showCustomBase ? (
-                  <Input
-                    label={t('login.custom_connection_input')}
-                    placeholder={t('login.custom_connection_placeholder')}
-                    value={apiBase}
-                    onChange={(e) => setApiBase(e.target.value)}
-                    description={t('login.custom_connection_hint')}
-                  />
-                ) : null}
+              <SensitiveInput
+                autoFocus
+                label={t('login.management_key_label')}
+                placeholder={t('login.management_key_placeholder')}
+                name="cpa-management-key"
+                autoComplete="current-password"
+                value={managementKey}
+                onValueChange={setManagementKey}
+              />
 
-                <SensitiveInput
-                  autoFocus
-                  label={t('login.management_key_label')}
-                  placeholder={t('login.management_key_placeholder')}
-                  name="cpa-management-key"
-                  autoComplete="current-password"
-                  value={managementKey}
-                  onValueChange={setManagementKey}
+              <Checkbox
+                label={t('login.remember_password_label')}
+                checked={rememberPassword}
+                onCheckedChange={(checked) => setRememberPassword(checked === true)}
+              />
+
+              {error ? (
+                <Banner
+                  variant="error"
+                  icon={<WarningCircleIcon weight="fill" />}
+                  title={t('login.error_title')}
+                  description={error}
                 />
+              ) : null}
 
-                <Checkbox
-                  label={t('login.remember_password_label')}
-                  checked={rememberPassword}
-                  onCheckedChange={(checked) => setRememberPassword(checked === true)}
-                />
-
-                {error ? (
-                  <Banner
-                    variant="error"
-                    icon={<WarningCircleIcon weight="fill" />}
-                    title={t('login.error_title')}
-                    description={error}
-                  />
-                ) : null}
-
-                <Button variant="primary" type="submit" className="w-full" loading={loading}>
-                  {loading ? t('login.submitting') : t('login.submit_button')}
-                </Button>
-              </form>
-            </LayerCard.Primary>
-          </LayerCard>
+              <Button variant="primary" type="submit" className="w-full" loading={loading}>
+                {loading ? t('login.submitting') : t('login.submit_button')}
+              </Button>
+            </form>
+          </Panel>
         )}
       </div>
     </div>

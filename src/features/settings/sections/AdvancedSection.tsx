@@ -53,7 +53,7 @@ export function AdvancedSection({ onOpenYaml }: { onOpenYaml: () => void }) {
         </SettingRow>
       </SettingsGroup>
 
-      <div className="flex flex-col gap-3 rounded-lg bg-kumo-elevated p-5 ring ring-kumo-line sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-lg border border-kumo-line bg-kumo-base p-4 sm:flex-row md:p-5 sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <Text variant="heading" as="h3">
             {t('settings.advanced.yaml_title')}

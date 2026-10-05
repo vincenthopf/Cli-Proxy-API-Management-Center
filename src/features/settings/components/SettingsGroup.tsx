@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { Collapsible, LayerCard, Text } from '@cloudflare/kumo';
+import { Collapsible, Text } from '@cloudflare/kumo';
 import { CaretDownIcon } from '@phosphor-icons/react';
+import { Panel } from '@/components/ui/Panel';
 import { useSettingsForm } from '../settingsForm';
 
 export function SettingsGroup({
@@ -15,8 +16,8 @@ export function SettingsGroup({
   children: ReactNode;
 }) {
   return (
-    <LayerCard>
-      <LayerCard.Secondary className="flex-wrap justify-between gap-y-1">
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <Text variant="heading" as="h3">
             {title}
@@ -28,11 +29,11 @@ export function SettingsGroup({
           ) : null}
         </div>
         {action}
-      </LayerCard.Secondary>
-      <LayerCard.Primary className="gap-0 divide-y divide-kumo-line px-5 py-0">
+      </div>
+      <Panel padding="none" className="divide-y divide-kumo-line px-4 md:px-5">
         {children}
-      </LayerCard.Primary>
-    </LayerCard>
+      </Panel>
+    </section>
   );
 }
 

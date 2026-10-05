@@ -1,9 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useReducer, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Banner, LayerCard, Tabs } from '@cloudflare/kumo';
+import { Badge, Banner, Tabs } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Panel } from '@/components/ui/Panel';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
@@ -418,7 +419,8 @@ export function LogsPage() {
 
       <div className={styles.content}>
         {activeTab === 'logs' && (
-          <LayerCard
+          <Panel
+            padding="none"
             className={[styles.logCard, fullscreenLogs ? styles.logCardFullscreen : '']
               .filter(Boolean)
               .join(' ')}
@@ -915,11 +917,13 @@ export function LogsPage() {
                 </div>
               ) : logBuffer.buffer.length > 0 ? (
                 <EmptyState
+                  bare
                   title={t('logs.search_empty_title')}
                   description={t('logs.search_empty_desc')}
                 />
               ) : showFileLoggingRequired ? (
                 <EmptyState
+                  bare
                   title={t(
                     cpaNeedsFileLogging
                       ? 'logs.cpa_file_logging_required_title'
@@ -932,14 +936,14 @@ export function LogsPage() {
                   )}
                 />
               ) : (
-                <EmptyState title={t('logs.empty_title')} description={t('logs.empty_desc')} />
+                <EmptyState bare title={t('logs.empty_title')} description={t('logs.empty_desc')} />
               )}
             </div>
-          </LayerCard>
+          </Panel>
         )}
 
         {activeTab === 'errors' && (
-          <LayerCard className={styles.errorCard}>
+          <Panel padding="none" className={styles.errorCard}>
             <div className={styles.errorHeader}>
               <h2 className={styles.errorTitle}>{t('logs.error_logs_modal_title')}</h2>
               <Button
@@ -1006,7 +1010,7 @@ export function LogsPage() {
                 )}
               </div>
             </div>
-          </LayerCard>
+          </Panel>
         )}
       </div>
 

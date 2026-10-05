@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Banner, Empty, LayerCard, Loader } from '@cloudflare/kumo';
+import { Badge, Banner, Loader } from '@cloudflare/kumo';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
 import { CubeIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -330,7 +331,7 @@ export function SystemPage() {
       description: t('system_info.link_docs_desc'),
     },
   ];
-  const sectionTitleClass = 'm-0 text-base font-semibold text-kumo-default';
+  const sectionTitleClass = 'm-0 text-base font-semibold text-kumo-strong';
   const tileClass = 'flex min-w-0 flex-col gap-1 bg-kumo-base p-4';
   const tileLabelClass = 'text-xs font-medium text-kumo-subtle';
   const tileValueClass = 'truncate text-base font-semibold text-kumo-default tabular-nums';
@@ -340,18 +341,14 @@ export function SystemPage() {
       <PageHeader title={t('system_info.title')} />
 
       <section className="flex flex-col gap-3" aria-labelledby="system-about-title">
-        <LayerCard>
-          <div className="flex items-center gap-3 border-b border-kumo-hairline px-4 py-3 sm:px-5">
-            <img
-              src={INLINE_LOGO_JPEG}
-              alt="CPAMC"
-              className="size-9 rounded-lg ring ring-kumo-hairline"
-            />
-            <h2 id="system-about-title" className={sectionTitleClass}>
-              {t('system_info.about_title')}
-            </h2>
-          </div>
-          <div className="grid gap-px bg-kumo-hairline sm:grid-cols-2 xl:grid-cols-4">
+        <div className="flex items-center gap-3">
+          <img src={INLINE_LOGO_JPEG} alt="CPAMC" className="size-8 rounded-lg" />
+          <h2 id="system-about-title" className={sectionTitleClass}>
+            {t('system_info.about_title')}
+          </h2>
+        </div>
+        <Panel padding="none" className="overflow-hidden">
+          <div className="grid gap-px bg-kumo-line sm:grid-cols-2 xl:grid-cols-4">
             <button
               type="button"
               className={`${tileClass} cursor-default text-left focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none focus-visible:ring-inset`}
@@ -398,7 +395,7 @@ export function SystemPage() {
               </span>
             </div>
           </div>
-        </LayerCard>
+        </Panel>
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="system-links-title">
@@ -408,8 +405,8 @@ export function SystemPage() {
           </h2>
           <p className="m-0 text-sm text-kumo-subtle">{t('system_info.quick_links_desc')}</p>
         </div>
-        <LayerCard>
-          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
+        <Panel padding="none" className="overflow-hidden">
+          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-line p-0">
             {quickLinks.map((link) => (
               <li key={link.href}>
                 <a
@@ -418,7 +415,7 @@ export function SystemPage() {
                   rel="noopener noreferrer"
                   className="group flex items-center gap-3 px-4 py-3 no-underline hover:bg-kumo-tint focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none focus-visible:ring-inset sm:px-5"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated text-kumo-default ring ring-kumo-hairline">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-kumo-recessed text-kumo-default">
                     {link.icon}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -430,7 +427,7 @@ export function SystemPage() {
               </li>
             ))}
           </ul>
-        </LayerCard>
+        </Panel>
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="system-models-title">
@@ -462,19 +459,20 @@ export function SystemPage() {
           />
         )}
         {modelsLoading ? (
-          <LayerCard className="flex items-center gap-2 p-4 text-sm text-kumo-subtle">
+          <Panel padding="sm" className="flex items-center gap-2 text-sm text-kumo-default">
             <Loader size="sm" />
             {t('common.loading')}
-          </LayerCard>
+          </Panel>
         ) : models.length === 0 ? (
-          <Empty
-            size="sm"
-            icon={<CubeIcon size={32} className="text-kumo-inactive" />}
-            title={t('system_info.models_empty')}
-          />
+          <Panel padding="none">
+            <PanelEmpty
+              icon={<CubeIcon size={32} className="text-kumo-inactive" />}
+              title={t('system_info.models_empty')}
+            />
+          </Panel>
         ) : (
-          <LayerCard>
-            <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
+          <Panel padding="none">
+            <ul className="m-0 flex list-none flex-col divide-y divide-kumo-line p-0">
               {groupedModels.map((group) => {
                 const iconSrc = getIconForCategory(group.id);
                 return (
@@ -483,7 +481,7 @@ export function SystemPage() {
                     className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:px-5"
                   >
                     <div className="flex shrink-0 items-center gap-3 sm:w-48">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-kumo-recessed">
                         {iconSrc ? <img src={iconSrc} alt="" className="size-5" /> : null}
                       </span>
                       <span className="flex min-w-0 flex-col">
@@ -511,12 +509,12 @@ export function SystemPage() {
                 );
               })}
             </ul>
-          </LayerCard>
+          </Panel>
         )}
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="system-clear-login-title">
-        <LayerCard className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5">
+        <Panel className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 basis-72 flex-col gap-1">
             <h2 id="system-clear-login-title" className={sectionTitleClass}>
               {t('system_info.clear_login_title')}
@@ -526,7 +524,7 @@ export function SystemPage() {
           <Button variant="danger" onClick={handleClearLoginStorage}>
             {t('system_info.clear_login_button')}
           </Button>
-        </LayerCard>
+        </Panel>
       </section>
 
       <Modal

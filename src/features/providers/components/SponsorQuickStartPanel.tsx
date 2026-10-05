@@ -2,7 +2,8 @@ import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useNotificationStore } from '@/stores';
-import { Empty, LayerCard, LinkButton } from '@cloudflare/kumo';
+import { LinkButton } from '@cloudflare/kumo';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { IconCheckCircle2, IconExternalLink, IconPlus } from '@/components/ui/icons';
 import { PROVIDER_LOGOS } from '../brandLogos';
@@ -79,8 +80,13 @@ export function SponsorQuickStartPanel({
 
   const header = (extra?: ReactNode) => (
     <div className="flex min-w-0 flex-wrap items-center gap-3">
-      <img src={logo.src} alt="" aria-hidden="true" className="size-8 shrink-0 rounded-md object-contain" />
-      <h2 className="m-0 min-w-0 text-2xl font-semibold text-kumo-default">
+      <img
+        src={logo.src}
+        alt=""
+        aria-hidden="true"
+        className="size-8 shrink-0 rounded-md object-contain"
+      />
+      <h2 className="m-0 min-w-0 text-2xl font-semibold text-kumo-strong">
         {t('providersPage.providerNames.apikeyFun')}
       </h2>
       {extra}
@@ -89,10 +95,9 @@ export function SponsorQuickStartPanel({
 
   if (!resource && !showCreateForm) {
     return (
-      <LayerCard className="flex min-w-0 flex-col gap-5 !overflow-visible p-5">
-        {header()}
-        <Empty
-          size="sm"
+      <Panel padding="none" className="flex flex-col">
+        <div className="border-b border-kumo-line p-4 md:p-5">{header()}</div>
+        <PanelEmpty
           title={t('providersPage.sponsor.emptyRegisterHint')}
           contents={
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -115,7 +120,7 @@ export function SponsorQuickStartPanel({
             </div>
           }
         />
-      </LayerCard>
+      </Panel>
     );
   }
 
@@ -125,7 +130,7 @@ export function SponsorQuickStartPanel({
     : t('providersPage.sponsor.registerLink');
 
   return (
-    <LayerCard className="flex min-w-0 flex-col gap-5 !overflow-visible p-4 sm:p-5">
+    <Panel className="flex flex-col gap-5">
       {header(
         <LinkButton
           href={actionHref}
@@ -183,6 +188,6 @@ export function SponsorQuickStartPanel({
           </span>
         </Button>
       </div>
-    </LayerCard>
+    </Panel>
   );
 }

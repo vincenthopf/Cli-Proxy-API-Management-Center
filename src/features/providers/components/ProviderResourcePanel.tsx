@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Empty, InputGroup, LayerCard, LinkButton } from '@cloudflare/kumo';
+import { InputGroup, LinkButton } from '@cloudflare/kumo';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { IconExternalLink, IconPlus, IconSearch } from '@/components/ui/icons';
 import type { ProviderRecentUsageMap } from '@/components/providers/utils';
@@ -75,7 +76,7 @@ export function ProviderResourcePanel({
   const titleContent = (
     <>
       <ProviderBrandLogo logo={logo} />
-      <h2 className="m-0 text-xl font-semibold text-kumo-default">{providerTitle}</h2>
+      <h2 className="m-0 text-xl font-semibold text-kumo-strong">{providerTitle}</h2>
       {showSponsorDashboardLink ? (
         <IconExternalLink
           className="shrink-0 text-kumo-subtle transition-transform group-hover:translate-x-px group-hover:-translate-y-px"
@@ -86,8 +87,8 @@ export function ProviderResourcePanel({
   );
 
   return (
-    <LayerCard className="flex min-w-0 flex-col gap-4 !overflow-visible p-5">
-      <div className="flex flex-col gap-3">
+    <Panel padding="none" className="flex flex-col">
+      <div className="flex flex-col gap-3 border-b border-kumo-line p-4 md:p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="flex min-w-0 flex-col items-start gap-2">
             {showSponsorDashboardLink ? (
@@ -164,8 +165,7 @@ export function ProviderResourcePanel({
       </div>
 
       {filteredResources.length === 0 ? (
-        <Empty
-          size="sm"
+        <PanelEmpty
           title={emptyText}
           contents={
             showSponsorRegistrationLink ? (
@@ -197,6 +197,6 @@ export function ProviderResourcePanel({
           onToggleDisabled={onToggleDisabled}
         />
       )}
-    </LayerCard>
+    </Panel>
   );
 }

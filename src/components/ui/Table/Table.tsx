@@ -6,7 +6,8 @@ import type {
   TdHTMLAttributes,
   ThHTMLAttributes,
 } from 'react';
-import { LayerCard, Table as KumoTable } from '@cloudflare/kumo';
+import { Table as KumoTable } from '@cloudflare/kumo';
+import { Panel } from '@/components/ui/Panel';
 
 const join = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(' ');
@@ -14,18 +15,29 @@ const join = (...parts: Array<string | false | null | undefined>) =>
 interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
   className?: string;
   cols?: ReactNode;
+  bordered?: boolean;
 }
 
-export function Table({ children, cols, className, ...rest }: PropsWithChildren<TableProps>) {
+export function Table({
+  children,
+  cols,
+  className,
+  bordered = true,
+  ...rest
+}: PropsWithChildren<TableProps>) {
+  const table = (
+    <div className="overflow-x-auto">
+      <KumoTable className={join('text-sm', className)} {...rest}>
+        {cols ? <colgroup>{cols}</colgroup> : null}
+        {children}
+      </KumoTable>
+    </div>
+  );
+  if (!bordered) return table;
   return (
-    <LayerCard className="w-full p-0">
-      <div className="overflow-x-auto">
-        <KumoTable className={join('text-sm', className)} {...rest}>
-          {cols ? <colgroup>{cols}</colgroup> : null}
-          {children}
-        </KumoTable>
-      </div>
-    </LayerCard>
+    <Panel padding="none" className="w-full overflow-hidden">
+      {table}
+    </Panel>
   );
 }
 
@@ -35,7 +47,11 @@ export function TableHeader({
   ...rest
 }: PropsWithChildren<HTMLAttributes<HTMLTableSectionElement>>) {
   return (
-    <KumoTable.Header variant="compact" className={className} {...rest}>
+    <KumoTable.Header
+      variant="compact"
+      className={join('[&_th]:border-kumo-line [&_th]:bg-kumo-recessed', className)}
+      {...rest}
+    >
       {children}
     </KumoTable.Header>
   );
@@ -66,7 +82,11 @@ export function TableRow({
   return (
     <KumoTable.Row
       variant={selected ? 'selected' : 'default'}
-      className={join('[&>td]:border-b [&>td]:border-kumo-hairline last:[&>td]:border-b-0', className)}
+      className={join(
+        '[&>td]:border-b [&>td]:border-kumo-hairline last:[&>td]:border-b-0',
+        !selected && 'even:bg-kumo-base even:[--kumo-table-row-bg:var(--color-kumo-base)]',
+        className
+      )}
       {...rest}
     >
       {children}
@@ -105,10 +125,7 @@ export function TableCell({
   ...rest
 }: PropsWithChildren<TableCellProps>) {
   return (
-    <KumoTable.Cell
-      className={join('align-top', alignRight && 'text-right', className)}
-      {...rest}
-    >
+    <KumoTable.Cell className={join('align-top', alignRight && 'text-right', className)} {...rest}>
       {children}
     </KumoTable.Cell>
   );

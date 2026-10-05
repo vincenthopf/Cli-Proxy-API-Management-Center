@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, LayerCard, Text } from '@cloudflare/kumo';
+import { Badge, Text } from '@cloudflare/kumo';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 import { useConfigStore } from '@/stores';
+import { Panel } from '@/components/ui/Panel';
 import {
   SETTINGS_SECTION_IDS,
   buildSettingsSummary,
@@ -64,16 +65,16 @@ export function OverviewSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <LayerCard>
-        <LayerCard.Secondary className="flex-wrap justify-between">
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Text variant="heading" as="h3">
             {t('settings.overview.summary_title')}
           </Text>
           {changedFieldIds.size > 0 ? (
             <Badge variant="info">{t('settings.overview.includes_unsaved')}</Badge>
           ) : null}
-        </LayerCard.Secondary>
-        <LayerCard.Primary className="gap-0 divide-y divide-kumo-line px-5 py-0">
+        </div>
+        <Panel padding="none" className="divide-y divide-kumo-line px-4 md:px-5">
           <SummaryRow
             label={t('settings.overview.listen_address')}
             value={
@@ -126,8 +127,8 @@ export function OverviewSection({
             actionLabel={edit}
             onAction={() => onOpen('logging', 'requestLog')}
           />
-        </LayerCard.Primary>
-      </LayerCard>
+        </Panel>
+      </section>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {SETTINGS_SECTION_IDS.filter((id) => id !== 'overview').map((id) => {
@@ -138,7 +139,7 @@ export function OverviewSection({
               key={id}
               type="button"
               onClick={() => onOpen(id)}
-              className="flex flex-col gap-1 rounded-lg bg-kumo-base p-4 text-left ring ring-kumo-line transition-colors hover:bg-kumo-tint focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none"
+              className="flex flex-col gap-1 rounded-lg border border-kumo-line bg-kumo-base p-4 text-left transition-colors hover:bg-kumo-tint focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none"
             >
               <span className="flex items-center gap-2">
                 <span className="text-base font-medium text-kumo-default">

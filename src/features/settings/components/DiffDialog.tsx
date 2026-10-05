@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Dialog, Empty, Text } from '@cloudflare/kumo';
+import { Button, Dialog, Text } from '@cloudflare/kumo';
+import { PanelEmpty } from '@/components/ui/Panel';
 import { EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
 import { computeUnifiedDiff, type UnifiedLineType } from '@/features/config/unifiedDiff';
 import { redactYamlText } from '@/utils/redactSecrets';
@@ -74,7 +75,7 @@ export function DiffDialog({
 
         <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-kumo-recessed ring ring-kumo-line">
           {diff.hunks.length === 0 ? (
-            <Empty size="sm" title={t('config_management.diff.no_changes')} />
+            <PanelEmpty title={t('config_management.diff.no_changes')} />
           ) : (
             <div className="min-w-max font-mono text-xs leading-5">
               {diff.hunks.map((hunk, hunkIndex) => (

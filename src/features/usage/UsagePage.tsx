@@ -11,9 +11,6 @@ import {
   Banner,
   ChartLegend,
   ChartPalette,
-  Empty,
-  LayerCard,
-  Table,
   Tabs,
   TimeseriesChart,
   type BadgeVariant,
@@ -41,6 +38,15 @@ import {
 import { PageHeader } from '@/features/overview/components/PageHeader';
 import { SectionHeader } from '@/features/overview/components/SectionHeader';
 import { StatCard, StatRow } from '@/features/overview/components/StatCard';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/Table';
 import { echarts } from './echarts';
 import { useChartFont } from './useChartFont';
 
@@ -55,11 +61,9 @@ const isGroup = (value: string): value is UsageGroupBy => (GROUPS as string[]).i
 
 function NoData({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <LayerCard>
-      <LayerCard.Primary>
-        <Empty size="sm" icon={icon} title={title} />
-      </LayerCard.Primary>
-    </LayerCard>
+    <Panel padding="none">
+      <PanelEmpty icon={icon} title={title} />
+    </Panel>
   );
 }
 
@@ -226,15 +230,13 @@ export function UsagePage() {
             title={t('usage.no_data')}
           />
         ) : (
-          <LayerCard>
-            <LayerCard.Primary>
-              {usage.data ? (
-                <TokenChart data={usage.data} isDarkMode={isDarkMode} />
-              ) : (
-                <TimeseriesChart echarts={echarts} data={[]} height={260} loading />
-              )}
-            </LayerCard.Primary>
-          </LayerCard>
+          <Panel>
+            {usage.data ? (
+              <TokenChart data={usage.data} isDarkMode={isDarkMode} />
+            ) : (
+              <TimeseriesChart echarts={echarts} data={[]} height={260} loading />
+            )}
+          </Panel>
         )}
       </section>
 
@@ -257,73 +259,71 @@ export function UsagePage() {
             title={t('usage.no_data')}
           />
         ) : (
-          <LayerCard className="overflow-x-auto p-0">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>{t(`usage.group_${group}`)}</Table.Head>
-                  <Table.Head>{t('usage.in_out')}</Table.Head>
-                  <Table.Head>{t('usage.cache')}</Table.Head>
-                  <Table.Head>{t('usage.requests')}</Table.Head>
-                  <Table.Head>{t('usage.share')}</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {groups.map((row) => (
-                  <Table.Row key={row.key}>
-                    <Table.Cell>
-                      <span className="font-medium text-kumo-default" title={row.key}>
-                        {group === 'account'
-                          ? maskEmail(row.label) || row.label
-                          : row.label || row.key}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t(`usage.group_${group}`)}</TableHead>
+                <TableHead>{t('usage.in_out')}</TableHead>
+                <TableHead>{t('usage.cache')}</TableHead>
+                <TableHead>{t('usage.requests')}</TableHead>
+                <TableHead>{t('usage.share')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {groups.map((row) => (
+                <TableRow key={row.key}>
+                  <TableCell>
+                    <span className="font-medium text-kumo-default" title={row.key}>
+                      {group === 'account'
+                        ? maskEmail(row.label) || row.label
+                        : row.label || row.key}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5 tabular-nums">
+                      <span>{formatTokens(row.input + row.output)}</span>
+                      <span className="text-xs text-kumo-subtle">
+                        {formatTokens(row.input)} / {formatTokens(row.output)}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-col gap-0.5 tabular-nums">
-                        <span>{formatTokens(row.input + row.output)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5 tabular-nums">
+                      <span>{formatPercent(row.cache_hit_ratio * 100)}</span>
+                      <span className="text-xs text-kumo-subtle">
+                        {t('usage.read_write', {
+                          read: formatTokens(row.cache_read),
+                          write: formatTokens(row.cache_creation),
+                        })}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5 tabular-nums">
+                      <span>{formatCount(row.requests)}</span>
+                      {row.failures > 0 || row.rate_limited > 0 ? (
                         <span className="text-xs text-kumo-subtle">
-                          {formatTokens(row.input)} / {formatTokens(row.output)}
+                          {[
+                            row.failures > 0
+                              ? t('overview.failures_count', { count: row.failures })
+                              : '',
+                            row.rate_limited > 0
+                              ? t('usage.rate_limited', { count: row.rate_limited })
+                              : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-col gap-0.5 tabular-nums">
-                        <span>{formatPercent(row.cache_hit_ratio * 100)}</span>
-                        <span className="text-xs text-kumo-subtle">
-                          {t('usage.read_write', {
-                            read: formatTokens(row.cache_read),
-                            write: formatTokens(row.cache_creation),
-                          })}
-                        </span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-col gap-0.5 tabular-nums">
-                        <span>{formatCount(row.requests)}</span>
-                        {row.failures > 0 || row.rate_limited > 0 ? (
-                          <span className="text-xs text-kumo-subtle">
-                            {[
-                              row.failures > 0
-                                ? t('overview.failures_count', { count: row.failures })
-                                : '',
-                              row.rate_limited > 0
-                                ? t('usage.rate_limited', { count: row.rate_limited })
-                                : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </span>
-                        ) : null}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <ShareBar value={row.share} />
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          </LayerCard>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <ShareBar value={row.share} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
 
@@ -335,60 +335,56 @@ export function UsagePage() {
             title={t('usage.no_sessions')}
           />
         ) : (
-          <LayerCard className="overflow-x-auto p-0">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>{t('usage.session')}</Table.Head>
-                  <Table.Head>{t('usage.in_out')}</Table.Head>
-                  <Table.Head>{t('usage.cache')}</Table.Head>
-                  <Table.Head>{t('usage.requests')}</Table.Head>
-                  <Table.Head>{t('usage.last')}</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {sessionRows.map((session) => (
-                  <Table.Row key={session.session_id}>
-                    <Table.Cell>
-                      <div className="flex min-w-40 flex-col gap-0.5">
-                        <span
-                          className="font-mono text-sm text-kumo-default"
-                          title={session.session_id}
-                        >
-                          {session.session_id.slice(0, 8)}
-                        </span>
-                        <span className="text-xs text-kumo-subtle">
-                          {[
-                            session.models.join(', '),
-                            session.accounts.map((a) => maskEmail(a) || a).join(', '),
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {formatTokens(session.input + session.output)}
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {formatPercent(session.cache_hit_ratio * 100)}
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {formatCount(session.requests)}
-                    </Table.Cell>
-                    <Table.Cell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('usage.session')}</TableHead>
+                <TableHead>{t('usage.in_out')}</TableHead>
+                <TableHead>{t('usage.cache')}</TableHead>
+                <TableHead>{t('usage.requests')}</TableHead>
+                <TableHead>{t('usage.last')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessionRows.map((session) => (
+                <TableRow key={session.session_id}>
+                  <TableCell>
+                    <div className="flex min-w-40 flex-col gap-0.5">
                       <span
-                        className="text-sm text-kumo-subtle"
-                        title={formatDateTime(session.last_at)}
+                        className="font-mono text-sm text-kumo-default"
+                        title={session.session_id}
                       >
-                        {formatRelative(session.last_at, now)}
+                        {session.session_id.slice(0, 8)}
                       </span>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          </LayerCard>
+                      <span className="text-xs text-kumo-subtle">
+                        {[
+                          session.models.join(', '),
+                          session.accounts.map((a) => maskEmail(a) || a).join(', '),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatTokens(session.input + session.output)}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatPercent(session.cache_hit_ratio * 100)}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{formatCount(session.requests)}</TableCell>
+                  <TableCell>
+                    <span
+                      className="text-sm text-kumo-subtle"
+                      title={formatDateTime(session.last_at)}
+                    >
+                      {formatRelative(session.last_at, now)}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
 
@@ -400,59 +396,56 @@ export function UsagePage() {
             title={t('usage.no_requests')}
           />
         ) : (
-          <LayerCard className="overflow-x-auto p-0">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>{t('usage.model_account')}</Table.Head>
-                  <Table.Head>{t('usage.in_out')}</Table.Head>
-                  <Table.Head>{t('usage.cache')}</Table.Head>
-                  <Table.Head>{t('usage.status')}</Table.Head>
-                  <Table.Head>{t('usage.latency')}</Table.Head>
-                  <Table.Head>{t('usage.when')}</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {requestRows.map((request, index) => (
-                  <Table.Row key={`${request.request_id}-${index}`}>
-                    <Table.Cell>
-                      <div className="flex min-w-40 flex-col gap-0.5">
-                        <span className="text-kumo-default">{request.model}</span>
-                        <span className="text-xs text-kumo-subtle">
-                          {maskEmail(request.account) || request.account}
-                        </span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {formatTokens(request.input_tokens)} / {formatTokens(request.output_tokens)}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="text-xs text-kumo-subtle tabular-nums">
-                        {t('usage.read_write', {
-                          read: formatTokens(request.cache_read_tokens),
-                          write: formatTokens(request.cache_creation_tokens),
-                        })}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('usage.model_account')}</TableHead>
+                <TableHead>{t('usage.in_out')}</TableHead>
+                <TableHead>{t('usage.cache')}</TableHead>
+                <TableHead>{t('usage.status')}</TableHead>
+                <TableHead>{t('usage.latency')}</TableHead>
+                <TableHead>{t('usage.when')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {requestRows.map((request, index) => (
+                <TableRow key={`${request.request_id}-${index}`}>
+                  <TableCell>
+                    <div className="flex min-w-40 flex-col gap-0.5">
+                      <span className="text-kumo-default">{request.model}</span>
+                      <span className="text-xs text-kumo-subtle">
+                        {maskEmail(request.account) || request.account}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Badge variant={requestBadge(request)}>
-                        {request.status_code ??
-                          (request.failed ? t('usage.failed') : t('usage.ok'))}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell className="tabular-nums">
-                      {formatLatency(request.latency_ms)}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="text-sm text-kumo-subtle" title={formatDateTime(request.ts)}>
-                        {formatRelative(request.ts, now)}
-                      </span>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          </LayerCard>
+                    </div>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatTokens(request.input_tokens)} / {formatTokens(request.output_tokens)}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs text-kumo-subtle tabular-nums">
+                      {t('usage.read_write', {
+                        read: formatTokens(request.cache_read_tokens),
+                        write: formatTokens(request.cache_creation_tokens),
+                      })}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={requestBadge(request)}>
+                      {request.status_code ?? (request.failed ? t('usage.failed') : t('usage.ok'))}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatLatency(request.latency_ms)}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-kumo-subtle" title={formatDateTime(request.ts)}>
+                      {formatRelative(request.ts, now)}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
     </div>

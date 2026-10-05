@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { LayerCard } from '@cloudflare/kumo';
+import { cn } from '@cloudflare/kumo';
+import { Panel } from '@/components/ui/Panel';
 
 interface CardProps {
   title?: ReactNode;
@@ -9,14 +10,14 @@ interface CardProps {
 
 export function Card({ title, extra, children, className }: PropsWithChildren<CardProps>) {
   return (
-    <LayerCard className={['card !overflow-visible', className].filter(Boolean).join(' ')}>
+    <Panel padding="none" className={cn('p-5', className)}>
       {(title || extra) && (
-        <div className="card-header">
-          <div className="title">{title}</div>
+        <div className="-mx-5 -mt-5 mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-kumo-line px-5 py-3">
+          <div className="min-w-0 flex-1 text-base font-semibold text-kumo-strong">{title}</div>
           {extra}
         </div>
       )}
       {children}
-    </LayerCard>
+    </Panel>
   );
 }

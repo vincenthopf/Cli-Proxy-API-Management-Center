@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Dialog, Empty, Input, SensitiveInput, Text } from '@cloudflare/kumo';
+import { Button, Dialog, Input, SensitiveInput, Text } from '@cloudflare/kumo';
+import { PanelEmpty } from '@/components/ui/Panel';
 import { KeyIcon, PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react';
 import { useAuthStore } from '@/stores';
 import {
@@ -112,8 +113,7 @@ function ScopedApiKeysEditor({
   return (
     <div className="flex flex-col gap-3">
       {keys.length === 0 ? (
-        <Empty
-          size="sm"
+        <PanelEmpty
           icon={<KeyIcon size={32} className="text-kumo-inactive" />}
           title={t('settings.access.keys_empty_title')}
           description={t('settings.access.keys_empty_description')}

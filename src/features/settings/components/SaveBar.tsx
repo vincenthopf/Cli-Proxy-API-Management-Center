@@ -1,5 +1,6 @@
-import { Button, LayerCard, Text } from '@cloudflare/kumo';
+import { Button, Text } from '@cloudflare/kumo';
 import { useTranslation } from 'react-i18next';
+import { Panel } from '@/components/ui/Panel';
 
 export type SaveBarProps = {
   changedCount: number;
@@ -35,7 +36,10 @@ export function SaveBar({
       role="region"
       aria-label={t('settings.save_bar.label')}
     >
-      <LayerCard className="flex flex-col gap-3 rounded-xl bg-kumo-elevated p-3 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <Panel
+        padding="sm"
+        className="flex flex-col gap-3 py-3 shadow-lg sm:flex-row sm:items-center sm:justify-between"
+      >
         <div className="flex min-w-0 flex-col" aria-live="polite">
           <Text bold>{summary}</Text>
           {errorCount > 0 ? (
@@ -56,7 +60,7 @@ export function SaveBar({
             {t('settings.save_bar.save')}
           </Button>
         </div>
-      </LayerCard>
+      </Panel>
     </div>
   );
 }

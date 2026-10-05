@@ -42,11 +42,13 @@ export function AuthFileModelsModal(props: AuthFileModelsModalProps) {
         </div>
       ) : error === 'unsupported' ? (
         <EmptyState
+          bare
           title={t('auth_files.models_unsupported')}
           description={t('auth_files.models_unsupported_desc')}
         />
       ) : models.length === 0 ? (
         <EmptyState
+          bare
           title={t('auth_files.models_empty')}
           description={t('auth_files.models_empty_desc')}
         />
@@ -62,11 +64,7 @@ export function AuthFileModelsModal(props: AuthFileModelsModalProps) {
                 onClick={() => {
                   onCopyText(model.id);
                 }}
-                title={
-                  excludedModel
-                    ? t('auth_files.models_excluded_hint')
-                    : t('common.copy')
-                }
+                title={excludedModel ? t('auth_files.models_excluded_hint') : t('common.copy')}
               >
                 <span className={styles.modelId}>{model.id}</span>
                 {model.display_name && model.display_name !== model.id && (

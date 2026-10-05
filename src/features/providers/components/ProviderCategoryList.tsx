@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Badge, LayerCard } from '@cloudflare/kumo';
+import { Badge } from '@cloudflare/kumo';
+import { Panel } from '@/components/ui/Panel';
 import { PROVIDER_LOGOS } from '../brandLogos';
 import type { ProviderBrand, ProviderGroup } from '../types';
 import { ProviderBrandLogo } from './ProviderBrandLogo';
@@ -24,7 +25,7 @@ export function ProviderCategoryList({ groups, activeBrand, onSelect }: Provider
     .sort((left, right) => Number(right.resources.length > 0) - Number(left.resources.length > 0));
 
   return (
-    <LayerCard className="min-w-0 self-start p-2">
+    <Panel padding="none" className="self-start p-2">
       <p className="mx-2 mt-1 mb-2 text-xs font-medium tracking-wide text-kumo-subtle uppercase">
         {t('providersPage.categories.title')}
       </p>
@@ -69,6 +70,6 @@ export function ProviderCategoryList({ groups, activeBrand, onSelect }: Provider
           );
         })}
       </div>
-    </LayerCard>
+    </Panel>
   );
 }

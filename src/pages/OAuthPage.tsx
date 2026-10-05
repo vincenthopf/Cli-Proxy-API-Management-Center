@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Banner, ClipboardText, LayerCard, Loader } from '@cloudflare/kumo';
+import { Badge, Banner, ClipboardText, Loader } from '@cloudflare/kumo';
+import { Panel } from '@/components/ui/Panel';
 import {
   ArrowSquareOutIcon,
   CheckCircleIcon,
@@ -729,7 +730,7 @@ export function OAuthPage() {
         aria-labelledby={titleId}
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-recessed">
             <OAuthProviderIcon provider={provider} theme={resolvedTheme} />
           </span>
           <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
@@ -772,7 +773,7 @@ export function OAuthPage() {
         </div>
 
         {hasDetails && (
-          <div className="flex flex-col gap-4 rounded-lg bg-kumo-elevated p-4 ring ring-kumo-hairline sm:ml-14">
+          <div className="flex flex-col gap-4 border-t border-kumo-line pt-4 sm:ml-14">
             {renderStatusBanner(provider, state)}
             {state.url && (
               <div className="flex flex-col gap-3">
@@ -843,7 +844,7 @@ export function OAuthPage() {
               />
             )}
             {canSubmitCallback && (
-              <div className="flex flex-col gap-2 border-t border-kumo-hairline pt-4">
+              <div className="flex flex-col gap-2 border-t border-kumo-line pt-4">
                 <Input
                   label={t(
                     provider.id === 'xai'
@@ -927,20 +928,20 @@ export function OAuthPage() {
       <PageHeader title={t('nav.add_account')} description={t('auth_login.page_description')} />
 
       <section className="flex flex-col gap-3" aria-label={t('auth_login.oauth_section_title')}>
-        <LayerCard>
-          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
+        <Panel padding="none">
+          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-line p-0">
             {orderedProviders.map((provider) => renderOAuthProviderCard(provider))}
           </ul>
-        </LayerCard>
+        </Panel>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="m-0 text-base font-semibold text-kumo-default">
+        <h2 className="m-0 text-base font-semibold text-kumo-strong">
           {t('auth_login.other_login_methods')}
         </h2>
-        <LayerCard className="flex flex-col gap-4 p-4 sm:p-5">
+        <Panel className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-recessed">
               <img src={iconVertex} alt="" className="size-6" />
             </span>
             <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
@@ -1011,7 +1012,7 @@ export function OAuthPage() {
             />
           )}
           {vertexState.result && (
-            <div className="flex flex-col gap-3 rounded-lg bg-kumo-elevated p-4 ring ring-kumo-hairline sm:ml-14">
+            <div className="flex flex-col gap-3 border-t border-kumo-line pt-4 sm:ml-14">
               <div className="flex items-center gap-2">
                 <CheckCircleIcon weight="fill" className="text-kumo-success" />
                 <span className="text-sm font-semibold text-kumo-default">
@@ -1037,7 +1038,7 @@ export function OAuthPage() {
               </dl>
             </div>
           )}
-        </LayerCard>
+        </Panel>
       </section>
     </div>
   );

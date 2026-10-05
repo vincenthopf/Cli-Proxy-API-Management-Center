@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Banner, InputArea, LayerCard, buttonVariants } from '@cloudflare/kumo';
+import { Badge, Banner, InputArea, buttonVariants } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Panel } from '@/components/ui/Panel';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
@@ -55,8 +56,7 @@ function PluginCardLogo({ src }: { src: string }) {
   );
 }
 
-const FIELD_ROW =
-  'flex items-center justify-between gap-4 rounded-lg bg-kumo-elevated px-4 py-3 ring ring-kumo-hairline';
+const FIELD_ROW = 'flex items-center justify-between gap-4 py-1';
 const FORM_FIELD = 'flex flex-col gap-1.5';
 const SECTION_TITLE = 'm-0 text-sm font-semibold tracking-wide text-kumo-subtle uppercase';
 const ICON_LINK = buttonVariants({ variant: 'ghost', size: 'sm', shape: 'square' });
@@ -568,7 +568,7 @@ export function PluginsPage() {
       </div>
 
       {loading ? (
-        <LayerCard className={styles.pluginList}>
+        <Panel padding="none" className={styles.pluginList}>
           {Array.from({ length: 4 }, (_, index) => (
             <div key={index} className={styles.pluginRow}>
               <Skeleton width={40} height={40} rounded={8} />
@@ -578,20 +578,23 @@ export function PluginsPage() {
               </div>
             </div>
           ))}
-        </LayerCard>
+        </Panel>
       ) : visiblePlugins.length === 0 ? (
-        <EmptyState
-          title={t('plugin_management.no_plugins')}
-          description={t('plugin_management.no_plugins_desc')}
-          action={
-            <Button variant="secondary" onClick={loadPlugins} disabled={!connected}>
-              <IconRefreshCw size={16} />
-              {t('plugin_management.refresh')}
-            </Button>
-          }
-        />
+        <Panel padding="none">
+          <EmptyState
+            bare
+            title={t('plugin_management.no_plugins')}
+            description={t('plugin_management.no_plugins_desc')}
+            action={
+              <Button variant="secondary" onClick={loadPlugins} disabled={!connected}>
+                <IconRefreshCw size={16} />
+                {t('plugin_management.refresh')}
+              </Button>
+            }
+          />
+        </Panel>
       ) : (
-        <LayerCard className={styles.pluginList}>
+        <Panel padding="none" className={styles.pluginList}>
           {visiblePlugins.map((plugin) => {
             const logo = resolvePluginAsset(getPluginLogo(plugin, logoEntries));
             const github = plugin.metadata?.githubRepository.trim();
@@ -705,7 +708,7 @@ export function PluginsPage() {
               </article>
             );
           })}
-        </LayerCard>
+        </Panel>
       )}
 
       <Sheet
@@ -769,7 +772,7 @@ export function PluginsPage() {
               {editingPlugin.configFields.length > 0 ? (
                 editingPlugin.configFields.map((field) => renderFieldEditor(field))
               ) : (
-                <div className="rounded-lg bg-kumo-elevated px-4 py-6 text-center text-sm text-kumo-subtle ring ring-kumo-hairline">
+                <div className="py-6 text-center text-sm text-kumo-subtle">
                   {t('plugin_management.no_config_fields')}
                 </div>
               )}

@@ -46,7 +46,7 @@ interface ProviderResourceTableProps {
 
 const BASE_URL_CLASS = 'block w-full min-w-0 truncate font-mono text-xs text-kumo-subtle';
 const STICKY_HEAD_CLASS =
-  'sticky right-0 z-3 w-44 min-w-44 !bg-kumo-elevated shadow-[-12px_0_16px_-18px_var(--color-kumo-shadow-drop)]';
+  'sticky right-0 z-3 w-44 min-w-44 !bg-kumo-recessed shadow-[-12px_0_16px_-18px_var(--color-kumo-shadow-drop)]';
 const STICKY_CELL_CLASS =
   'sticky right-0 z-2 w-44 min-w-44 bg-(--kumo-table-row-bg) shadow-[-12px_0_16px_-18px_var(--color-kumo-shadow-drop)]';
 
@@ -164,7 +164,9 @@ export function ProviderResourceTable({
     if (isSponsorResource(r)) {
       return (
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="max-w-56 truncate font-medium text-kumo-default">{r.name ?? r.identifier}</span>
+          <span className="max-w-56 truncate font-medium text-kumo-default">
+            {r.name ?? r.identifier}
+          </span>
           <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">
             {r.apiKeyPreview ?? t('providersPage.status.notConfigured')}
           </span>
@@ -175,15 +177,25 @@ export function ProviderResourceTable({
       const extra = r.apiKeyEntryCount > 1 ? ` · +${r.apiKeyEntryCount - 1}` : '';
       return (
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="max-w-56 truncate font-medium text-kumo-default">{r.name ?? r.identifier}</span>
-          <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">{(r.apiKeyPreview ?? '—') + extra}</span>
+          <span className="max-w-56 truncate font-medium text-kumo-default">
+            {r.name ?? r.identifier}
+          </span>
+          <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">
+            {(r.apiKeyPreview ?? '—') + extra}
+          </span>
         </div>
       );
     }
     return (
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="max-w-56 truncate font-medium text-kumo-default">{r.apiKeyPreview ?? '—'}</span>
-        {r.authIndex ? <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">auth: {r.authIndex}</span> : null}
+        <span className="max-w-56 truncate font-medium text-kumo-default">
+          {r.apiKeyPreview ?? '—'}
+        </span>
+        {r.authIndex ? (
+          <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">
+            auth: {r.authIndex}
+          </span>
+        ) : null}
       </div>
     );
   };
@@ -204,6 +216,7 @@ export function ProviderResourceTable({
 
   return (
     <Table
+      bordered={false}
       className="min-w-[960px] table-fixed"
       cols={columnWidths.map((w, i) => (
         <col key={i} style={{ width: w }} />
@@ -263,13 +276,13 @@ export function ProviderResourceTable({
                   ) : null}
                 </div>
               </TableCell>
-              <TableCell
-                alignRight
-                className={STICKY_CELL_CLASS}
-              >
+              <TableCell alignRight className={STICKY_CELL_CLASS}>
                 <div className="flex min-w-0 items-center justify-end gap-1">
                   {onToggleDisabled ? (
-                    <span className="mr-1 inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <span
+                      className="mr-1 inline-flex items-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <ToggleSwitch
                         checked={!resource.disabled}
                         disabled={disableMutations}

@@ -1,21 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CopyIcon, KeyIcon, PlugsConnectedIcon } from '@phosphor-icons/react';
-import {
-  Badge,
-  Button,
-  ClipboardText,
-  Code,
-  Empty,
-  LayerCard,
-  LinkButton,
-  SensitiveInput,
-} from '@cloudflare/kumo';
+import { Badge, Button, ClipboardText, Code, LinkButton, SensitiveInput } from '@cloudflare/kumo';
 import { modelsApi } from '@/services/api/models';
 import { useAuthStore, useConfigStore } from '@/stores';
 import { buildEnvSnippet, buildSettingsSnippet, KEY_PLACEHOLDER, maskKey } from './snippets';
 import { PageHeader } from '@/features/overview/components/PageHeader';
 import { SectionHeader } from '@/features/overview/components/SectionHeader';
+import { Panel, PanelEmpty } from '@/components/ui/Panel';
 
 type TestResult =
   | { state: 'idle' }
@@ -118,46 +110,43 @@ export function ConnectPage() {
             </>
           }
         />
-        <LayerCard>
-          <LayerCard.Primary className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-kumo-default">{t('connect.base_url')}</span>
-              <ClipboardText
-                text={baseUrl}
-                size="base"
-                tooltip={{ text: t('connect.copy'), copiedText: t('connect.copied') }}
-                labels={{ copyAction: t('connect.copy') }}
-              />
-            </div>
+        <Panel padding="none" className="divide-y divide-kumo-line">
+          <div className="flex flex-col gap-1.5 p-4 md:p-5">
+            <span className="text-sm font-medium text-kumo-default">{t('connect.base_url')}</span>
+            <ClipboardText
+              text={baseUrl}
+              size="base"
+              tooltip={{ text: t('connect.copy'), copiedText: t('connect.copied') }}
+              labels={{ copyAction: t('connect.copy') }}
+            />
             {test.state === 'error' ? (
               <span className="text-xs text-kumo-danger">{test.message}</span>
             ) : null}
-            {keys.length === 0 ? (
-              <Empty
-                size="sm"
-                icon={<KeyIcon size={32} className="text-kumo-inactive" />}
-                title={t('connect.no_keys_title')}
-                description={t('connect.no_keys')}
-                contents={
-                  <LinkButton variant="secondary" size="sm" href="/settings">
-                    {t('connect.open_settings')}
-                  </LinkButton>
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {keys.map((key, index) => (
-                  <SensitiveInput
-                    key={`${index}-${key.slice(-4)}`}
-                    label={t('connect.client_key', { n: index + 1 })}
-                    value={key}
-                    readOnly
-                  />
-                ))}
-              </div>
-            )}
-          </LayerCard.Primary>
-        </LayerCard>
+          </div>
+          {keys.length === 0 ? (
+            <PanelEmpty
+              icon={<KeyIcon size={32} className="text-kumo-inactive" />}
+              title={t('connect.no_keys_title')}
+              description={t('connect.no_keys')}
+              contents={
+                <LinkButton variant="secondary" size="sm" href="/settings">
+                  {t('connect.open_settings')}
+                </LinkButton>
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 md:p-5">
+              {keys.map((key, index) => (
+                <SensitiveInput
+                  key={`${index}-${key.slice(-4)}`}
+                  label={t('connect.client_key', { n: index + 1 })}
+                  value={key}
+                  readOnly
+                />
+              ))}
+            </div>
+          )}
+        </Panel>
       </section>
 
       <Snippet
