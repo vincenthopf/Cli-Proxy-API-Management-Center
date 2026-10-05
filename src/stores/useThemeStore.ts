@@ -44,6 +44,7 @@ const resolveTheme = (theme: Theme): AppliedTheme => {
 };
 
 const applyTheme = (resolved: AppliedTheme) => {
+  document.documentElement.setAttribute('data-mode', resolved === 'dark' ? 'dark' : 'light');
   if (resolved === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
     return;
