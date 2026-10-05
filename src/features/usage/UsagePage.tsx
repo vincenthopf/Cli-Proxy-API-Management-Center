@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ChartBarIcon,
@@ -42,6 +42,7 @@ import { PageHeader } from '@/features/overview/components/PageHeader';
 import { SectionHeader } from '@/features/overview/components/SectionHeader';
 import { StatCard, StatRow } from '@/features/overview/components/StatCard';
 import { echarts } from './echarts';
+import { useChartFont } from './useChartFont';
 
 const RANGES: UsageRange[] = ['24h', '7d', '30d'];
 const GROUPS: UsageGroupBy[] = ['account', 'model', 'session', 'client'];
@@ -89,8 +90,10 @@ function TokenChart({ data, isDarkMode }: { data: UsageResponse; isDarkMode: boo
   }, [data, isDarkMode, t]);
 
   const daily = data.bucket === 'day';
+  const chartRef = useRef<HTMLDivElement>(null);
+  useChartFont(chartRef, `${series.length}:${isDarkMode}:${data.series.length}`);
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" ref={chartRef}>
       <div className="flex flex-wrap gap-4">
         {series.map((item) => (
           <ChartLegend.SmallItem

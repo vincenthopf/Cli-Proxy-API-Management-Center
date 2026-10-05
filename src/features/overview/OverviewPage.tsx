@@ -2,139 +2,85 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowClockwiseIcon,
+  InfoIcon,
   PlusIcon,
-  UsersIcon,
   WarningCircleIcon,
   WarningIcon,
-  InfoIcon,
 } from '@phosphor-icons/react';
-import {
-  Badge,
-  Banner,
-  Button,
-  Empty,
-  LayerCard,
-  LinkButton,
-  Table,
-  Text,
-  type BadgeVariant,
-} from '@cloudflare/kumo';
-import { sidecarApi } from '@/services/api/sidecar';
+import { Banner, Button, Link, LinkButton, Tabs } from '@cloudflare/kumo';
+import { sidecarApi, type UsageRange, type UsageResponse } from '@/services/api/sidecar';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
+import { useThemeStore } from '@/stores';
 import { usePolling } from './usePolling';
 import { useNow } from './useNow';
-import {
-  accountAlerts,
-  accountDisplayName,
-  accountStatus,
-  effectiveWindow,
-  sortAccounts,
-  type AccountRecord,
-  type AccountStatus,
-} from './accounts';
+import { accountAlerts, sortAccounts, type AccountRecord } from './accounts';
 import { formatCount, formatPercent, formatRelative, formatTokens } from './format';
 import { PageHeader } from './components/PageHeader';
-import { SectionHeader } from './components/SectionHeader';
-import { StatCard, StatRow } from './components/StatCard';
-import { QuotaMeter } from './components/QuotaMeter';
-import { ResetTime } from './components/ResetTime';
+import { MetricCard } from './components/MetricCard';
+import { StatusRail } from './components/StatusRail';
 
-const STATUS_BADGE: Record<AccountStatus, BadgeVariant> = {
-  serving: 'success',
-  standby: 'neutral',
-  cooling: 'warning',
-  paused: 'neutral',
-  unavailable: 'error',
-  exhausted: 'error',
+const RANGES: UsageRange[] = ['24h', '7d', '30d'];
+const isRange = (value: string): value is UsageRange => (RANGES as string[]).includes(value);
+
+interface Bucket {
+  requests: number;
+  tokens: number;
+  cacheRatio: number;
+  limited: number;
+}
+
+interface Accumulator {
+  requests: number;
+  tokens: number;
+  read: number;
+  denom: number;
+  limited: number;
+}
+
+const toBuckets = (data: UsageResponse | null): Array<[number, Bucket]> => {
+  if (!data) return [];
+  const map = new Map<number, Accumulator>();
+  for (const row of data.series) {
+    const time = new Date(row.t).getTime();
+    if (Number.isNaN(time)) continue;
+    const cur = map.get(time) ?? { requests: 0, tokens: 0, read: 0, denom: 0, limited: 0 };
+    cur.requests += row.requests;
+    cur.tokens += row.input + row.output;
+    cur.read += row.cache_read;
+    cur.denom += row.input + row.cache_read + row.cache_creation;
+    cur.limited += row.rate_limited;
+    map.set(time, cur);
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([time, v]) => [
+      time,
+      {
+        requests: v.requests,
+        tokens: v.tokens,
+        cacheRatio: v.denom > 0 ? (v.read / v.denom) * 100 : 0,
+        limited: v.limited,
+      },
+    ]);
 };
 
-function AccountsTable({ rows, now }: { rows: AccountRecord[]; now: number }) {
-  const { t } = useTranslation();
-  return (
-    <LayerCard className="overflow-x-auto p-0">
-      <Table>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head>{t('overview.col_account')}</Table.Head>
-            <Table.Head>{t('overview.col_status')}</Table.Head>
-            <Table.Head>{t('overview.col_five_hour')}</Table.Head>
-            <Table.Head>{t('overview.col_weekly')}</Table.Head>
-            <Table.Head>{t('overview.col_24h')}</Table.Head>
-            <Table.Head>{t('overview.col_priority')}</Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {rows.map((account) => {
-            const status = accountStatus(account, now);
-            return (
-              <Table.Row key={account.auth_index}>
-                <Table.Cell>
-                  <div className="flex min-w-40 flex-col gap-0.5">
-                    <span className="font-medium text-kumo-default">
-                      {accountDisplayName(account)}
-                    </span>
-                    <span className="text-xs text-kumo-subtle">
-                      {account.provider}
-                      {account.last_served_at
-                        ? ` · ${t('overview.last_served', {
-                            when: formatRelative(account.last_served_at, now),
-                          })}`
-                        : ''}
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex flex-col items-start gap-1">
-                    <Badge variant={STATUS_BADGE[status]} appearance="dot">
-                      {t(`overview.status_${status}`)}
-                    </Badge>
-                    {status === 'cooling' && account.cooldown_until ? (
-                      <ResetTime iso={account.cooldown_until} now={now} />
-                    ) : null}
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <QuotaMeter view={effectiveWindow(account.five_hour, now)} now={now} />
-                </Table.Cell>
-                <Table.Cell>
-                  <QuotaMeter view={effectiveWindow(account.seven_day, now)} now={now} />
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex flex-col gap-0.5 tabular-nums">
-                    <span className="text-kumo-default">
-                      {formatTokens(account.tokens_24h.input + account.tokens_24h.output)}
-                    </span>
-                    <span className="text-xs text-kumo-subtle">
-                      {t('overview.requests_count', { count: account.requests_24h })}
-                      {account.failures_24h > 0
-                        ? ` · ${t('overview.failures_count', { count: account.failures_24h })}`
-                        : ''}
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex flex-col gap-0.5 tabular-nums">
-                    <span className="font-medium text-kumo-default">
-                      {account.serving_rank ? `#${account.serving_rank}` : '—'}
-                    </span>
-                    <span className="text-xs text-kumo-subtle">
-                      {t('overview.priority_value', { value: account.priority })}
-                    </span>
-                  </div>
-                </Table.Cell>
-              </Table.Row>
-            );
-          })}
-        </Table.Body>
-      </Table>
-    </LayerCard>
-  );
-}
+const rangeLabel = (data: UsageResponse | null): string => {
+  if (!data || data.series.length === 0) return '';
+  const times = data.series
+    .map((row) => new Date(row.t).getTime())
+    .filter((n) => !Number.isNaN(n));
+  if (times.length === 0) return '';
+  const fmt = (n: number) =>
+    new Date(n).toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+  return `${fmt(Math.min(...times))} – ${fmt(Math.max(...times))}`;
+};
 
 export function OverviewPage() {
   const { t } = useTranslation();
+  const isDarkMode = useThemeStore((state) => state.resolvedTheme === 'dark');
+  const [range, setRange] = useState<UsageRange>('24h');
   const accounts = usePolling(() => sidecarApi.accounts(), 30_000);
-  const usage = usePolling(() => sidecarApi.usage('24h', 'none'), 60_000);
+  const usage = usePolling(() => sidecarApi.usage(range, 'none'), 60_000, range);
   const router = usePolling(() => sidecarApi.router(), 60_000);
   const health = usePolling(() => sidecarApi.health(), 60_000);
   const now = useNow();
@@ -153,7 +99,9 @@ export function OverviewPage() {
     [accounts.data]
   );
   const alerts = useMemo(() => accountAlerts(rows, now), [rows, now]);
+  const buckets = useMemo(() => toBuckets(usage.data), [usage.data]);
   const totals = usage.data?.totals;
+  const daily = usage.data?.bucket === 'day';
   const sidecarError = health.error ?? (accounts.data ? null : accounts.error);
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -165,143 +113,170 @@ export function OverviewPage() {
     }
   };
 
+  const series = (pick: (b: Bucket) => number): Array<[number, number]> =>
+    buckets.map(([time, b]) => [time, pick(b)]);
+  const chartLoading = usage.loading && !usage.data;
+  const rangeText = t(`usage.range_${range}`);
+  const showRouterNotice = Boolean(router.data && router.data.mode !== 'active');
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title={t('overview.title')}
-        description={t('overview.subtitle')}
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              icon={ArrowClockwiseIcon}
-              loading={refreshing}
-              onClick={() => void handleRefresh()}
-            >
-              {t('overview.refresh')}
-            </Button>
-            <LinkButton variant="primary" icon={PlusIcon} href="/oauth">
-              {t('overview.add_account')}
-            </LinkButton>
-          </>
-        }
-      />
-
-      {sidecarError || alerts.length > 0 || (router.data && router.data.mode !== 'active') ? (
-        <div className="flex flex-col gap-3">
-          {sidecarError ? (
-            <Banner
-              variant="error"
-              icon={<WarningCircleIcon weight="fill" />}
-              title={t('overview.alert_sidecar_title')}
-              description={t('overview.sidecar_down', { error: sidecarError })}
-            />
-          ) : null}
-          {alerts.map((alert) =>
-            alert.kind === 'expiring' ? (
-              <Banner
-                key={`expiring-${alert.name}`}
-                variant="alert"
-                icon={<WarningIcon weight="fill" />}
-                title={t('overview.alert_expiring_title', { name: alert.name })}
-                description={t('overview.alert_expiring', {
-                  remaining: formatPercent(alert.remaining),
-                  when: formatRelative(alert.resetsAt, now),
-                })}
-              />
-            ) : (
-              <Banner
-                key={`exhausted-${alert.name}`}
-                variant="error"
-                icon={<WarningCircleIcon weight="fill" />}
-                title={t('overview.alert_exhausted_title', { name: alert.name })}
-                description={t('overview.alert_exhausted', {
-                  when: formatRelative(alert.resetsAt, now),
-                })}
-              />
-            )
-          )}
-          {router.data && router.data.mode !== 'active' ? (
-            <Banner
-              variant="secondary"
-              icon={<InfoIcon weight="fill" />}
-              title={t('overview.alert_router_title')}
-              description={t('overview.alert_router_off', {
-                mode: t(`routing.mode_${router.data.mode}`),
-              })}
-              action={
-                <LinkButton variant="secondary" size="sm" href="/routing">
-                  {t('overview.link_routing')}
-                </LinkButton>
-              }
-            />
-          ) : null}
-        </div>
-      ) : null}
-
-      <StatRow>
-        <StatCard
-          label={t('overview.stat_requests')}
-          value={formatCount(totals?.requests)}
-          hint={t('overview.stat_failures', { count: totals?.failures ?? 0 })}
-        />
-        <StatCard
-          label={t('overview.stat_tokens')}
-          value={formatTokens((totals?.input ?? 0) + (totals?.output ?? 0))}
-          hint={t('overview.stat_in_out', {
-            input: formatTokens(totals?.input),
-            output: formatTokens(totals?.output),
-          })}
-        />
-        <StatCard
-          label={t('overview.stat_cache')}
-          value={formatPercent(totals ? totals.cache_hit_ratio * 100 : null)}
-          hint={t('overview.stat_cache_detail', {
-            read: formatTokens(totals?.cache_read),
-            write: formatTokens(totals?.cache_creation),
-          })}
-        />
-        <StatCard
-          label={t('overview.stat_limited')}
-          value={formatCount(totals?.rate_limited)}
-          hint={t('overview.stat_last_24h')}
-        />
-      </StatRow>
-
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('overview.accounts_title')}
-          description={t('overview.footnote')}
+    <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title={t('overview.title')}
+          description={t('overview.subtitle')}
           actions={
-            <LinkButton variant="ghost" size="sm" href="/routing">
-              {t('overview.link_routing')}
-            </LinkButton>
+            <>
+              <Button
+                variant="secondary"
+                icon={ArrowClockwiseIcon}
+                loading={refreshing}
+                onClick={() => void handleRefresh()}
+              >
+                {t('overview.refresh')}
+              </Button>
+              <LinkButton variant="primary" icon={PlusIcon} href="/oauth">
+                {t('overview.add_account')}
+              </LinkButton>
+            </>
           }
         />
-        {rows.length === 0 && !accounts.loading ? (
-          <LayerCard>
-            <LayerCard.Primary>
-              <Empty
-                icon={<UsersIcon size={48} className="text-kumo-inactive" />}
-                title={t('overview.empty_title')}
-                description={t('overview.no_accounts')}
-                contents={
-                  <LinkButton variant="primary" icon={PlusIcon} href="/oauth">
-                    {t('overview.add_account')}
+
+        {sidecarError || alerts.length > 0 || showRouterNotice ? (
+          <div className="flex flex-col gap-3" role="status">
+            {sidecarError ? (
+              <Banner
+                variant="error"
+                icon={<WarningCircleIcon weight="fill" />}
+                title={t('overview.alert_sidecar_title')}
+                description={t('overview.sidecar_down', { error: sidecarError })}
+              />
+            ) : null}
+            {alerts.map((alert) =>
+              alert.kind === 'expiring' ? (
+                <Banner
+                  key={`expiring-${alert.name}`}
+                  variant="alert"
+                  icon={<WarningIcon weight="fill" />}
+                  title={t('overview.alert_expiring_title', { name: alert.name })}
+                  description={t('overview.alert_expiring', {
+                    remaining: formatPercent(alert.remaining),
+                    when: formatRelative(alert.resetsAt, now),
+                  })}
+                />
+              ) : (
+                <Banner
+                  key={`exhausted-${alert.name}`}
+                  variant="error"
+                  icon={<WarningCircleIcon weight="fill" />}
+                  title={t('overview.alert_exhausted_title', { name: alert.name })}
+                  description={t('overview.alert_exhausted', {
+                    when: formatRelative(alert.resetsAt, now),
+                  })}
+                />
+              )
+            )}
+            {showRouterNotice && router.data ? (
+              <Banner
+                variant="secondary"
+                icon={<InfoIcon weight="fill" />}
+                title={t('overview.alert_router_title')}
+                description={t('overview.alert_router_off', {
+                  mode: t(`routing.mode_${router.data.mode}`),
+                })}
+                action={
+                  <LinkButton variant="secondary" size="sm" href="/routing">
+                    {t('overview.link_routing')}
                   </LinkButton>
                 }
               />
-            </LayerCard.Primary>
-          </LayerCard>
-        ) : (
-          <AccountsTable rows={rows} now={now} />
-        )}
-        {rows.length > 0 ? (
-          <Text variant="secondary" size="xs">
-            {t('overview.hover_hint')}
-          </Text>
+            ) : null}
+          </div>
         ) : null}
-      </section>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Tabs
+            variant="segmented"
+            value={range}
+            onValueChange={(value) => isRange(value) && setRange(value)}
+            tabs={RANGES.map((value) => ({ value, label: t(`usage.range_${value}`) }))}
+          />
+          <span className="text-xs font-medium uppercase tracking-wide text-kumo-subtle">
+            {rangeLabel(usage.data)}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <MetricCard
+            label={t('overview.metric_requests')}
+            value={formatCount(totals?.requests)}
+            hint={t('overview.stat_failures', { count: totals?.failures ?? 0 })}
+            points={series((b) => b.requests)}
+            seriesName={t('overview.metric_requests')}
+            daily={daily}
+            isDarkMode={isDarkMode}
+            colorIndex={0}
+            formatValue={(v) => formatCount(v)}
+            minInterval={1}
+            description={t('overview.chart_requests', { range: rangeText })}
+            loading={chartLoading}
+          />
+          <MetricCard
+            label={t('overview.metric_tokens')}
+            value={formatTokens((totals?.input ?? 0) + (totals?.output ?? 0))}
+            hint={t('overview.stat_in_out', {
+              input: formatTokens(totals?.input),
+              output: formatTokens(totals?.output),
+            })}
+            points={series((b) => b.tokens)}
+            seriesName={t('overview.metric_tokens')}
+            daily={daily}
+            isDarkMode={isDarkMode}
+            colorIndex={1}
+            formatValue={(v) => formatTokens(v)}
+            minInterval={1}
+            description={t('overview.chart_tokens', { range: rangeText })}
+            loading={chartLoading}
+          />
+          <MetricCard
+            label={t('overview.stat_cache')}
+            value={formatPercent(totals ? totals.cache_hit_ratio * 100 : null, 1)}
+            hint={t('overview.stat_cache_detail', {
+              read: formatTokens(totals?.cache_read),
+              write: formatTokens(totals?.cache_creation),
+            })}
+            points={series((b) => b.cacheRatio)}
+            seriesName={t('overview.stat_cache')}
+            daily={daily}
+            isDarkMode={isDarkMode}
+            colorIndex={2}
+            formatValue={(v) => formatPercent(v)}
+            minInterval={1}
+            description={t('overview.chart_cache', { range: rangeText })}
+            loading={chartLoading}
+          />
+          <MetricCard
+            label={t('overview.metric_limited')}
+            value={formatCount(totals?.rate_limited)}
+            hint={t('overview.metric_limited_hint')}
+            points={series((b) => b.limited)}
+            seriesName={t('overview.metric_limited')}
+            daily={daily}
+            isDarkMode={isDarkMode}
+            colorIndex={3}
+            formatValue={(v) => formatCount(v)}
+            minInterval={1}
+            description={t('overview.chart_limited', { range: rangeText })}
+            loading={chartLoading}
+          />
+        </div>
+
+        <div className="text-sm">
+          <Link href="/usage">{t('overview.view_usage')}</Link>
+        </div>
+      </div>
+
+      <StatusRail accounts={rows} router={router.data ?? null} now={now} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { QuotaWindow, RouterState, SidecarAccount } from '@/services/api/sidecar';
-import { credentialName, maskEmail } from './format';
+import { credentialName } from './format';
 
 export interface SidecarCooldown {
   scope?: string;
@@ -48,7 +48,7 @@ const timeOf = (iso: string | null | undefined): number | null => {
 };
 
 export const accountDisplayName = (account: Pick<SidecarAccount, 'label' | 'email' | 'name'>) =>
-  maskEmail(account.label) || maskEmail(account.email) || credentialName(account.name);
+  account.label || account.email || credentialName(account.name);
 
 export const effectiveWindow = (
   window: QuotaWindow | null | undefined,

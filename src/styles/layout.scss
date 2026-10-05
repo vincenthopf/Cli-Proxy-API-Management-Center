@@ -34,7 +34,6 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
-  overflow-x: hidden;
 
   .page-transition__layer {
     background: var(--color-kumo-base);
