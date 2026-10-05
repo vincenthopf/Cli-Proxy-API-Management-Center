@@ -15,6 +15,7 @@ import { StatusRail } from './components/StatusRail';
 import { AddAccountButton } from '@/features/authFiles/addAccount/AddAccountButton';
 import { AddAccountDialog } from '@/features/authFiles/addAccount/AddAccountDialog';
 import { useAuthFileUpload } from '@/features/authFiles/hooks/useAuthFileUpload';
+import { WaitingConversations } from '@/features/sessionGuard/WaitingConversations';
 
 const RANGES: UsageRange[] = ['24h', '7d', '30d'];
 const isRange = (value: string): value is UsageRange => (RANGES as string[]).includes(value);
@@ -146,6 +147,8 @@ export function OverviewPage() {
             {t('overview.sidecar_unreachable')}
           </p>
         ) : null}
+
+        <WaitingConversations />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Tabs

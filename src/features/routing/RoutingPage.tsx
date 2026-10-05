@@ -8,6 +8,8 @@ import {
 } from '@phosphor-icons/react';
 import { Badge, Banner, LinkButton, Radio, Text } from '@cloudflare/kumo';
 import { sidecarApi, type RouterMode } from '@/services/api/sidecar';
+import { sessionGuardApi } from '@/services/api/sessionGuard';
+import { GuardModeSetting } from '@/features/sessionGuard/GuardModeSetting';
 import { useConfigStore } from '@/stores';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { usePolling } from '@/features/overview/usePolling';
@@ -38,6 +40,7 @@ export function RoutingPage() {
   const { t } = useTranslation();
   const router = usePolling(() => sidecarApi.router(), 30_000);
   const accounts = usePolling(() => sidecarApi.accounts(), 60_000);
+  const guard = usePolling(() => sessionGuardApi.status(), 30_000);
   const config = useConfigStore((s) => s.config);
   const fetchConfig = useConfigStore((s) => s.fetchConfig);
   const now = useNow();
@@ -50,9 +53,12 @@ export function RoutingPage() {
 
   const refreshRouter = router.refresh;
   const refreshAccounts = accounts.refresh;
+  const refreshGuard = guard.refresh;
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshRouter(), refreshAccounts()]);
-  }, [refreshRouter, refreshAccounts]);
+    await Promise.all([refreshRouter(), refreshAccounts(), refreshGuard()]);
+  }, [refreshRouter, refreshAccounts, refreshGuard]);
+  const guardAvailable = guard.data !== null && !guard.error;
+  const guardMode = guardAvailable ? (guard.data?.mode ?? null) : null;
   useHeaderRefresh(refreshAll);
 
   const names = useMemo(() => {
@@ -143,6 +149,7 @@ export function RoutingPage() {
         description={t('routing.flow.description')}
         settings={flowSettings}
         mode={mode}
+        guardMode={guardMode}
         order={order}
         now={now}
         orderError={Boolean(router.error && accounts.error)}
@@ -156,6 +163,13 @@ export function RoutingPage() {
             {t('routing.view_decisions')}
           </LinkButton>
         }
+      />
+
+      <GuardModeSetting
+        mode={guardMode}
+        available={guardAvailable}
+        loading={guard.loading}
+        onChanged={refreshGuard}
       />
 
       <section className="flex flex-col gap-3">

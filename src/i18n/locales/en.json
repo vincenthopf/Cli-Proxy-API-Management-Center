@@ -2481,7 +2481,9 @@
       "order_skipped_one": "{{count}} account is skipped (paused, cooling down or out of quota).",
       "order_skipped_other": "{{count}} accounts are skipped (paused, cooling down or out of quota).",
       "weekly_left": "{{percent}} weekly left",
-      "weekly_unknown": "Weekly usage unknown"
+      "weekly_unknown": "Weekly usage unknown",
+      "limit_wait_approval": "Waits for your approval in the console.",
+      "guard_pinned": "A conversation keeps its account until it has been idle for 12 hours."
     }
   },
   "connect": {
@@ -3076,5 +3078,39 @@
     "model_rules_hint": "Hide models from OAuth accounts or expose them under another name.",
     "provider_quota": "Provider quota",
     "sidecar_unreachable": "Analytics service unreachable. Quota, status and usage columns may be empty."
+  },
+  "session_guard": {
+    "title": "Waiting conversations",
+    "description_one": "This Claude Code conversation stopped because its account can't serve it. Choose where it continues.",
+    "description_other": "These Claude Code conversations stopped because their accounts can't serve them. Choose where each one continues.",
+    "conversation": "Conversation {{id}}",
+    "waiting_for": "Waiting {{duration}}",
+    "on_account": "On {{account}}",
+    "reason_limit": "Hit its usage limit",
+    "reason_limit_resets": "Hit its usage limit, resets {{when}}",
+    "reason_paused": "Account is paused",
+    "reason_unavailable": "Account is unavailable",
+    "reason_removed": "Account was removed",
+    "reason_available": "Account is available again. The next message continues on it.",
+    "last_model": "Last model {{model}}",
+    "held_one": "{{count}} message held",
+    "held_other": "{{count}} messages held",
+    "move_to": "Move to {{account}}",
+    "move_all_to": "Move all to {{account}}",
+    "move_options": "Other accounts",
+    "no_target": "No other account available",
+    "keep_waiting": "Keep waiting",
+    "moved": "Approved. The next message in this conversation continues on {{account}}.",
+    "moved_all": "Approved. Waiting conversations continue on {{account}} with their next message.",
+    "kept": "Conversation stays on its account.",
+    "action_failed": "Could not update the conversation: {{error}}",
+    "mode_title": "When a conversation's account hits its limit",
+    "mode_help": "Applies to Claude Code conversations routed through this proxy.",
+    "mode_confirm": "Ask before moving",
+    "mode_confirm_help": "The conversation waits until you approve the move here.",
+    "mode_auto": "Move automatically",
+    "mode_auto_help": "The conversation moves to the next account in the order.",
+    "mode_unavailable": "The session-guard plugin is not running, so conversations move automatically.",
+    "mode_error": "Could not change the setting: {{error}}"
   }
 }

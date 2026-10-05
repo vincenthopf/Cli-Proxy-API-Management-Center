@@ -12,6 +12,7 @@ import {
   type IconProps,
 } from '@phosphor-icons/react';
 import type { RouterMode } from '@/services/api/sidecar';
+import type { SessionGuardMode } from '@/services/api/sessionGuard';
 import { Panel } from '@/components/ui/Panel';
 import { formatPercent } from '@/features/overview/format';
 import { ResetTime } from '@/features/overview/components/ResetTime';
@@ -22,6 +23,7 @@ const COMPACT_ORDER_LIMIT = 4;
 export interface RoutingFlowProps {
   settings: RoutingFlowSettings;
   mode: RouterMode | null | undefined;
+  guardMode?: SessionGuardMode | null;
   order: RoutingOrder | null;
   now: number;
   orderError?: boolean;
@@ -43,6 +45,7 @@ interface FlowStep {
 export function RoutingFlow({
   settings,
   mode,
+  guardMode = null,
   order,
   now,
   orderError = false,
@@ -86,17 +89,23 @@ export function RoutingFlow({
           {settings.sessionAffinity ? t('routing.value_on') : t('routing.value_off')}
         </Badge>
       ),
-      lines: settings.sessionAffinity
+      lines: guardMode
         ? [
             t('routing.flow.affinity_yes'),
-            settings.affinityTTL
-              ? t('routing.flow.affinity_ttl', { ttl: settings.affinityTTL })
-              : null,
-            settings.subagentsShare
-              ? t('routing.flow.subagents_share')
-              : t('routing.flow.subagents_spread'),
-          ].filter((line): line is string => Boolean(line))
-        : [t('routing.flow.affinity_off')],
+            t('routing.flow.guard_pinned'),
+            t('routing.flow.subagents_share'),
+          ]
+        : settings.sessionAffinity
+          ? [
+              t('routing.flow.affinity_yes'),
+              settings.affinityTTL
+                ? t('routing.flow.affinity_ttl', { ttl: settings.affinityTTL })
+                : null,
+              settings.subagentsShare
+                ? t('routing.flow.subagents_share')
+                : t('routing.flow.subagents_spread'),
+            ].filter((line): line is string => Boolean(line))
+          : [t('routing.flow.affinity_off')],
     },
     {
       key: 'pick',
@@ -116,7 +125,11 @@ export function RoutingFlow({
       icon: ProhibitIcon,
       title: t('routing.flow.limit_title'),
       lines: [
-        settings.sessionAffinity ? t('routing.flow.limit_move_stay') : t('routing.flow.limit_move'),
+        guardMode === 'confirm'
+          ? t('routing.flow.limit_wait_approval')
+          : settings.sessionAffinity
+            ? t('routing.flow.limit_move_stay')
+            : t('routing.flow.limit_move'),
         t('routing.flow.limit_pause'),
       ],
     },

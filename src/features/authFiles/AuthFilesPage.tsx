@@ -35,6 +35,7 @@ import { OAuthExcludedCard } from '@/features/authFiles/components/OAuthExcluded
 import { OAuthModelAliasCard } from '@/features/authFiles/components/OAuthModelAliasCard';
 import { AddAccountButton } from '@/features/authFiles/addAccount/AddAccountButton';
 import { AddAccountDialog } from '@/features/authFiles/addAccount/AddAccountDialog';
+import { WaitingConversations } from '@/features/sessionGuard/WaitingConversations';
 import {
   ADD_ACCOUNT_PARAM,
   addAccountParamValue,
@@ -504,6 +505,7 @@ export function AuthFilesPage() {
           </>
         }
       />
+      <WaitingConversations />
       <AuthFileRefreshResults results={refreshResults} onClose={closeRefreshResults} />
       <input
         ref={fileInputRef}
