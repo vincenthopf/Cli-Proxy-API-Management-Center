@@ -1,9 +1,10 @@
 @use './variables.scss' as *;
 
 :root {
-  --header-height: 80px;
-  --shell-gutter: 24px;
-  --sidebar-panel-width: 216px;
+  --header-height: 64px;
+  --shell-gutter: 20px;
+  --shell-inset: 8px;
+  --sidebar-panel-width: 240px;
   --sidebar-collapsed-width: 60px;
   --sidebar-active-width: var(--sidebar-panel-width);
   --sidebar-gap: 0px;
@@ -21,7 +22,7 @@
   overflow: hidden;
   // 与 .page-transition__layer 的不透明填充保持同色：外壳一旦用渐变，
   // main-content 的 padding 圈就会和内容层拼出一道 4~7 级色差的硬边，看着像每页都有边框。
-  background: var(--bg-secondary);
+  background: var(--chrome);
   color: var(--text-primary);
 
   &.sidebar-is-collapsed {
@@ -43,6 +44,7 @@
 }
 
 .top-gradient-blur {
+  display: none;
   position: fixed;
   top: 0;
   right: 0;
@@ -94,16 +96,14 @@
     position: fixed;
     top: 50%;
     left: calc(var(--sidebar-active-width) - 12px);
-    width: 24px;
-    height: 52px;
+    width: 20px;
+    height: 40px;
     padding: 0;
-    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
-    border-radius: 14px;
-    background: var(--bg-primary);
-    color: color-mix(in srgb, var(--text-secondary) 88%, transparent);
-    box-shadow:
-      4px 0 14px rgb(0 0 0 / 0.18),
-      inset 0 1px 0 rgb(255 255 255 / 0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text-tertiary);
+    box-shadow: var(--raised-shadow);
     cursor: pointer;
     pointer-events: auto;
     display: inline-flex;
@@ -123,10 +123,9 @@
     }
 
     &:hover {
-      background: color-mix(in srgb, var(--bg-primary) 90%, var(--text-primary) 10%);
-      border-color: color-mix(in srgb, var(--border-hover) 86%, transparent);
+      background: var(--secondary);
+      border-color: var(--border-primary);
       color: var(--text-primary);
-      transform: translateY(-50%) translateX(2px);
     }
 
     &:active {
@@ -135,9 +134,7 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--primary-color) 24%, transparent),
-        4px 0 14px rgb(0 0 0 / 0.18);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 50%, transparent);
     }
   }
 
@@ -147,16 +144,14 @@
     top: var(--shell-gutter);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px;
-    border: 1px solid color-mix(in srgb, var(--border-color) 68%, transparent);
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--bg-primary) 68%, transparent);
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--popover-translucent);
     color: var(--text-secondary);
-    box-shadow:
-      0 18px 44px rgb(0 0 0 / 0.17),
-      inset 0 1px 0 rgb(255 255 255 / 0.04);
-    --glass-blur: 16px;
+    box-shadow: var(--raised-shadow);
+    --glass-blur: 8px;
     backdrop-filter: var(--glass-backdrop-filter);
     -webkit-backdrop-filter: var(--glass-backdrop-filter);
     pointer-events: auto;
@@ -168,7 +163,8 @@
   }
 
   .header-actions {
-    right: var(--shell-gutter);
+    top: calc(var(--shell-inset) + 12px);
+    right: calc(var(--shell-inset) + 12px);
   }
 
   .mobile-sidebar-actions .btn,
@@ -177,7 +173,7 @@
     height: var(--floating-control-size);
     min-width: var(--floating-control-size);
     padding: 0;
-    border-radius: 11px;
+    border-radius: 9px;
     background: transparent;
     color: var(--text-secondary);
     border-color: transparent;
@@ -190,14 +186,14 @@
     }
 
     &:hover {
-      background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+      background: var(--accent);
       color: var(--text-primary);
       border-color: transparent;
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 26%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 50%, transparent);
     }
   }
 
@@ -397,15 +393,14 @@
   z-index: $z-dropdown - 1;
   width: var(--sidebar-panel-width);
   height: 100vh;
-  padding: 14px 10px;
+  padding: 12px 8px;
   display: flex;
   flex-direction: column;
   gap: $spacing-sm;
   flex-shrink: 0;
   overflow-y: auto;
-  background: var(--bg-primary);
+  background: transparent;
   border: 0;
-  border-right: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
   border-radius: 0;
   box-shadow: none;
   scrollbar-width: none;
@@ -482,9 +477,8 @@
     align-items: center;
     gap: 8px;
     min-height: 36px;
-    padding: 2px 2px 10px;
-    margin-bottom: 2px;
-    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+    padding: 2px 2px 8px;
+    margin-bottom: 4px;
     flex-shrink: 0;
   }
 
@@ -518,18 +512,18 @@
     min-width: 0;
     overflow: hidden;
     color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: nowrap;
   }
 
   .sidebar-brand-subtitle {
     margin-top: 1px;
     overflow: hidden;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -548,12 +542,11 @@
   }
 
   .nav-group-label {
-    padding: 0 10px 2px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--text-primary) 42%, transparent);
+    padding: 6px 10px 4px;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--text-tertiary);
     user-select: none;
   }
 
@@ -599,12 +592,13 @@
   }
 
   .nav-item {
-    padding: 6px 10px;
-    border-radius: 9px;
-    border: 1px solid transparent;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 600;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 0;
+    color: var(--foreground-soft);
+    font-size: 13.5px;
+    font-weight: 500;
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -623,7 +617,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      color: color-mix(in srgb, var(--text-primary) 58%, transparent);
+      color: inherit;
       transition: color $transition-fast;
 
       svg {
@@ -685,32 +679,30 @@
     }
 
     &:hover {
-      background: color-mix(in srgb, var(--text-primary) 7%, transparent);
-      border-color: color-mix(in srgb, var(--border-color) 58%, transparent);
-      transform: translateX(1px);
+      background: var(--accent);
+      color: var(--foreground);
+    }
 
-      .nav-icon {
-        color: color-mix(in srgb, var(--text-primary) 82%, transparent);
-      }
+    &:active {
+      background: var(--accent-pressed);
     }
 
     &.active {
-      background: color-mix(in srgb, var(--text-primary) 10%, transparent);
-      color: var(--text-primary);
-      border-color: color-mix(in srgb, var(--border-hover) 70%, transparent);
-      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+      background: var(--accent);
+      color: var(--foreground);
+    }
 
-      .nav-icon {
-        color: var(--primary-active);
-      }
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 50%, transparent);
     }
 
     &.nav-sub-item {
       min-height: 30px;
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      font-weight: 600;
+      padding: 0 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
 
       .nav-icon {
         width: 16px;
@@ -785,12 +777,17 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  height: 100vh;
+  height: calc(100vh - var(--shell-inset) * 2);
+  margin: var(--shell-inset) var(--shell-inset) var(--shell-inset) 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--raised-shadow);
 
   @supports (height: 100dvh) {
-    height: 100dvh;
+    height: calc(100dvh - var(--shell-inset) * 2);
   }
 
   &.content-logs {
@@ -807,7 +804,7 @@
 .main-content {
   flex: 1 0 auto;
   min-height: 100%;
-  padding: 70px clamp(20px, 3vw, 48px) 40px;
+  padding: 64px clamp(20px, 3vw, 40px) 40px;
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
@@ -978,6 +975,9 @@
   .content {
     height: auto;
     min-height: 100vh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
     overflow: visible;
     overflow-y: auto;
 

@@ -28,12 +28,12 @@
 }
 
 .box {
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
-  border-radius: 7px;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
+  border-radius: 5px;
+  border: 1px solid var(--border-hover);
+  background: var(--surface);
   color: var(--primary-contrast, #fff);
   display: inline-flex;
   align-items: center;
@@ -46,8 +46,7 @@
 }
 
 .root:hover .box {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 16%, transparent);
+  border-color: var(--text-tertiary);
 }
 
 .root:active .box {
@@ -64,10 +63,8 @@
 }
 
 .input:focus-visible + .box {
-  border-color: var(--primary-color);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color) 16%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--primary-color) 50%, transparent);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 40%, transparent);
 }
 
 .boxChecked {
@@ -82,6 +79,6 @@
 
 .label {
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
 }

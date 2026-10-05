@@ -1,243 +1,230 @@
-/**
- * 主题样式
- */
+@mixin light-tokens {
+  --surface: #ffffff;
+  --chrome: #f3f3f3;
+  --well: #f3f3f3;
+  --well-outline: rgb(0 0 0 / 0.05);
+  --well-highlight: rgb(255 255 255 / 0.9);
+  --popover: #ffffff;
+  --popover-translucent: rgb(255 255 255 / 0.88);
+  --foreground: #141414;
+  --foreground-soft: oklch(0.45 0 0);
+  --accent: #e7e8e8;
+  --accent-pressed: #eeeeee;
+  --secondary: oklch(0.96 0 0);
+  --muted: oklch(0.91 0 0);
+  --hairline: rgb(0 0 0 / 0.07);
+  --ring: oklch(0.6 0 0);
+  --raised-shadow: none;
+  --destructive-soft: rgb(220 38 38 / 0.07);
+  --destructive-outline: rgb(220 38 38 / 0.16);
 
-// 浅色主题（默认）
-:root {
-  // 极简暖灰：浅色模式
-  --bg-secondary: #faf9f5; // 页面背景（纸感）
-  --bg-primary: #f0eee8; // 容器/卡片背景
-  --bg-tertiary: #e9e6df; // hover/次级背景
-  --bg-hover: var(--bg-tertiary);
-  --bg-quinary: #f6f4ee;
-  --bg-error-light: rgba(198, 87, 70, 0.1);
-  --floating-surface: #fffdf9;
-  --floating-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+  --bg-secondary: var(--surface);
+  --bg-primary: var(--surface);
+  --bg-tertiary: var(--well);
+  --bg-hover: var(--secondary);
+  --bg-quinary: #fafafa;
+  --bg-error-light: var(--destructive-soft);
+  --floating-surface: var(--popover);
+  --floating-shadow: 0 12px 32px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.06);
 
-  --text-primary: #2d2a26;
-  --text-secondary: #6d6760;
-  --text-tertiary: #a29c95;
-  --text-quaternary: #c0bab3;
+  --text-primary: var(--foreground);
+  --text-secondary: oklch(0.45 0 0);
+  --text-tertiary: oklch(0.6 0 0);
+  --text-quaternary: oklch(0.75 0 0);
   --text-muted: var(--text-tertiary);
 
-  --border-color: #e3e1db; // 边框/分割线
+  --border-color: var(--hairline);
   --border-secondary: var(--border-color);
-  --border-primary: #d5d2cb;
-  --border-hover: #cecac4;
+  --border-primary: rgb(0 0 0 / 0.1);
+  --border-hover: rgb(0 0 0 / 0.16);
 
-  --primary-color: #8b8680; // 行动色（主色）
-  --primary-hover: #7f7a74;
-  --primary-active: #726d67;
-  --primary-contrast: #ffffff;
+  --primary-color: oklch(0.17 0 0);
+  --primary-hover: oklch(0.28 0 0);
+  --primary-active: oklch(0.24 0 0);
+  --primary-contrast: oklch(0.985 0 0);
 
-  --success-color: #10b981;
-  --quota-medium-color: #e0aa14;
-  --warning-color: #c65746; // 错误/警告色
-  --error-color: #c65746;
+  --success-color: #1baf7a;
+  --quota-medium-color: #eda100;
+  --warning-color: oklch(0.577 0.245 27.325);
+  --error-color: oklch(0.577 0.245 27.325);
   --danger-color: var(--error-color);
-  --info-color: var(--primary-color);
+  --info-color: #2a78d6;
 
-  --warning-bg: rgba(198, 87, 70, 0.12);
-  --warning-border: rgba(198, 87, 70, 0.35);
+  --warning-bg: var(--destructive-soft);
+  --warning-border: var(--destructive-outline);
   --warning-text: var(--warning-color);
 
-  --success-badge-bg: #d1fae5;
-  --success-badge-text: #065f46;
-  --success-badge-border: #6ee7b7;
+  --success-badge-bg: rgb(27 175 122 / 0.1);
+  --success-badge-text: #0f7a54;
+  --success-badge-border: rgb(27 175 122 / 0.25);
 
-  --failure-badge-bg: rgba(198, 87, 70, 0.14);
-  --failure-badge-text: #8a3a30;
-  --failure-badge-border: rgba(198, 87, 70, 0.35);
+  --failure-badge-bg: var(--destructive-soft);
+  --failure-badge-text: #b42318;
+  --failure-badge-border: var(--destructive-outline);
 
-  --count-badge-bg: rgba(139, 134, 128, 0.18);
-  --count-badge-text: var(--primary-active);
+  --count-badge-bg: var(--accent);
+  --count-badge-text: var(--foreground);
 
-  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 10px 18px -3px rgb(0 0 0 / 0.1);
+  --shadow: none;
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.1);
 
-  --radius-md: 8px;
+  --radius-md: 12px;
 
-  // Workbench tokens (Home parity)
-  --primary-8: color-mix(in srgb, var(--primary-color) 8%, transparent);
-  --primary-10: color-mix(in srgb, var(--primary-color) 10%, transparent);
-  --primary-30: color-mix(in srgb, var(--primary-color) 30%, transparent);
-  --amber-color: #d97706;
-  --amber-text: #92400e;
-  --amber-10: color-mix(in srgb, var(--amber-color) 10%, transparent);
+  --primary-8: color-mix(in srgb, var(--primary-color) 6%, transparent);
+  --primary-10: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  --primary-30: color-mix(in srgb, var(--primary-color) 22%, transparent);
+  --amber-color: #eda100;
+  --amber-text: #8a5a00;
+  --amber-10: color-mix(in srgb, var(--amber-color) 12%, transparent);
   --amber-30: color-mix(in srgb, var(--amber-color) 30%, transparent);
   --destructive-color: var(--error-color);
-  --destructive-10: color-mix(in srgb, var(--destructive-color) 10%, transparent);
-  --destructive-30: color-mix(in srgb, var(--destructive-color) 30%, transparent);
-  --muted-bg: var(--bg-tertiary);
-  --muted-foreground: var(--text-secondary);
-  --accent-bg: var(--bg-tertiary);
+  --destructive-10: var(--destructive-soft);
+  --destructive-30: var(--destructive-outline);
+  --muted-bg: var(--well);
+  --muted-foreground: oklch(0.52 0 0);
+  --accent-bg: var(--accent);
 
-  // Glass effect (blurred surfaces)
+  --glass-bg: var(--popover-translucent);
+  --glass-bg-secondary: rgb(243 243 243 / 0.72);
+  --glass-border: var(--hairline);
+
+  --viz-success: #1baf7a;
+  --viz-failure: #e34948;
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+}
+
+@mixin dark-tokens {
+  --surface: #181818;
+  --chrome: #202020;
+  --well: #242424;
+  --well-outline: rgb(255 255 255 / 0.05);
+  --well-highlight: rgb(255 255 255 / 0.12);
+  --popover: #262626;
+  --popover-translucent: rgb(38 38 38 / 0.88);
+  --foreground: #f0f0f0;
+  --foreground-soft: oklch(0.78 0 0);
+  --accent: #313131;
+  --accent-pressed: #2a2a2a;
+  --secondary: #292929;
+  --muted: #303030;
+  --hairline: rgb(255 255 255 / 0.06);
+  --ring: oklch(0.56 0 0);
+  --raised-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06), inset 0 0 0 0.5px rgb(255 255 255 / 0.04);
+  --destructive-soft: rgb(248 113 113 / 0.1);
+  --destructive-outline: rgb(248 113 113 / 0.2);
+
+  --bg-secondary: var(--surface);
+  --bg-primary: var(--surface);
+  --bg-tertiary: var(--well);
+  --bg-hover: var(--secondary);
+  --bg-quinary: #1c1c1c;
+  --bg-error-light: var(--destructive-soft);
+  --floating-surface: var(--popover);
+  --floating-shadow: 0 16px 40px rgb(0 0 0 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+
+  --text-primary: var(--foreground);
+  --text-secondary: oklch(0.78 0 0);
+  --text-tertiary: oklch(0.62 0 0);
+  --text-quaternary: oklch(0.48 0 0);
+  --text-muted: var(--text-tertiary);
+
+  --border-color: var(--hairline);
+  --border-secondary: var(--border-color);
+  --border-primary: rgb(255 255 255 / 0.1);
+  --border-hover: rgb(255 255 255 / 0.16);
+
+  --primary-color: oklch(0.9 0 0);
+  --primary-hover: oklch(0.95 0 0);
+  --primary-active: oklch(0.85 0 0);
+  --primary-contrast: oklch(0.17 0 0);
+
+  --success-color: #199e70;
+  --quota-medium-color: #c98500;
+  --warning-color: oklch(0.704 0.191 22.216);
+  --error-color: oklch(0.704 0.191 22.216);
+  --danger-color: var(--error-color);
+  --info-color: #3987e5;
+
+  --warning-bg: var(--destructive-soft);
+  --warning-border: var(--destructive-outline);
+  --warning-text: #f1a5a0;
+
+  --success-badge-bg: rgb(25 158 112 / 0.14);
+  --success-badge-text: #6fd8ad;
+  --success-badge-border: rgb(25 158 112 / 0.3);
+
+  --failure-badge-bg: var(--destructive-soft);
+  --failure-badge-text: #f1a5a0;
+  --failure-badge-border: var(--destructive-outline);
+
+  --count-badge-bg: var(--accent);
+  --count-badge-text: var(--foreground);
+
+  --shadow: none;
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.45);
+
+  --radius-md: 12px;
+
+  --primary-8: color-mix(in srgb, var(--primary-color) 6%, transparent);
+  --primary-10: color-mix(in srgb, var(--primary-color) 9%, transparent);
+  --primary-30: color-mix(in srgb, var(--primary-color) 24%, transparent);
+  --amber-color: #c98500;
+  --amber-text: #f2c25c;
+  --amber-10: color-mix(in srgb, var(--amber-color) 16%, transparent);
+  --amber-30: color-mix(in srgb, var(--amber-color) 36%, transparent);
+  --destructive-color: var(--error-color);
+  --destructive-10: var(--destructive-soft);
+  --destructive-30: var(--destructive-outline);
+  --muted-bg: var(--well);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent-bg: var(--accent);
+
+  --glass-bg: var(--popover-translucent);
+  --glass-bg-secondary: rgb(36 36 36 / 0.72);
+  --glass-border: var(--hairline);
+
+  --viz-success: #199e70;
+  --viz-failure: #e66767;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+}
+
+:root {
+  @include light-tokens;
+
   --glass-blur: 12px;
   --glass-backdrop-filter: blur(var(--glass-blur));
   --glass-filter: blur(var(--glass-blur));
-  --glass-bg: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-  --glass-bg-secondary: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  --glass-border: color-mix(in srgb, var(--border-color) 60%, transparent);
 
-  // 可视化配色：与语义色同源；深色模式下重新取步阶（见 [data-theme='dark']）。
-  // 规则：翡翠绿只表达「活的流量」。
-  --viz-success: #10b981;
-  --viz-failure: #c65746;
-
-  // 动效词汇表：内置 ease 太弱，交互反馈统一用强减速曲线。
-  // 按压 160ms / 悬停 200ms，UI 动效不超过 300ms。
-  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
-  --dur-press: 160ms;
-  --dur-hover: 200ms;
+  --ease-out-strong: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-press: 150ms;
+  --dur-hover: 150ms;
+  --font-sans: InterVariable, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
-// 纯白主题
 [data-theme='white'] {
-  --bg-secondary: #ffffff;
-  --bg-primary: #ffffff;
-  --bg-tertiary: #f6f6f6;
-  --bg-hover: var(--bg-tertiary);
-  --bg-quinary: #ffffff;
-  --bg-error-light: rgba(198, 87, 70, 0.08);
-  --floating-surface: #ffffff;
-  --floating-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
-
-  --text-primary: #2d2a26;
-  --text-secondary: #6d6760;
-  --text-tertiary: #a29c95;
-  --text-quaternary: #c0bab3;
-  --text-muted: var(--text-tertiary);
-
-  --border-color: #e5e5e5;
-  --border-secondary: var(--border-color);
-  --border-primary: #d9d9d9;
-  --border-hover: #cccccc;
-
-  --primary-color: #8b8680;
-  --primary-hover: #7f7a74;
-  --primary-active: #726d67;
-  --primary-contrast: #ffffff;
-
-  --success-color: #10b981;
-  --quota-medium-color: #e0aa14;
-  --warning-color: #c65746;
-  --error-color: #c65746;
-  --danger-color: var(--error-color);
-  --info-color: var(--primary-color);
-
-  --warning-bg: rgba(198, 87, 70, 0.12);
-  --warning-border: rgba(198, 87, 70, 0.35);
-  --warning-text: var(--warning-color);
-
-  --success-badge-bg: #d1fae5;
-  --success-badge-text: #065f46;
-  --success-badge-border: #6ee7b7;
-
-  --failure-badge-bg: rgba(198, 87, 70, 0.14);
-  --failure-badge-text: #8a3a30;
-  --failure-badge-border: rgba(198, 87, 70, 0.35);
-
-  --count-badge-bg: rgba(139, 134, 128, 0.18);
-  --count-badge-text: var(--primary-active);
-
-  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 10px 18px -3px rgb(0 0 0 / 0.1);
-
-  --radius-md: 8px;
-
-  // Workbench tokens (Home parity)
-  --primary-8: color-mix(in srgb, var(--primary-color) 8%, transparent);
-  --primary-10: color-mix(in srgb, var(--primary-color) 10%, transparent);
-  --primary-30: color-mix(in srgb, var(--primary-color) 30%, transparent);
-  --amber-color: #d97706;
-  --amber-text: #92400e;
-  --amber-10: color-mix(in srgb, var(--amber-color) 10%, transparent);
-  --amber-30: color-mix(in srgb, var(--amber-color) 30%, transparent);
-  --destructive-color: var(--error-color);
-  --destructive-10: color-mix(in srgb, var(--destructive-color) 10%, transparent);
-  --destructive-30: color-mix(in srgb, var(--destructive-color) 30%, transparent);
-  --muted-bg: var(--bg-tertiary);
-  --muted-foreground: var(--text-secondary);
-  --accent-bg: var(--bg-tertiary);
+  @include light-tokens;
 }
 
-// 深色主题（#191919）
 [data-theme='dark'] {
-  // 极简暖灰：深色模式（提升对比度与层级）
-  --bg-secondary: #151412; // 页面背景
-  --bg-primary: #1d1b18; // 容器/卡片背景
-  --bg-tertiary: #262320; // hover/次级背景
-  --bg-hover: #2e2a26;
-  --bg-quinary: #191714;
-  --bg-error-light: rgba(198, 87, 70, 0.18);
-  --floating-surface: #2a2723;
-  --floating-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
-
-  --text-primary: #f6f4f1;
-  --text-secondary: #c9c3bb;
-  --text-tertiary: #9c958d;
-  --text-quaternary: #6f6962;
-  --text-muted: var(--text-tertiary);
-
-  --border-color: #3a3530;
-  --border-secondary: var(--border-color);
-  --border-primary: #4a453f;
-  --border-hover: #5a544d;
-
-  --primary-color: #8b8680;
-  --primary-hover: #9a948e;
-  --primary-active: #a6a099;
-  --primary-contrast: #ffffff;
-
-  --success-color: #10b981;
-  --quota-medium-color: #ffd862;
-  --warning-color: #c65746;
-  --error-color: #c65746;
-  --danger-color: var(--error-color);
-  --info-color: var(--primary-color);
-
-  --warning-bg: rgba(198, 87, 70, 0.22);
-  --warning-border: rgba(198, 87, 70, 0.45);
-  --warning-text: #f1b0a6;
-
-  --success-badge-bg: rgba(6, 78, 59, 0.3);
-  --success-badge-text: #6ee7b7;
-  --success-badge-border: #059669;
-
-  --failure-badge-bg: rgba(198, 87, 70, 0.24);
-  --failure-badge-text: #f1b0a6;
-  --failure-badge-border: rgba(198, 87, 70, 0.5);
-
-  --count-badge-bg: rgba(139, 134, 128, 0.28);
-  --count-badge-text: var(--primary-active);
-
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
-
-  --radius-md: 8px;
-
-  // Workbench tokens (Home parity, deeper amber for dark)
-  --primary-8: color-mix(in srgb, var(--primary-color) 8%, transparent);
-  --primary-10: color-mix(in srgb, var(--primary-color) 10%, transparent);
-  --primary-30: color-mix(in srgb, var(--primary-color) 30%, transparent);
-  --amber-color: #f59e0b;
-  --amber-text: #fcd34d;
-  --amber-10: color-mix(in srgb, var(--amber-color) 14%, transparent);
-  --amber-30: color-mix(in srgb, var(--amber-color) 38%, transparent);
-  --destructive-color: var(--error-color);
-  --destructive-10: color-mix(in srgb, var(--destructive-color) 14%, transparent);
-  --destructive-30: color-mix(in srgb, var(--destructive-color) 38%, transparent);
-  --muted-bg: var(--bg-tertiary);
-  --muted-foreground: var(--text-secondary);
-  --accent-bg: var(--bg-tertiary);
-
-  --glass-border: color-mix(in srgb, var(--border-color) 55%, transparent);
-
-  // 深色卡面上 #10b981 亮度超出 OKLCH 0.48–0.67 区间，且与失败色的色盲分离度不足，
-  // 因此深色单独降一档。三套主题均已通过对比度/色盲/亮度校验。
-  --viz-success: #0fae78;
-  --viz-failure: #cf4b3a;
+  @include dark-tokens;
+  color-scheme: dark;
 }
 
 @media (max-width: 768px),
@@ -246,8 +233,8 @@
   :root {
     --glass-backdrop-filter: none;
     --glass-filter: none;
-    --glass-bg: var(--bg-primary);
-    --glass-bg-secondary: var(--bg-secondary);
+    --glass-bg: var(--popover);
+    --glass-bg-secondary: var(--well);
     --glass-border: var(--border-color);
   }
 }
