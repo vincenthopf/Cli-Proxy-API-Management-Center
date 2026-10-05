@@ -5,12 +5,10 @@ import type { RouterState } from '@/services/api/sidecar';
 import {
   accountDisplayName,
   accountStatus,
-  effectiveWindow,
   type AccountRecord,
   type AccountStatus,
-  type WindowView,
 } from '../accounts';
-import { formatDuration, formatLocalTime, formatPercent, remainingTone } from '../format';
+import { QuotaBars } from './QuotaBars';
 
 const STATUS_BADGE: Record<AccountStatus, BadgeVariant> = {
   serving: 'success',
@@ -21,64 +19,12 @@ const STATUS_BADGE: Record<AccountStatus, BadgeVariant> = {
   exhausted: 'error',
 };
 
-const BAR_TONE = {
-  ok: 'bg-kumo-brand',
-  warn: 'bg-kumo-warning',
-  low: 'bg-kumo-danger',
-} as const;
-
 function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3 border-b border-kumo-line py-5 first:pt-0 last:border-b-0">
       <h2 className="text-base font-semibold text-kumo-strong">{title}</h2>
       {children}
     </section>
-  );
-}
-
-function WindowLine({ label, view, now }: { label: string; view: WindowView; now: number }) {
-  const { t } = useTranslation();
-  if (view.remaining === null) {
-    return (
-      <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="text-kumo-default">{label}</span>
-        <span className="text-kumo-subtle">{t('overview.no_quota_data')}</span>
-      </div>
-    );
-  }
-  const remaining = Math.max(0, Math.min(100, view.remaining));
-  const target = view.resetsAt ? new Date(view.resetsAt).getTime() : Number.NaN;
-  const resetText = view.reset
-    ? t('overview.window_reset')
-    : Number.isNaN(target)
-      ? t('overview.no_reset')
-      : t('overview.rail_resets', {
-          when: formatDuration(target - now),
-          time: formatLocalTime(view.resetsAt),
-        });
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="text-kumo-default">{label}</span>
-        <span className="font-medium tabular-nums text-kumo-strong">
-          {t('overview.quota_left', { value: formatPercent(remaining) })}
-        </span>
-      </div>
-      <div
-        className="h-1.5 overflow-hidden rounded-full bg-kumo-fill"
-        role="meter"
-        aria-label={`${label} ${t('overview.quota_left', { value: formatPercent(remaining) })}`}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(remaining)}
-      >
-        <div
-          className={`h-full rounded-full ${BAR_TONE[remainingTone(remaining)]}`}
-          style={{ width: `${remaining}%` }}
-        />
-      </div>
-      <span className="text-xs text-kumo-subtle">{resetText}</span>
-    </div>
   );
 }
 
@@ -120,15 +66,11 @@ export function StatusRail({ accounts, router, now }: StatusRailProps) {
                       {t(`overview.status_${status}`)}
                     </Badge>
                   </div>
-                  <WindowLine
-                    label={t('overview.col_five_hour')}
-                    view={effectiveWindow(account.five_hour, now)}
+                  <QuotaBars
+                    fiveHour={account.five_hour}
+                    weekly={account.seven_day}
                     now={now}
-                  />
-                  <WindowLine
-                    label={t('overview.col_weekly')}
-                    view={effectiveWindow(account.seven_day, now)}
-                    now={now}
+                    emptyText={t('overview.no_quota_data')}
                   />
                 </li>
               );
@@ -169,7 +111,7 @@ export function StatusRail({ accounts, router, now }: StatusRailProps) {
       <RailSection title={t('overview.rail_shortcuts')}>
         <ul className="flex flex-col gap-2 text-sm">
           <li>
-            <Link href="/oauth">{t('overview.add_account')}</Link>
+            <Link href="/auth-files?add=other">{t('overview.add_account')}</Link>
           </li>
           <li>
             <Link href="/connect">{t('overview.rail_connect')}</Link>

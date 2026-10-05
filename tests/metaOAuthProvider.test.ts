@@ -63,7 +63,13 @@ describe('Muse (Meta) provider and device OAuth', () => {
   });
 
   test('registers device-code UI but not a manual OAuth callback', () => {
-    const source = readFileSync('src/pages/OAuthPage.tsx', 'utf8');
+    const source = [
+      'src/features/authFiles/addAccount/oauthProviders.ts',
+      'src/features/authFiles/addAccount/useOAuthFlows.ts',
+      'src/features/authFiles/addAccount/OAuthProviderFlow.tsx',
+    ]
+      .map((path) => readFileSync(path, 'utf8'))
+      .join('\n');
     expect(source).toContain("id: 'meta'");
     expect(source).toContain('userCode: res.user_code');
     expect(source).toContain("t('auth_login.device_code_copy')");

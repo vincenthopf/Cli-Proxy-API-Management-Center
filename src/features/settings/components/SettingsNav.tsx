@@ -7,7 +7,6 @@ import {
   FileCodeIcon,
   GlobeIcon,
   KeyIcon,
-  ScrollIcon,
   SquaresFourIcon,
   WrenchIcon,
   type IconProps,
@@ -22,7 +21,6 @@ const SECTION_ICONS: Record<SettingsSectionId, ComponentType<IconProps>> = {
   overview: SquaresFourIcon,
   access: KeyIcon,
   routing: ArrowsSplitIcon,
-  logging: ScrollIcon,
   network: GlobeIcon,
   providers: CpuIcon,
   advanced: WrenchIcon,
@@ -46,6 +44,7 @@ export function SettingsNav({
 }: SettingsNavProps) {
   const { t } = useTranslation();
   const title = (id: SettingsSectionId) => t(`settings.sections.${id}.title`);
+  const summary = (id: SettingsSectionId) => t(`settings.sections.${id}.summary`);
   const marker = (id: SettingsSectionId) => {
     const errors = errorCounts[id] ?? 0;
     if (errors > 0) {
@@ -70,7 +69,15 @@ export function SettingsNav({
           aria-label={t('settings.nav.label')}
           value={active}
           renderValue={(value: SettingsSectionId) => title(value)}
-          items={SETTINGS_SECTION_IDS.map((id) => ({ value: id, label: title(id) }))}
+          items={SETTINGS_SECTION_IDS.map((id) => ({
+            value: id,
+            label: (
+              <span className="flex flex-col gap-0.5 py-0.5">
+                <span className="text-kumo-default">{title(id)}</span>
+                <span className="text-xs text-kumo-subtle">{summary(id)}</span>
+              </span>
+            ),
+          }))}
           onValueChange={(next: SettingsSectionId | null) => {
             if (next) onSelect(next);
           }}
@@ -87,15 +94,20 @@ export function SettingsNav({
                   type="button"
                   aria-current={current ? 'page' : undefined}
                   onClick={() => onSelect(id)}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none ${
+                  className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none ${
                     current
                       ? 'bg-kumo-tint font-medium text-kumo-default'
                       : 'text-kumo-subtle hover:bg-kumo-tint hover:text-kumo-default'
                   }`}
                 >
-                  <Icon aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate">{title(id)}</span>
-                  {marker(id)}
+                  <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate">{title(id)}</span>
+                      {marker(id)}
+                    </span>
+                    <span className="text-xs font-normal text-kumo-subtle">{summary(id)}</span>
+                  </span>
                 </button>
               </li>
             );

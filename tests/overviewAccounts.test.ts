@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  accountAlerts,
   accountStatus,
   effectiveWindow,
   parseDecisions,
@@ -79,21 +78,6 @@ describe('accountStatus', () => {
   test('an empty open window is out of quota but a reset window is not', () => {
     expect(accountStatus(account({ five_hour: window(0, hours(1)) }), NOW)).toBe('exhausted');
     expect(accountStatus(account({ five_hour: window(0, hours(-1)) }), NOW)).toBe('serving');
-  });
-});
-
-describe('accountAlerts', () => {
-  test('flags weekly quota expiring within 24 hours with more than 1% left', () => {
-    const alerts = accountAlerts([account({ seven_day: window(3, hours(9)) })], NOW);
-    expect(alerts).toHaveLength(1);
-    expect(alerts[0].kind).toBe('expiring');
-  });
-
-  test('flags exhausted weekly quota and ignores distant resets', () => {
-    expect(accountAlerts([account({ seven_day: window(0, hours(30)) })], NOW)[0].kind).toBe(
-      'exhausted'
-    );
-    expect(accountAlerts([account({ seven_day: window(40, hours(30)) })], NOW)).toHaveLength(0);
   });
 });
 

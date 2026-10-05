@@ -8,11 +8,13 @@ export function SettingsGroup({
   title,
   description,
   action,
+  notice,
   children,
 }: {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
+  notice?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -30,6 +32,7 @@ export function SettingsGroup({
         </div>
         {action}
       </div>
+      {notice}
       <Panel padding="none" className="divide-y divide-kumo-line px-4 md:px-5">
         {children}
       </Panel>

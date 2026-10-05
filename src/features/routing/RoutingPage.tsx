@@ -6,19 +6,14 @@ import {
   ListBulletsIcon,
   WarningCircleIcon,
 } from '@phosphor-icons/react';
-import { Badge, Banner, LinkButton, Radio, Text, type BadgeVariant } from '@cloudflare/kumo';
+import { Badge, Banner, LinkButton, Radio, Text } from '@cloudflare/kumo';
 import { sidecarApi, type RouterMode } from '@/services/api/sidecar';
 import { useConfigStore } from '@/stores';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { usePolling } from '@/features/overview/usePolling';
 import { useNow } from '@/features/overview/useNow';
-import { accountDisplayName, parseDecisions } from '@/features/overview/accounts';
-import {
-  credentialName,
-  formatDateTime,
-  formatRelative,
-  maskEmail,
-} from '@/features/overview/format';
+import { accountDisplayName } from '@/features/overview/accounts';
+import { credentialName, formatRelative, maskEmail } from '@/features/overview/format';
 import { PageHeader } from '@/features/overview/components/PageHeader';
 import { SectionHeader } from '@/features/overview/components/SectionHeader';
 import { ResetTime } from '@/features/overview/components/ResetTime';
@@ -31,26 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { RoutingFlow } from './components/RoutingFlow';
+import { STRATEGY_KEYS, buildRoutingOrder, pickPath, readRoutingFlowSettings } from './routingFlow';
 
 const MODES: RouterMode[] = ['active', 'shadow', 'off'];
-const DECISION_LIMIT = 12;
 
 const isMode = (value: unknown): value is RouterMode =>
   typeof value === 'string' && (MODES as string[]).includes(value);
-
-const pick = (source: unknown, path: string[]): unknown =>
-  path.reduce<unknown>(
-    (value, key) =>
-      value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined,
-    source
-  );
-
-const actionBadge = (action: string, error: string | null): BadgeVariant => {
-  if (error) return 'error';
-  if (action === 'unchanged') return 'neutral';
-  if (action === 'skipped') return 'warning';
-  return 'info';
-};
 
 export function RoutingPage() {
   const { t } = useTranslation();
@@ -83,28 +65,41 @@ export function RoutingPage() {
   const nameOf = (authIndex: string, fallback: string) =>
     names.get(authIndex) ?? (maskEmail(credentialName(fallback)) || credentialName(fallback));
 
-  const decisions = useMemo(
-    () => parseDecisions(router.data).slice(0, DECISION_LIMIT),
-    [router.data]
-  );
   const ranking = router.data?.ranking ?? [];
   const mode = router.data?.mode;
 
   const boolText = (value: unknown) =>
     typeof value === 'boolean' ? (value ? t('routing.value_on') : t('routing.value_off')) : value;
   const raw = config?.raw ?? {};
+  const flowSettings = useMemo(
+    () => readRoutingFlowSettings(config?.raw, config?.routingStrategy),
+    [config]
+  );
+  const order = useMemo(
+    () =>
+      router.data || accounts.data
+        ? buildRoutingOrder(router.data, accounts.data?.accounts, now)
+        : null,
+    [accounts.data, now, router.data]
+  );
   const settings: Array<[string, unknown]> = [
-    [t('routing.strategy'), pick(raw, ['routing', 'strategy']) ?? config?.routingStrategy],
-    [t('routing.affinity'), boolText(pick(raw, ['routing', 'session-affinity']))],
-    [t('routing.affinity_ttl'), pick(raw, ['routing', 'session-affinity-ttl'])],
+    [
+      t('routing.strategy'),
+      t(`settings.routing.strategies.${STRATEGY_KEYS[flowSettings.strategy]}.label`),
+    ],
+    [t('routing.affinity'), boolText(pickPath(raw, ['routing', 'session-affinity']))],
+    [t('routing.affinity_ttl'), pickPath(raw, ['routing', 'session-affinity-ttl'])],
     [
       t('routing.affinity_subagents'),
-      boolText(pick(raw, ['routing', 'session-affinity-subagents'])),
+      boolText(pickPath(raw, ['routing', 'session-affinity-subagents'])),
     ],
-    [t('routing.retry'), pick(raw, ['routing', 'retry', 'request-retry']) ?? config?.requestRetry],
+    [
+      t('routing.retry'),
+      pickPath(raw, ['routing', 'retry', 'request-retry']) ?? config?.requestRetry,
+    ],
     [
       t('routing.model_cooling'),
-      boolText(pick(raw, ['upstream', 'claude', 'model-level-cooling'])),
+      boolText(pickPath(raw, ['upstream', 'claude', 'model-level-cooling'])),
     ],
   ];
 
@@ -142,6 +137,26 @@ export function RoutingPage() {
           description={error}
         />
       ) : null}
+
+      <RoutingFlow
+        title={t('routing.flow.title')}
+        description={t('routing.flow.description')}
+        settings={flowSettings}
+        mode={mode}
+        order={order}
+        now={now}
+        orderError={Boolean(router.error && accounts.error)}
+        actions={
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            icon={ListBulletsIcon}
+            href="/logs?tab=decisions"
+          >
+            {t('routing.view_decisions')}
+          </LinkButton>
+        }
+      />
 
       <section className="flex flex-col gap-3">
         <SectionHeader
@@ -240,72 +255,10 @@ export function RoutingPage() {
 
       <section className="flex flex-col gap-3">
         <SectionHeader
-          title={t('routing.decisions_title')}
-          description={t('routing.decisions_help')}
-        />
-        {decisions.length === 0 ? (
-          <Panel padding="none">
-            <PanelEmpty
-              icon={<ListBulletsIcon size={32} className="text-kumo-inactive" />}
-              title={t('routing.no_decisions')}
-            />
-          </Panel>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('routing.decision_when')}</TableHead>
-                <TableHead>{t('overview.col_account')}</TableHead>
-                <TableHead>{t('routing.decision_action')}</TableHead>
-                <TableHead>{t('routing.decision_priority')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {decisions.map((decision, index) => (
-                <TableRow key={`${decision.runId ?? 'run'}-${decision.authIndex}-${index}`}>
-                  <TableCell>
-                    <span className="text-sm text-kumo-subtle" title={formatDateTime(decision.ts)}>
-                      {formatRelative(decision.ts, now)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-kumo-default">
-                        {nameOf(decision.authIndex, decision.name)}
-                      </span>
-                      <span className="text-xs text-kumo-subtle">
-                        {decision.rank
-                          ? t('routing.rank', { rank: decision.rank })
-                          : decision.reason}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                      <Badge variant={actionBadge(decision.action, decision.error)}>
-                        {decision.action}
-                      </Badge>
-                      {decision.error ? (
-                        <span className="text-xs text-kumo-danger">{decision.error}</span>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    {decision.previousPriority ?? '—'} → {decision.recommendedPriority ?? '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <SectionHeader
           title={t('routing.proxy_title')}
           description={t('routing.proxy_help')}
           actions={
-            <LinkButton variant="secondary" size="sm" icon={GearIcon} href="/settings#routing">
+            <LinkButton variant="secondary" size="sm" icon={GearIcon} href="/settings/routing">
               {t('routing.edit_config')}
             </LinkButton>
           }

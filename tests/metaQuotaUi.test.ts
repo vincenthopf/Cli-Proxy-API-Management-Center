@@ -9,7 +9,6 @@ import { META_CONFIG } from '@/features/quota/providers/meta/data';
 import { parseMetaQuotaPayload } from '@/services/api/metaQuota';
 import { metaQuotaResponse } from './fixtures/metaQuota';
 import { QUOTA_CLASS_KEYS, bindQuotaClasses } from '@/features/quota/types';
-import { classifyQuotaFiles, buildTabCounts } from '@/features/quota/logic';
 import { QUOTA_PROVIDER_TYPES } from '@/features/authFiles/constants';
 import {
   captureQuotaCacheGeneration,
@@ -70,9 +69,6 @@ describe('Muse quota UI integration', () => {
     expect(QUOTA_PROVIDER_TYPES.has('meta')).toBe(true);
     expect(META_CONFIG.filterFn(file)).toBe(true);
     expect(META_CONFIG.filterFn({ ...file, disabled: true })).toBe(false);
-    const entries = classifyQuotaFiles([file, { ...file, name: 'disabled.json', disabled: true }]);
-    expect(entries).toEqual([{ file, type: 'meta' }]);
-    expect(buildTabCounts(entries).meta).toBe(1);
   });
 
   test('converts used percent into remaining meters and displays plan and windows', () => {

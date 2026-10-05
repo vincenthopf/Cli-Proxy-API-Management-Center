@@ -103,7 +103,14 @@ export function PageTransition({
   useLayoutEffect(() => {
     if (isAnimating) return;
     if (location.key === currentLayerKey) return;
-    if (currentLayerPathname === location.pathname) return;
+    if (currentLayerPathname === location.pathname) {
+      if (currentLayer && currentLayer.location !== location) {
+        setLayers((prev) =>
+          prev.map((layer) => (layer.status === 'current' ? { ...layer, location } : layer))
+        );
+      }
+      return;
+    }
     const scrollContainer = resolveScrollContainer();
     const exitScrollOffset = scrollContainer?.scrollTop ?? 0;
     exitScrollOffsetRef.current = exitScrollOffset;

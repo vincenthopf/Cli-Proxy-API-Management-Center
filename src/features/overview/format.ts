@@ -85,3 +85,13 @@ export const maskEmail = (email: string | null | undefined): string => {
 
 export const credentialName = (name: string | null | undefined): string =>
   (name ?? '').replace(/\.json$/i, '').replace(/^[a-z]+-(?:[0-9a-f]{6,}-)?/i, '');
+
+export const formatResetClock = (iso: string | null | undefined): string => {
+  const target = parseTime(iso);
+  if (target === null) return '—';
+  return new Date(target).toLocaleString(undefined, {
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};

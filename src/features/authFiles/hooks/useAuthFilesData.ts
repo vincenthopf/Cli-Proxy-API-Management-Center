@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { apiClient, authFilesApi } from '@/services/api';
 import type { AuthFileRefreshResult } from '@/services/api/authFiles';
 import { getAuthFileRefreshKey } from '@/features/authFiles/manualRefresh';
+import { useAuthFileUpload } from '@/features/authFiles/hooks/useAuthFileUpload';
 import { notifyAuthFilesChanged } from '@/features/authFiles/authFilesEvents';
 import { useNotificationStore } from '@/stores';
 import type { AuthFileItem } from '@/types';
-import { formatFileSize } from '@/utils/format';
-import { MAX_AUTH_FILE_SIZE } from '@/utils/constants';
 import { downloadBlob } from '@/utils/download';
 import {
   getTypeLabel,
@@ -84,7 +83,6 @@ export function useAuthFilesData(options?: UseAuthFilesDataOptions): UseAuthFile
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<Record<string, boolean>>({});
@@ -97,8 +95,6 @@ export function useAuthFilesData(options?: UseAuthFilesDataOptions): UseAuthFile
   const [batchStatusUpdating, setBatchStatusUpdating] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const uploadPendingRef = useRef(false);
   const manualRefreshPendingRef = useRef<Set<string>>(new Set());
   const cooldownResetPendingRef = useRef<Set<string>>(new Set());
   const batchStatusPendingRef = useRef(false);
@@ -240,84 +236,12 @@ export function useAuthFilesData(options?: UseAuthFilesDataOptions): UseAuthFile
     [t]
   );
 
-  const handleUploadClick = useCallback(() => {
-    if (uploadPendingRef.current) return;
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const fileList = event.target.files;
-      if (!fileList || fileList.length === 0) return;
-
-      const filesToUpload = Array.from(fileList);
-      const validFiles: File[] = [];
-      const invalidFiles: string[] = [];
-      const oversizedFiles: string[] = [];
-
-      filesToUpload.forEach((file) => {
-        if (!file.name.endsWith('.json')) {
-          invalidFiles.push(file.name);
-          return;
-        }
-        if (file.size > MAX_AUTH_FILE_SIZE) {
-          oversizedFiles.push(file.name);
-          return;
-        }
-        validFiles.push(file);
-      });
-
-      if (invalidFiles.length > 0) {
-        showNotification(t('auth_files.upload_error_json'), 'error');
-      }
-      if (oversizedFiles.length > 0) {
-        showNotification(
-          t('auth_files.upload_error_size', { maxSize: formatFileSize(MAX_AUTH_FILE_SIZE) }),
-          'error'
-        );
-      }
-
-      if (validFiles.length === 0) {
-        event.target.value = '';
-        return;
-      }
-      if (uploadPendingRef.current) {
-        event.target.value = '';
-        return;
-      }
-
-      uploadPendingRef.current = true;
-      setUploading(true);
-      try {
-        const result = await authFilesApi.uploadFiles(validFiles);
-        const successCount = result.uploaded;
-
-        if (successCount > 0) {
-          const suffix = validFiles.length > 1 ? ` (${successCount}/${validFiles.length})` : '';
-          showNotification(
-            `${t('auth_files.upload_success')}${suffix}`,
-            result.failed.length ? 'warning' : 'success'
-          );
-          notifyAuthFilesChanged();
-          onFilesMutatedRef.current?.(result.files.length > 0 ? result.files : undefined);
-          await loadFiles({ background: true });
-        }
-
-        if (result.failed.length > 0) {
-          const details = result.failed.map((item) => `${item.name}: ${item.error}`).join('; ');
-          showNotification(`${t('notification.upload_failed')}: ${details}`, 'error');
-        }
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        showNotification(`${t('notification.upload_failed')}: ${errorMessage}`, 'error');
-      } finally {
-        uploadPendingRef.current = false;
-        setUploading(false);
-        event.target.value = '';
-      }
+  const { uploading, fileInputRef, handleUploadClick, handleFileChange } = useAuthFileUpload({
+    onUploaded: async (names) => {
+      onFilesMutatedRef.current?.(names);
+      await loadFiles({ background: true });
     },
-    [loadFiles, showNotification, t]
-  );
+  });
 
   const handleDelete = useCallback(
     (name: string) => {

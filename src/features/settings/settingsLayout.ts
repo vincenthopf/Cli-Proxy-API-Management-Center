@@ -10,7 +10,6 @@ export const SETTINGS_SECTION_IDS = [
   'overview',
   'access',
   'routing',
-  'logging',
   'network',
   'providers',
   'advanced',
@@ -23,13 +22,23 @@ export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = 'overview';
 
 export const SETTINGS_BASE_PATH = '/settings';
 
+export const LOGS_PAGE_HOME = 'logs' as const;
+
+export type SettingsFieldHome = SettingsSectionId | typeof LOGS_PAGE_HOME;
+
+export const LOGS_SETTINGS_PATH = '/logs';
+
+export const LOGS_SETTINGS_TAB = 'settings';
+
+const LEGACY_LOGGING_SECTION = 'logging';
+
 export const ROUTING_STRATEGIES: readonly RoutingStrategy[] = [
   'round-robin',
   'weighted-round-robin',
   'fill-first',
 ];
 
-export const SETTINGS_FIELD_SECTIONS: Readonly<Record<string, SettingsSectionId>> = {
+export const SETTINGS_FIELD_SECTIONS: Readonly<Record<string, SettingsFieldHome>> = {
   apiKeys: 'access',
   rmAllowRemote: 'access',
   rmSecretKey: 'access',
@@ -50,12 +59,12 @@ export const SETTINGS_FIELD_SECTIONS: Readonly<Record<string, SettingsSectionId>
   claudeModelLevelCooling: 'routing',
   codexModelLevelCooling: 'routing',
 
-  debug: 'logging',
-  loggingToFile: 'logging',
-  logsMaxTotalSizeMb: 'logging',
-  errorLogsMaxFiles: 'logging',
-  usageStatisticsEnabled: 'logging',
-  redisUsageQueueRetentionSeconds: 'logging',
+  debug: LOGS_PAGE_HOME,
+  loggingToFile: LOGS_PAGE_HOME,
+  logsMaxTotalSizeMb: LOGS_PAGE_HOME,
+  errorLogsMaxFiles: LOGS_PAGE_HOME,
+  usageStatisticsEnabled: LOGS_PAGE_HOME,
+  redisUsageQueueRetentionSeconds: LOGS_PAGE_HOME,
 
   host: 'network',
   port: 'network',
@@ -153,14 +162,37 @@ export function settingsPath(section: SettingsSectionId, fieldId?: string): stri
   return fieldId ? `${base}?field=${encodeURIComponent(fieldId)}` : base;
 }
 
-export function sectionForField(fieldId: string | null | undefined): SettingsSectionId | undefined {
+export function homeForField(fieldId: string | null | undefined): SettingsFieldHome | undefined {
   return fieldId ? SETTINGS_FIELD_SECTIONS[fieldId] : undefined;
+}
+
+export function sectionForField(fieldId: string | null | undefined): SettingsSectionId | undefined {
+  const home = homeForField(fieldId);
+  return home === LOGS_PAGE_HOME ? undefined : home;
+}
+
+export function logSettingsPath(fieldId?: string): string {
+  const params = new URLSearchParams({ tab: LOGS_SETTINGS_TAB });
+  if (fieldId) params.set('field', fieldId);
+  return `${LOGS_SETTINGS_PATH}?${params.toString()}`;
+}
+
+export function fieldPath(fieldId: string): string | undefined {
+  const home = homeForField(fieldId);
+  if (!home) return undefined;
+  return home === LOGS_PAGE_HOME ? logSettingsPath(fieldId) : settingsPath(home, fieldId);
 }
 
 export function legacyConfigTarget(search: string): string {
   const fieldId = new URLSearchParams(search).get('field');
-  const section = sectionForField(fieldId);
-  return section ? settingsPath(section, fieldId ?? undefined) : SETTINGS_BASE_PATH;
+  return (fieldId && fieldPath(fieldId)) || SETTINGS_BASE_PATH;
+}
+
+export function settingsRedirectTarget(pathname: string, search: string): string | null {
+  const fieldId = new URLSearchParams(search).get('field');
+  if (homeForField(fieldId) === LOGS_PAGE_HOME) return logSettingsPath(fieldId ?? undefined);
+  const segment = pathname.replace(/^\/+/, '').split('/').filter(Boolean)[1];
+  return segment === LEGACY_LOGGING_SECTION ? logSettingsPath() : null;
 }
 
 export function editorModeForSection(section: SettingsSectionId): ConfigEditorMode {
@@ -184,13 +216,13 @@ export function changedFieldIds(dirtyValueKeys: Iterable<string>): string[] {
   return [...ids];
 }
 
-export type SectionCounts = Partial<Record<SettingsSectionId, number>>;
+export type SectionCounts = Partial<Record<SettingsFieldHome, number>>;
 
 export function countFieldsBySection(fieldIds: Iterable<string>): SectionCounts {
   const counts: SectionCounts = {};
   for (const fieldId of fieldIds) {
-    const section = sectionForField(fieldId);
-    if (section) counts[section] = (counts[section] ?? 0) + 1;
+    const home = homeForField(fieldId);
+    if (home) counts[home] = (counts[home] ?? 0) + 1;
   }
   return counts;
 }

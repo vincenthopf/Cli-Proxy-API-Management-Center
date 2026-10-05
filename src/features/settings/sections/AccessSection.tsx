@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Banner, SensitiveInput } from '@cloudflare/kumo';
-import { InfoIcon } from '@phosphor-icons/react';
+import { SensitiveInput } from '@cloudflare/kumo';
 import { ApiKeysEditor } from '../components/ApiKeysEditor';
+import { SettingNote } from '../components/SettingNote';
 import { SettingRow } from '../components/SettingRow';
 import { SettingsGroup } from '../components/SettingsGroup';
 import { SwitchSetting, TextSetting } from '../components/controls';
@@ -65,22 +65,18 @@ export function AccessSection() {
             }
           />
         </SettingRow>
-        <div className="py-4">
-          <Banner
-            variant="secondary"
-            icon={<InfoIcon weight="fill" />}
-            title={
-              hasSavedSecret
-                ? t('settings.access.management_key_set_title')
-                : t('settings.access.management_key_unset_title')
-            }
-            description={
-              hasSavedSecret
-                ? t('settings.access.management_key_set_description')
-                : t('settings.access.management_key_unset_description')
-            }
-          />
-        </div>
+        <SettingNote
+          title={
+            hasSavedSecret
+              ? t('settings.access.management_key_set_title')
+              : t('settings.access.management_key_unset_title')
+          }
+          description={
+            hasSavedSecret
+              ? t('settings.access.management_key_set_description')
+              : t('settings.access.management_key_unset_description')
+          }
+        />
         <SwitchSetting fieldId="rmDisableControlPanel" />
         <SwitchSetting fieldId="rmDisableAutoUpdatePanel" />
         <TextSetting

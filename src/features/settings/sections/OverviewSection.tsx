@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Badge, Text } from '@cloudflare/kumo';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 import { useConfigStore } from '@/stores';
@@ -7,6 +8,7 @@ import { Panel } from '@/components/ui/Panel';
 import {
   SETTINGS_SECTION_IDS,
   buildSettingsSummary,
+  logSettingsPath,
   type SectionCounts,
   type SettingsSectionId,
 } from '../settingsLayout';
@@ -57,6 +59,7 @@ export function OverviewSection({
   onOpen: (section: SettingsSectionId, fieldId?: string) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { values, changedFieldIds } = useSettingsForm();
   const requestLog = useConfigStore((state) => state.config?.requestLog);
   const summary = buildSettingsSummary(values, requestLog);
@@ -125,7 +128,7 @@ export function OverviewSection({
               )
             }
             actionLabel={edit}
-            onAction={() => onOpen('logging', 'requestLog')}
+            onAction={() => void navigate(logSettingsPath('requestLog'))}
           />
         </Panel>
       </section>
@@ -157,6 +160,19 @@ export function OverviewSection({
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => void navigate(logSettingsPath())}
+          className="flex flex-col gap-1 rounded-lg border border-kumo-line bg-kumo-base p-4 text-left transition-colors hover:bg-kumo-tint focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none"
+        >
+          <span className="inline-flex items-center gap-1.5 text-base font-medium text-kumo-default">
+            {t('settings.sections.logging.title')}
+            <ArrowRightIcon aria-hidden="true" className="size-3.5 text-kumo-subtle" />
+          </span>
+          <span className="text-sm text-kumo-subtle">
+            {t('settings.sections.logging.description')}
+          </span>
+        </button>
       </div>
     </div>
   );

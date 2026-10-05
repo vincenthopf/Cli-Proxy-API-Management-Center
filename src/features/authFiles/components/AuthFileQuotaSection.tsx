@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/Button';
 import { IconRefreshCw } from '@/components/ui/icons';
 import { bindQuotaClasses } from '@/features/quota/types';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '@/features/quota/providers';
+import { enrichQuotaInBackground } from '@/features/quota/quotaEnrichment';
+import { useClaudeResetGrants } from '@/features/quota/providers/claude/ClaudeResetGrants';
 import styles from './AuthFileQuota.module.scss';
 
 /** 认证文件卡片外衣：紧凑额度样式绑定成类型化契约（缺键在模块初始化即抛）。 */
@@ -75,10 +77,12 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
     try {
       const data = await adapter.fetchQuota(file, t);
       commitIfQuotaCacheCurrent(cacheGeneration, () => {
+        const successState = adapter.buildSuccessState(data);
         updateQuotaState((prev) => ({
           ...prev,
-          [cacheKey]: adapter.buildSuccessState(data),
+          [cacheKey]: successState,
         }));
+        void enrichQuotaInBackground(adapter, file, data, successState, t);
         showNotification(t('auth_files.quota_refresh_success', { name: file.name }), 'success');
       });
     } catch (err: unknown) {
@@ -177,6 +181,13 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
         {t('codex_quota.reset_button')}
       </Button>
     ) : undefined;
+  const claudeReset = useClaudeResetGrants(
+    file,
+    quotaType === 'claude' && quotaStatus !== 'idle',
+    !canRefreshQuota || quotaStatus === 'loading',
+    quota,
+    () => void refreshQuotaForFile()
+  );
   const quotaErrorMessage = resolveQuotaErrorMessage(
     t,
     quota?.errorStatus,
@@ -184,49 +195,70 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
   );
 
   return (
-    <div className={styles.quotaSection}>
-      {quotaStatus === 'loading' ? (
-        <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.loading`)}</div>
-      ) : quotaStatus === 'idle' ? (
-        <button
-          type="button"
-          className={`${styles.quotaMessage} ${styles.quotaMessageAction}`}
-          onClick={() => void refreshQuotaForFile()}
-          disabled={!canRefreshQuota}
-        >
-          {t(`${adapter.i18nPrefix}.idle`)}
-        </button>
-      ) : quotaStatus === 'error' ? (
-        <div className={styles.quotaError}>
-          {t(`${adapter.i18nPrefix}.load_failed`, {
-            message: quotaErrorMessage,
-          })}
-        </div>
-      ) : quota ? (
-        <adapter.Body quota={quota} classes={compactQuotaClasses} />
-      ) : (
-        <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.idle`)}</div>
-      )}
-      {quotaStatus !== 'idle' && (resetQuotaAction || quotaType === 'devin') && (
-        <div className={styles.quotaCardActions}>
+    <section className="flex flex-col gap-2" aria-label={t('accounts.provider_quota')}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-medium text-kumo-default">
+          {t('accounts.provider_quota')}
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
           {resetQuotaAction}
-          {quotaType === 'devin' && (
+          {claudeReset.count !== null ? (
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className={styles.quotaResetCreditButton}
+              disabled={claudeReset.blocked}
+              loading={claudeReset.busy}
+              onClick={claudeReset.confirm}
+            >
+              {`${t(`claude_reset.${claudeReset.buttonLabel}`)} (${claudeReset.count})`}
+            </Button>
+          ) : null}
+          {quotaStatus !== 'idle' ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void refreshQuotaForFile()}
-              disabled={!canRefreshQuota || quotaStatus === 'loading'}
+              disabled={!canRefreshQuota || quotaStatus === 'loading' || claudeReset.busy}
               loading={quotaStatus === 'loading'}
               title={t('auth_files.quota_refresh_hint')}
             >
               {quotaStatus !== 'loading' && <IconRefreshCw size={14} />}
               {t('auth_files.quota_refresh_single')}
             </Button>
-          )}
+          ) : null}
         </div>
-      )}
-    </div>
+      </div>
+      {claudeReset.message ? (
+        <p role="status" className="m-0 text-xs text-kumo-danger">
+          {t(`claude_reset.${claudeReset.message}`)}
+        </p>
+      ) : null}
+      <div className={styles.quotaSection}>
+        {quotaStatus === 'loading' ? (
+          <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.loading`)}</div>
+        ) : quotaStatus === 'idle' ? (
+          <button
+            type="button"
+            className={`${styles.quotaMessage} ${styles.quotaMessageAction}`}
+            onClick={() => void refreshQuotaForFile()}
+            disabled={!canRefreshQuota}
+          >
+            {t(`${adapter.i18nPrefix}.idle`)}
+          </button>
+        ) : quotaStatus === 'error' ? (
+          <div className={styles.quotaError}>
+            {t(`${adapter.i18nPrefix}.load_failed`, {
+              message: quotaErrorMessage,
+            })}
+          </div>
+        ) : quota ? (
+          <adapter.Body quota={quota} classes={compactQuotaClasses} />
+        ) : (
+          <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.idle`)}</div>
+        )}
+      </div>
+    </section>
   );
 }

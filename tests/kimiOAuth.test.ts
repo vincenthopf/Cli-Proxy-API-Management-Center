@@ -42,7 +42,13 @@ describe('Kimi regional login', () => {
   });
 
   test('offers both cards with site-specific registration links', () => {
-    const source = readFileSync('src/pages/OAuthPage.tsx', 'utf8');
+    const source = [
+      'src/features/authFiles/addAccount/oauthProviders.ts',
+      'src/features/authFiles/addAccount/useOAuthFlows.ts',
+      'src/features/authFiles/addAccount/OAuthProviderFlow.tsx',
+    ]
+      .map((path) => readFileSync(path, 'utf8'))
+      .join('\n');
     expect(source).toContain("id: 'kimi-ai'");
     expect(source).toContain("id: 'kimi'");
     expect(source).toMatch(

@@ -15,7 +15,6 @@ import {
   ArrowsSplitIcon,
   ChartBarIcon,
   CircleHalfIcon,
-  GaugeIcon,
   GearIcon,
   InfoIcon,
   KeyIcon,
@@ -28,7 +27,6 @@ import {
   SquaresFourIcon,
   SunIcon,
   TerminalIcon,
-  UserPlusIcon,
   UsersIcon,
   type Icon,
 } from '@phosphor-icons/react';
@@ -573,9 +571,7 @@ export function MainLayout() {
                 ? t('nav.accounts_count', { count: authFilesCount })
                 : undefined,
           },
-          { path: '/oauth', label: t('nav.add_account'), icon: UserPlusIcon },
           { path: '/routing', label: t('nav.routing'), icon: ArrowsSplitIcon },
-          { path: '/quota', label: t('nav.quota_detail'), icon: GaugeIcon },
         ],
       },
       {

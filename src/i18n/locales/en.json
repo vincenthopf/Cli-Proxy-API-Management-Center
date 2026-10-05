@@ -117,7 +117,6 @@
     "quick_start": "Quick Start",
     "ai_providers": "API key providers",
     "auth_files": "Auth Files",
-    "oauth": "Add account",
     "quota_management": "Quota details",
     "plugins": "Plugins",
     "plugin_store": "Plugin Store",
@@ -127,9 +126,7 @@
     "overview": "Overview",
     "usage": "Usage",
     "accounts": "Accounts",
-    "add_account": "Add account",
     "routing": "Routing",
-    "quota_detail": "Quota details",
     "connect": "Connect",
     "settings": "Settings",
     "api_key_providers": "API key providers",
@@ -1068,7 +1065,25 @@
     "search_empty_desc": "Try a different keyword or clear the filters.",
     "double_click_copy_hint": "Double-click to copy raw log line",
     "copy_success": "Log copied to clipboard",
-    "copy_failed": "Copy failed"
+    "copy_failed": "Copy failed",
+    "tab_decisions": "Routing decisions",
+    "tab_settings": "Log settings",
+    "decisions_title": "Routing decisions",
+    "decisions_description": "What reset-aware ordering decided for each account on its recent runs.",
+    "decisions_description_last_run": "What reset-aware ordering decided for each account. Last run {{when}}.",
+    "decisions_mode": "Ordering: {{mode}}",
+    "decisions_changes_only": "Only changes",
+    "decisions_open_routing": "Open Routing",
+    "decisions_empty": "No router runs recorded yet.",
+    "decisions_no_changes": "No priority changes in the recent runs.",
+    "decisions_col_time": "Time",
+    "decisions_col_account": "Account",
+    "decisions_col_action": "Action",
+    "decisions_col_priority": "Priority change",
+    "decisions_col_reason": "Reason",
+    "settings_title": "Log settings",
+    "settings_description": "What the server logs, request capture and usage statistics. Changes are saved to config.yaml.",
+    "settings_open_yaml": "Open YAML source"
   },
   "config_management": {
     "title": "Settings",
@@ -2282,9 +2297,6 @@
     "subtitle": "Account health, quota left and what is using it.",
     "refresh": "Refresh",
     "sidecar_down": "{{error}}. Check the cpa-sidecar service on the proxy host.",
-    "alert_expiring": "{{remaining}} left, resets {{when}}. Use this account first.",
-    "alert_exhausted": "Weekly quota resets {{when}}.",
-    "alert_router_off": "Mode is {{mode}}. Account priorities are not being reordered.",
     "stat_requests": "Requests (24h)",
     "stat_failures": "{{count}} failed",
     "stat_tokens": "Tokens (24h)",
@@ -2295,7 +2307,6 @@
     "stat_last_24h": "429 responses, last 24h",
     "accounts_title": "Accounts",
     "link_routing": "Routing",
-    "link_add": "Add account",
     "col_account": "Account",
     "col_five_hour": "5-hour window",
     "col_weekly": "Weekly window",
@@ -2316,9 +2327,6 @@
     "add_account": "Add account",
     "col_status": "Status",
     "alert_sidecar_title": "Analytics service unreachable",
-    "alert_expiring_title": "{{name}}: weekly quota expires soon",
-    "alert_exhausted_title": "{{name}} is out of weekly quota",
-    "alert_router_title": "Reset-aware routing is not active",
     "empty_title": "No accounts yet",
     "hover_hint": "Hover a reset time to see the local date and time.",
     "no_quota_data": "No quota data",
@@ -2352,7 +2360,8 @@
     "rail_shortcuts": "Shortcuts",
     "rail_connect": "Connect Claude Code",
     "rail_usage": "Usage details",
-    "rail_settings": "Proxy settings"
+    "rail_settings": "Proxy settings",
+    "sidecar_unreachable": "Analytics service unreachable. Quota and usage data may be out of date."
   },
   "usage": {
     "title": "Usage",
@@ -2411,7 +2420,6 @@
     "mode_off_help": "Leaves priorities as they are.",
     "last_run": "Last run {{when}}.",
     "weekly_reset": "Weekly reset",
-    "reason": "Reason",
     "current": "Priority",
     "target": "Target",
     "rank": "#{{rank}}",
@@ -2424,15 +2432,9 @@
     "affinity_subagents": "Subagents share account",
     "retry": "Retry rounds",
     "model_cooling": "Per-model cooling",
-    "decision_action": "Action",
-    "decision_priority": "Priority change",
-    "decisions_title": "Recent decisions",
-    "decisions_help": "What the router did on its latest runs.",
-    "decision_when": "When",
     "eligibility": "Eligibility",
     "eligible": "Eligible",
     "mode_error_title": "Could not change router mode",
-    "no_decisions": "No router runs recorded yet.",
     "proxy_help": "Read-only. Change these in Settings.",
     "rank_col": "Rank",
     "ranking_title": "Ranking",
@@ -2440,7 +2442,47 @@
     "router_help": "Choose how the router manages account priorities.",
     "value_on": "On",
     "value_off": "Off",
-    "will_change": "Will change"
+    "will_change": "Will change",
+    "view_decisions": "Routing decisions",
+    "flow": {
+      "title": "How a request picks an account",
+      "description": "Live view of your routing settings and the current account order.",
+      "step": "Step {{step}}",
+      "unknown": "unknown",
+      "request_title": "Request from Claude Code",
+      "request_detail": "Every request goes through the proxy, which picks one of your accounts.",
+      "affinity_title": "Same conversation?",
+      "affinity_yes": "Yes: stays on its account, which keeps the prompt cache.",
+      "affinity_ttl": "A conversation stays pinned for {{ttl}} after its last request.",
+      "subagents_share": "Subagents use their parent's account.",
+      "subagents_spread": "Subagents are spread across accounts.",
+      "affinity_off": "Session affinity is off, so every request picks an account again.",
+      "otherwise": "Otherwise: {{action}}",
+      "pick_title": "Starts on #1 in the order",
+      "pick_rotate_title": "Takes the next account in turn",
+      "pick_reset_order": "Order: the account whose weekly limit resets soonest comes first.",
+      "pick_strategy": "Strategy: {{strategy}}.",
+      "pick_round_robin": "Round robin spreads new conversations evenly across accounts.",
+      "pick_weighted": "Weighted round robin sends more new conversations to higher-priority accounts.",
+      "pick_fill_first": "Fill first uses the highest-priority account until it hits a limit.",
+      "pick_reset_off": "Reset-aware ordering: {{mode}}.",
+      "reset_aware_badge": "Reset-aware",
+      "limit_title": "Hits a limit (429)",
+      "limit_move_stay": "Moves to the next account and stays there.",
+      "limit_move": "Moves to the next account.",
+      "limit_pause": "The limited account pauses until its limit resets.",
+      "order_title": "Current order",
+      "order_reset": "Soonest weekly reset first",
+      "order_priority": "By account priority",
+      "order_loading": "Loading accounts…",
+      "order_empty": "No accounts can serve requests right now.",
+      "order_unavailable": "Account order is unavailable because the usage service cannot be reached.",
+      "order_more": "+{{count}} more",
+      "order_skipped_one": "{{count}} account is skipped (paused, cooling down or out of quota).",
+      "order_skipped_other": "{{count}} accounts are skipped (paused, cooling down or out of quota).",
+      "weekly_left": "{{percent}} weekly left",
+      "weekly_unknown": "Weekly usage unknown"
+    }
   },
   "connect": {
     "title": "Connect",
@@ -2490,35 +2532,42 @@
     "sections": {
       "overview": {
         "title": "Overview",
-        "description": "The values that matter most, at a glance."
+        "description": "The values that matter most, at a glance.",
+        "summary": "Key values at a glance"
       },
       "access": {
         "title": "Access",
-        "description": "Who can use the proxy and who can manage it."
+        "description": "Who can use the proxy and who can manage it.",
+        "summary": "API keys and console access"
       },
       "routing": {
         "title": "Routing",
-        "description": "How requests are spread across your accounts and what happens when one hits a limit."
+        "description": "How requests are spread across your accounts and what happens when one hits a limit.",
+        "summary": "Which account serves each request"
       },
       "logging": {
-        "title": "Logging and diagnostics",
-        "description": "Server logs, request capture and usage statistics."
+        "title": "Logging",
+        "description": "Log settings now live on the Logs page, next to the logs they control."
       },
       "network": {
         "title": "Network",
-        "description": "Upstream proxy, listener and streaming behaviour."
+        "description": "Upstream proxy, listener and streaming behaviour.",
+        "summary": "Listener, upstream proxy and streaming"
       },
       "providers": {
         "title": "Providers and models",
-        "description": "Model handling and provider-specific behaviour."
+        "description": "Model handling and provider-specific behaviour.",
+        "summary": "Model and provider behaviour"
       },
       "advanced": {
         "title": "Advanced",
-        "description": "Server tuning, storage paths and plugins."
+        "description": "Server tuning, storage paths and plugins.",
+        "summary": "Server tuning, storage and plugins"
       },
       "yaml": {
         "title": "YAML source",
-        "description": "Edit config.yaml directly. Use this for anything not shown in the other sections."
+        "description": "Edit config.yaml directly. Use this for anything not shown in the other sections.",
+        "summary": "Edit config.yaml directly"
       }
     },
     "save_bar": {
@@ -2601,9 +2650,8 @@
       },
       "model_cooling_title": "Claude subscription limits apply to the whole account",
       "model_cooling_description": "When a Claude Pro or Max account hits its limit, every model on that account is limited. Leave per-model cooldown off for Claude unless you know the limit is model-specific.",
-      "reset_aware_title": "Reset-aware ordering",
-      "reset_aware_description": "Ordering accounts by when their usage windows reset is managed on the Routing page.",
-      "reset_aware_link": "Open Routing"
+      "reset_aware_link": "Open Routing",
+      "flow_description": "Updates as you edit the settings below. Reset-aware ordering is managed on the Routing page."
     },
     "logging": {
       "request_log_label": "Request logging",
@@ -2969,5 +3017,64 @@
       }
     },
     "off": "Off"
+  },
+  "add_account": {
+    "button": "Add account",
+    "add_claude": "Add Claude account",
+    "add_codex": "Add Codex account",
+    "other_provider": "Other provider…",
+    "upload_file": "Upload credential file…",
+    "more_options": "More ways to add an account",
+    "dialog_title": "Add account",
+    "choose_title": "Providers",
+    "choose_description": "Choose where the account signs in.",
+    "change_provider": "Choose another provider",
+    "close": "Close",
+    "preparing": "Preparing the sign-in link…",
+    "step_open": "Open the sign-in page and approve access",
+    "open_sign_in": "Open sign-in page",
+    "link_hint": "Or copy the link and open it in another browser.",
+    "step_callback": "Paste the callback URL",
+    "success_title": "Account added",
+    "success_named": "{{name}} is ready to use.",
+    "success_unnamed": "The new account is ready to use.",
+    "error_title": "Sign-in failed",
+    "retry": "Try again",
+    "done": "Done",
+    "add_another": "Add another account"
+  },
+  "accounts": {
+    "col_account": "Account",
+    "col_status": "Status",
+    "col_quota": "Quota",
+    "col_usage": "Last 24h",
+    "col_order": "Order",
+    "col_actions": "Actions",
+    "select_all": "Select all accounts on this page",
+    "status_serving": "Serving now",
+    "status_standby": "Standby",
+    "status_ready": "Ready",
+    "status_paused": "Paused",
+    "status_cooling": "Cooling down",
+    "status_cooling_for": "Cooling down · {{time}}",
+    "status_exhausted": "Out of quota",
+    "status_error": "Error",
+    "requests_count_one": "{{formatted}} request",
+    "requests_count_other": "{{formatted}} requests",
+    "usage_sparkline": "Tokens per hour over the last 24 hours, {{tokens}} in total",
+    "row_actions": "Actions for {{name}}",
+    "action_details": "Details",
+    "action_refresh_token": "Refresh token",
+    "action_models": "View models",
+    "action_clear_cooldown": "Clear cooldown",
+    "action_download": "Download",
+    "action_delete": "Delete",
+    "provider_filter_label": "Filter by provider",
+    "provider_all": "All providers",
+    "more_actions": "More account actions",
+    "model_rules": "Model rules",
+    "model_rules_hint": "Hide models from OAuth accounts or expose them under another name.",
+    "provider_quota": "Provider quota",
+    "sidecar_unreachable": "Analytics service unreachable. Quota, status and usage columns may be empty."
   }
 }

@@ -1,23 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ArrowClockwiseIcon,
-  InfoIcon,
-  PlusIcon,
-  WarningCircleIcon,
-  WarningIcon,
-} from '@phosphor-icons/react';
-import { Banner, Button, Link, LinkButton, Tabs } from '@cloudflare/kumo';
+import { ArrowClockwiseIcon } from '@phosphor-icons/react';
+import { Button, Link, Tabs } from '@cloudflare/kumo';
 import { sidecarApi, type UsageRange, type UsageResponse } from '@/services/api/sidecar';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useThemeStore } from '@/stores';
 import { usePolling } from './usePolling';
 import { useNow } from './useNow';
-import { accountAlerts, sortAccounts, type AccountRecord } from './accounts';
-import { formatCount, formatPercent, formatRelative, formatTokens } from './format';
+import { sortAccounts, type AccountRecord } from './accounts';
+import { formatCount, formatPercent, formatTokens } from './format';
 import { PageHeader } from './components/PageHeader';
 import { MetricCard } from './components/MetricCard';
 import { StatusRail } from './components/StatusRail';
+import { AddAccountButton } from '@/features/authFiles/addAccount/AddAccountButton';
+import { AddAccountDialog } from '@/features/authFiles/addAccount/AddAccountDialog';
+import { useAuthFileUpload } from '@/features/authFiles/hooks/useAuthFileUpload';
 
 const RANGES: UsageRange[] = ['24h', '7d', '30d'];
 const isRange = (value: string): value is UsageRange => (RANGES as string[]).includes(value);
@@ -66,12 +63,10 @@ const toBuckets = (data: UsageResponse | null): Array<[number, Bucket]> => {
 
 const rangeLabel = (data: UsageResponse | null): string => {
   if (!data || data.series.length === 0) return '';
-  const times = data.series
-    .map((row) => new Date(row.t).getTime())
-    .filter((n) => !Number.isNaN(n));
+  const times = data.series.map((row) => new Date(row.t).getTime()).filter((n) => !Number.isNaN(n));
   if (times.length === 0) return '';
   const fmt = (n: number) =>
-    new Date(n).toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+    new Date(n).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   return `${fmt(Math.min(...times))} – ${fmt(Math.max(...times))}`;
 };
 
@@ -98,12 +93,15 @@ export function OverviewPage() {
     () => sortAccounts((accounts.data?.accounts ?? []) as AccountRecord[]),
     [accounts.data]
   );
-  const alerts = useMemo(() => accountAlerts(rows, now), [rows, now]);
   const buckets = useMemo(() => toBuckets(usage.data), [usage.data]);
   const totals = usage.data?.totals;
   const daily = usage.data?.bucket === 'day';
   const sidecarError = health.error ?? (accounts.data ? null : accounts.error);
   const [refreshing, setRefreshing] = useState(false);
+  const [addTarget, setAddTarget] = useState<string | null>(null);
+  const { uploading, fileInputRef, handleUploadClick, handleFileChange } = useAuthFileUpload({
+    onUploaded: () => refreshAccounts(),
+  });
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -117,7 +115,6 @@ export function OverviewPage() {
     buckets.map(([time, b]) => [time, pick(b)]);
   const chartLoading = usage.loading && !usage.data;
   const rangeText = t(`usage.range_${range}`);
-  const showRouterNotice = Boolean(router.data && router.data.mode !== 'active');
 
   return (
     <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -135,63 +132,19 @@ export function OverviewPage() {
               >
                 {t('overview.refresh')}
               </Button>
-              <LinkButton variant="primary" icon={PlusIcon} href="/oauth">
-                {t('overview.add_account')}
-              </LinkButton>
+              <AddAccountButton
+                onAdd={setAddTarget}
+                onUpload={handleUploadClick}
+                uploading={uploading}
+              />
             </>
           }
         />
 
-        {sidecarError || alerts.length > 0 || showRouterNotice ? (
-          <div className="flex flex-col gap-3" role="status">
-            {sidecarError ? (
-              <Banner
-                variant="error"
-                icon={<WarningCircleIcon weight="fill" />}
-                title={t('overview.alert_sidecar_title')}
-                description={t('overview.sidecar_down', { error: sidecarError })}
-              />
-            ) : null}
-            {alerts.map((alert) =>
-              alert.kind === 'expiring' ? (
-                <Banner
-                  key={`expiring-${alert.name}`}
-                  variant="alert"
-                  icon={<WarningIcon weight="fill" />}
-                  title={t('overview.alert_expiring_title', { name: alert.name })}
-                  description={t('overview.alert_expiring', {
-                    remaining: formatPercent(alert.remaining),
-                    when: formatRelative(alert.resetsAt, now),
-                  })}
-                />
-              ) : (
-                <Banner
-                  key={`exhausted-${alert.name}`}
-                  variant="error"
-                  icon={<WarningCircleIcon weight="fill" />}
-                  title={t('overview.alert_exhausted_title', { name: alert.name })}
-                  description={t('overview.alert_exhausted', {
-                    when: formatRelative(alert.resetsAt, now),
-                  })}
-                />
-              )
-            )}
-            {showRouterNotice && router.data ? (
-              <Banner
-                variant="secondary"
-                icon={<InfoIcon weight="fill" />}
-                title={t('overview.alert_router_title')}
-                description={t('overview.alert_router_off', {
-                  mode: t(`routing.mode_${router.data.mode}`),
-                })}
-                action={
-                  <LinkButton variant="secondary" size="sm" href="/routing">
-                    {t('overview.link_routing')}
-                  </LinkButton>
-                }
-              />
-            ) : null}
-          </div>
+        {sidecarError ? (
+          <p className="-mt-3 text-sm text-kumo-subtle" role="status">
+            {t('overview.sidecar_unreachable')}
+          </p>
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -277,6 +230,15 @@ export function OverviewPage() {
       </div>
 
       <StatusRail accounts={rows} router={router.data ?? null} now={now} />
+      <AddAccountDialog target={addTarget} onTargetChange={setAddTarget} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        multiple
+        className="hidden"
+        onChange={(event) => void handleFileChange(event)}
+      />
     </div>
   );
 }

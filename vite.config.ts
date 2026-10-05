@@ -64,6 +64,15 @@ export default defineConfig({
       }
     }
   },
+  server: {
+    allowedHosts: ['localhost', '.ts.net'],
+    proxy: {
+      '/v0': process.env.CPA_DEV_TARGET ?? 'http://127.0.0.1:8317',
+      '/v1': process.env.CPA_DEV_TARGET ?? 'http://127.0.0.1:8317',
+      '/v8': process.env.CPA_DEV_TARGET ?? 'http://127.0.0.1:8317',
+      '/sidecar': process.env.CPA_SIDECAR_TARGET ?? 'http://127.0.0.1:8320',
+    },
+  },
   build: {
     target: 'es2020',
     outDir: 'dist',

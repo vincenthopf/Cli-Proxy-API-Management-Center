@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import { createInstance } from 'i18next';
-import { OAuthPage } from '@/pages/OAuthPage';
+import { OAuthProviderFlow } from '@/features/authFiles/addAccount/OAuthProviderFlow';
+import { useOAuthFlows } from '@/features/authFiles/addAccount/useOAuthFlows';
+import { PROVIDERS } from '@/features/authFiles/addAccount/oauthProviders';
 import { validateDevinCallback } from '@/pages/devinOAuth';
 import en from '@/i18n/locales/en.json';
 
@@ -12,19 +13,26 @@ const i18n = createInstance();
 await i18n.init({ lng: 'en', resources: { en: { translation: en } } });
 
 describe('Devin OAuth login UI', () => {
-  test('renders a built-in login card with version and expiry guidance', () => {
+  test('renders the Devin start step with English labels', () => {
+    const devin = PROVIDERS.find((provider) => provider.id === 'devin');
+    if (!devin) throw new Error('Devin provider missing');
+    function Harness() {
+      const flows = useOAuthFlows({ loadPlugins: false });
+      return createElement(OAuthProviderFlow, {
+        provider: devin!,
+        state: {},
+        actions: flows,
+        accountName: null,
+        onDone: () => {},
+      });
+    }
     const markup = renderToStaticMarkup(
-      createElement(
-        I18nextProvider,
-        { i18n },
-        createElement(MemoryRouter, null, createElement(OAuthPage))
-      )
+      createElement(I18nextProvider, { i18n }, createElement(Harness))
     );
-    expect(markup).toContain('Devin OAuth');
     expect(markup).toContain('Start Devin Login');
-    expect(markup).toContain('v7.3.1');
-    expect(markup).toContain('five minutes');
     expect(markup).not.toContain('auth_login.devin_');
+    expect(en.auth_login.devin_oauth_title).toContain('Devin OAuth');
+    expect(en.auth_login.devin_oauth_hint).toContain('five minutes');
   });
 
   test('supplies every Devin label and hint in English', () => {

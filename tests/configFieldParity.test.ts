@@ -9,8 +9,9 @@ import {
 } from '@/features/config/searchIndex';
 import {
   SETTINGS_FIELD_SECTIONS,
+  LOGS_PAGE_HOME,
   fieldIdForValueKey,
-  type SettingsSectionId,
+  type SettingsFieldHome,
 } from '@/features/settings/settingsLayout';
 import { getVisualConfigValidationErrors } from '@/hooks/useVisualConfig';
 import { DEFAULT_VISUAL_VALUES } from '@/types/visualConfig';
@@ -25,10 +26,10 @@ const SEARCH_SECTION_IDS = new Set([
   'payload',
 ]);
 
-const SECTION_FILES: Record<string, SettingsSectionId> = {
+const SECTION_FILES: Record<string, SettingsFieldHome> = {
   'AccessSection.tsx': 'access',
   'RoutingSection.tsx': 'routing',
-  'LoggingSection.tsx': 'logging',
+  'LoggingSection.tsx': LOGS_PAGE_HOME,
   'NetworkSection.tsx': 'network',
   'ProvidersSection.tsx': 'providers',
   'AdvancedSection.tsx': 'advanced',
@@ -98,6 +99,22 @@ describe('value-key coverage (index ↔ VisualConfigValues)', () => {
 });
 
 describe('settings layout coverage', () => {
+  test('log fields live on the Logs page and nowhere in the settings sections', () => {
+    const logFields = Object.entries(SETTINGS_FIELD_SECTIONS)
+      .filter(([, home]) => home === LOGS_PAGE_HOME)
+      .map(([fieldId]) => fieldId);
+    expect(sorted(logFields)).toEqual(
+      sorted([
+        'debug',
+        'loggingToFile',
+        'logsMaxTotalSizeMb',
+        'errorLogsMaxFiles',
+        'usageStatisticsEnabled',
+        'redisUsageQueueRetentionSeconds',
+      ])
+    );
+  });
+
   test('every index field has exactly one settings section', () => {
     expect(sorted(Object.keys(SETTINGS_FIELD_SECTIONS))).toEqual(sorted(INDEX_FIELD_ID_SET));
   });

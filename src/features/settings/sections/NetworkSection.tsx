@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Banner, Button, Input } from '@cloudflare/kumo';
-import { FileCodeIcon, InfoIcon } from '@phosphor-icons/react';
+import { Button, Input } from '@cloudflare/kumo';
+import { FileCodeIcon } from '@phosphor-icons/react';
 import { getValidationMessage } from '@/features/config/components/blocks/shared';
+import { SettingNote } from '../components/SettingNote';
 import { SettingRow } from '../components/SettingRow';
 import { SettingsDisclosure, SettingsGroup } from '../components/SettingsGroup';
 import { ListSetting, SwitchSetting, TextSetting } from '../components/controls';
@@ -67,19 +68,15 @@ export function NetworkSection({ onOpenYaml }: { onOpenYaml: () => void }) {
             value={values.port || t('settings.network.default_port')}
           />
         </SettingRow>
-        <div className="py-4">
-          <Banner
-            variant="secondary"
-            icon={<InfoIcon weight="fill" />}
-            title={t('settings.network.listener_note_title')}
-            description={t('settings.network.listener_note_description')}
-            action={
-              <Button variant="secondary" size="sm" icon={<FileCodeIcon />} onClick={onOpenYaml}>
-                {t('settings.network.open_yaml')}
-              </Button>
-            }
-          />
-        </div>
+        <SettingNote
+          title={t('settings.network.listener_note_title')}
+          description={t('settings.network.listener_note_description')}
+          action={
+            <Button variant="secondary" size="sm" icon={<FileCodeIcon />} onClick={onOpenYaml}>
+              {t('settings.network.open_yaml')}
+            </Button>
+          }
+        />
         <ListSetting fieldId="trustedProxies" placeholder="192.168.0.0/24" />
         <SettingsDisclosure
           title={t('settings.groups.tls.title')}

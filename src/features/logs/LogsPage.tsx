@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useReducer, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Badge, Banner, Tabs } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -47,11 +48,30 @@ import { errorLogViewerReducer } from './model/errorLogViewer';
 import { shouldExitLogFullscreen } from './model/logFullscreen';
 import { useLogFilters } from './hooks/useLogFilters';
 import { isNearBottom, useLogScroller } from './hooks/useLogScroller';
+import { RoutingDecisionsView } from './components/RoutingDecisionsView';
+import { LogSettingsEditor } from '@/features/settings/LogSettingsEditor';
+import type { FieldFocusRequest } from '@/features/settings/settingsForm';
 import styles from './LogsPage.module.scss';
 
 const INITIAL_DISPLAY_LINES = INITIAL_VISIBLE_LINES;
 
-type TabType = 'logs' | 'errors';
+const TABS = ['logs', 'errors', 'decisions', 'settings'] as const;
+
+type TabType = (typeof TABS)[number];
+
+const isTab = (value: string | null): value is TabType =>
+  value !== null && (TABS as readonly string[]).includes(value);
+
+function readTabRequest(search: string): { tab: TabType | null; focus: FieldFocusRequest | null } {
+  const params = new URLSearchParams(search);
+  const tab = params.get('tab');
+  const fieldId = params.get('field');
+  const resolved = isTab(tab) ? tab : null;
+  return {
+    tab: resolved,
+    focus: resolved === 'settings' && fieldId ? { fieldId, id: Date.now() } : null,
+  };
+}
 
 export function LogsPage() {
   const { t } = useTranslation();
@@ -62,7 +82,21 @@ export function LogsPage() {
   const config = useConfigStore((state) => state.config);
   const requestLogEnabled = config?.requestLog ?? false;
 
-  const [activeTab, setActiveTab] = useState<TabType>('logs');
+  const location = useLocation();
+  const [tabRequest, setTabRequest] = useState(() => ({
+    search: location.search,
+    ...readTabRequest(location.search),
+  }));
+  const [activeTab, setActiveTab] = useState<TabType>(tabRequest.tab ?? 'logs');
+  const [settingsMounted, setSettingsMounted] = useState(activeTab === 'settings');
+  if (tabRequest.search !== location.search) {
+    const next = readTabRequest(location.search);
+    setTabRequest({ search: location.search, ...next });
+    if (next.tab) {
+      setActiveTab(next.tab);
+      if (next.tab === 'settings') setSettingsMounted(true);
+    }
+  }
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [hideManagementLogs, setHideManagementLogs] = useLocalStorage(
@@ -148,7 +182,10 @@ export function LogsPage() {
     }
   };
 
-  useHeaderRefresh(() => (activeTab === 'errors' ? loadErrorLogs() : loadLogs(false)));
+  useHeaderRefresh(
+    () => (activeTab === 'errors' ? loadErrorLogs() : loadLogs(false)),
+    activeTab === 'logs' || activeTab === 'errors'
+  );
 
   const downloadErrorLog = async (name: string) => {
     const session = requests.session.capture();
@@ -407,12 +444,16 @@ export function LogsPage() {
           className={styles.tabBar}
           value={activeTab}
           onValueChange={(value) => {
-            if (value === 'errors') setFullscreenLogs(false);
-            setActiveTab(value === 'errors' ? 'errors' : 'logs');
+            const next = isTab(value) ? value : 'logs';
+            if (next !== 'logs') setFullscreenLogs(false);
+            if (next === 'settings') setSettingsMounted(true);
+            setActiveTab(next);
           }}
           tabs={[
             { value: 'logs', label: t('logs.log_content') },
             { value: 'errors', label: t('logs.error_logs_modal_title') },
+            { value: 'decisions', label: t('logs.tab_decisions') },
+            { value: 'settings', label: t('logs.tab_settings') },
           ]}
         />
       </header>
@@ -1011,6 +1052,20 @@ export function LogsPage() {
               </div>
             </div>
           </Panel>
+        )}
+
+        {activeTab === 'decisions' && (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <RoutingDecisionsView />
+          </div>
+        )}
+
+        {settingsMounted && (
+          <div hidden={activeTab !== 'settings'} className="min-h-0 flex-1 overflow-y-auto pb-2">
+            <div className="mx-auto w-full max-w-4xl">
+              <LogSettingsEditor active={activeTab === 'settings'} focus={tabRequest.focus} />
+            </div>
+          </div>
         )}
       </div>
 

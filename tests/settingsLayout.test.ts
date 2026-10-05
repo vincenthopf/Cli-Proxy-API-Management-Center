@@ -9,7 +9,11 @@ import {
   countFieldsBySection,
   editorModeForSection,
   isDisabledBySentinel,
+  LOGS_PAGE_HOME,
+  fieldPath,
+  homeForField,
   legacyConfigTarget,
+  logSettingsPath,
   parseClientApiKeys,
   patchForValueKey,
   planSectionTransition,
@@ -17,6 +21,7 @@ import {
   sectionForField,
   sectionFromPathname,
   settingsPath,
+  settingsRedirectTarget,
 } from '@/features/settings/settingsLayout';
 import { AccessSection } from '@/features/settings/sections/AccessSection';
 import { LoggingSection } from '@/features/settings/sections/LoggingSection';
@@ -44,8 +49,26 @@ describe('settings routes', () => {
       '/settings/routing?field=routingStrategy'
     );
     expect(legacyConfigTarget('?field=apiKeys')).toBe('/settings/access?field=apiKeys');
+    expect(legacyConfigTarget('?field=debug')).toBe('/logs?tab=settings&field=debug');
     expect(legacyConfigTarget('?field=nope')).toBe('/settings');
     expect(legacyConfigTarget('')).toBe('/settings');
+  });
+
+  test('log settings live on the Logs page and old links redirect there', () => {
+    expect(SETTINGS_SECTION_IDS).not.toContain('logging' as never);
+    expect(homeForField('loggingToFile')).toBe(LOGS_PAGE_HOME);
+    expect(sectionForField('loggingToFile')).toBeUndefined();
+    expect(fieldPath('usageStatisticsEnabled')).toBe(
+      '/logs?tab=settings&field=usageStatisticsEnabled'
+    );
+    expect(fieldPath('proxyUrl')).toBe('/settings/network?field=proxyUrl');
+    expect(logSettingsPath()).toBe('/logs?tab=settings');
+    expect(settingsRedirectTarget('/settings/logging', '')).toBe('/logs?tab=settings');
+    expect(settingsRedirectTarget('/settings', '?field=debug')).toBe(
+      '/logs?tab=settings&field=debug'
+    );
+    expect(settingsRedirectTarget('/settings/routing', '?field=routingStrategy')).toBeNull();
+    expect(sectionFromPathname('/settings/logging')).toBe('overview');
   });
 
   test('only the YAML section uses the source editor mode', () => {
@@ -73,6 +96,7 @@ describe('dirty and error accounting', () => {
     expect(
       countFieldsBySection(['apiKeys', 'routingStrategy', 'disableCooling', 'proxyUrl'])
     ).toEqual({ access: 1, routing: 2, network: 1 });
+    expect(countFieldsBySection(['debug', 'loggingToFile'])).toEqual({ logs: 2 });
   });
 
   test('counts validation errors per section and adds payload errors to providers', () => {

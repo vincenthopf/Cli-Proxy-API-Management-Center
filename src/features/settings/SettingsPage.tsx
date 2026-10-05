@@ -1,45 +1,31 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, type BlockerFunction } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Badge, Banner, Button, Loader, Text } from '@cloudflare/kumo';
 import { ArrowsClockwiseIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer';
-import { prefersReducedMotion } from '@/hooks/motion';
-import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
-import { useVisualConfig } from '@/hooks/useVisualConfig';
-import { useConfigDocument } from '@/features/config/hooks/useConfigDocument';
-import { configFieldDomId } from '@/features/config/searchIndex';
-import { countTotalErrors, resolveStatus } from '@/features/config/uiState';
 import { useAuthStore, useConfigStore, useNotificationStore, useThemeStore } from '@/stores';
 import { DiffDialog } from './components/DiffDialog';
 import { SaveBar } from './components/SaveBar';
 import { SettingsNav } from './components/SettingsNav';
 import { AccessSection } from './sections/AccessSection';
 import { AdvancedSection } from './sections/AdvancedSection';
-import { LoggingSection } from './sections/LoggingSection';
 import { NetworkSection } from './sections/NetworkSection';
 import { OverviewSection } from './sections/OverviewSection';
 import { ProvidersSection } from './sections/ProvidersSection';
 import { RoutingSection } from './sections/RoutingSection';
 import { YamlSection } from './sections/YamlSection';
+import { SettingsFormContext, type FieldFocusRequest } from './settingsForm';
 import {
-  SettingsFormContext,
-  type FieldFocusRequest,
-  type SettingsFormValue,
-} from './settingsForm';
-import {
-  changedFieldIds as toChangedFieldIds,
-  countErrorsBySection,
-  countFieldsBySection,
   editorModeForSection,
   planSectionTransition,
   sectionForField,
   sectionFromPathname,
   settingsPath,
+  settingsRedirectTarget,
   type SettingsSectionId,
 } from './settingsLayout';
-
-const HIGHLIGHT_CLASSES = ['ring-2', 'ring-kumo-brand', 'bg-kumo-tint'];
+import { useSettingsEditor } from './useSettingsEditor';
 
 function replaceSettingsUrl(path: string) {
   if (typeof window === 'undefined') return;
@@ -58,6 +44,13 @@ function readInitialRequest(pathname: string, search: string) {
 }
 
 export function SettingsPage() {
+  const location = useLocation();
+  const redirect = settingsRedirectTarget(location.pathname, location.search);
+  if (redirect) return <Navigate to={redirect} replace />;
+  return <SettingsEditorPage />;
+}
+
+function SettingsEditorPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const layer = usePageTransitionLayer();
@@ -73,27 +66,22 @@ export function SettingsPage() {
   const [focus, setFocus] = useState<FieldFocusRequest | null>(initialRequest.focus);
   const mode = editorModeForSection(section);
 
+  const editor = useSettingsEditor({ mode, focus, guardEnabled: isCurrentLayer });
   const {
-    visualValues,
-    visualDirty,
-    visualDirtyFields,
-    visualParseError,
-    visualValidationErrors,
-    visualHasPayloadValidationErrors,
-    loadVisualValuesFromYaml,
-    rebaseVisualValuesFromYaml,
-    applyVisualChangesToYaml,
-    setVisualValues,
-  } = useVisualConfig();
-
-  const doc = useConfigDocument({
-    mode,
-    visualDirty,
-    visualParseError,
-    loadVisualValuesFromYaml,
-    rebaseVisualValuesFromYaml,
-    applyVisualChangesToYaml,
-  });
+    doc,
+    disconnected,
+    changedIds,
+    changedCounts,
+    errorCounts,
+    totalErrors,
+    status,
+    saveDisabled,
+    saveStatusText,
+    formValue,
+    initialLoading,
+  } = editor;
+  const { visualDirty, visualParseError, loadVisualValuesFromYaml, applyVisualChangesToYaml } =
+    editor.visual;
 
   useEffect(() => {
     replaceSettingsUrl(settingsPath(initialRequest.section));
@@ -103,22 +91,6 @@ export function SettingsPage() {
     if (connectionStatus !== 'connected') return;
     fetchConfig().catch(() => undefined);
   }, [connectionStatus, fetchConfig]);
-
-  const shouldBlock = useCallback<BlockerFunction>(
-    ({ currentLocation, nextLocation }) =>
-      doc.isDirty && currentLocation.pathname !== nextLocation.pathname,
-    [doc.isDirty]
-  );
-  const unsavedDialog = useMemo(
-    () => ({
-      title: t('common.unsaved_changes_title'),
-      message: t('common.unsaved_changes_message'),
-      confirmText: t('common.confirm'),
-      cancelText: t('common.cancel'),
-    }),
-    [t]
-  );
-  useUnsavedChangesGuard({ enabled: isCurrentLayer, shouldBlock, dialog: unsavedDialog });
 
   const selectSection = useCallback(
     (next: SettingsSectionId, fieldId?: string) => {
@@ -177,93 +149,6 @@ export function SettingsPage() {
     );
   }, [mode, showNotification, t, visualParseError]);
 
-  useEffect(() => {
-    if (!focus || doc.loading) return;
-    let frame = 0;
-    let timer = 0;
-    let attempts = 0;
-    let highlighted: HTMLElement | null = null;
-    const run = () => {
-      const element = document.getElementById(configFieldDomId(focus.fieldId));
-      if (!element || element.getClientRects().length === 0) {
-        attempts += 1;
-        if (attempts < 12) frame = requestAnimationFrame(run);
-        return;
-      }
-      element.scrollIntoView({
-        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-        block: 'center',
-      });
-      element.classList.add(...HIGHLIGHT_CLASSES);
-      highlighted = element;
-      timer = window.setTimeout(() => {
-        element.classList.remove(...HIGHLIGHT_CLASSES);
-        highlighted = null;
-      }, 1800);
-    };
-    frame = requestAnimationFrame(run);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-      highlighted?.classList.remove(...HIGHLIGHT_CLASSES);
-    };
-  }, [doc.loading, focus]);
-
-  const changedIds = useMemo(() => toChangedFieldIds(visualDirtyFields), [visualDirtyFields]);
-  const changedSet = useMemo(() => new Set(changedIds), [changedIds]);
-  const changedCounts = useMemo(() => countFieldsBySection(changedIds), [changedIds]);
-  const errorCounts = useMemo(
-    () => countErrorsBySection(visualValidationErrors, visualHasPayloadValidationErrors),
-    [visualHasPayloadValidationErrors, visualValidationErrors]
-  );
-  const totalErrors = countTotalErrors(visualValidationErrors, visualHasPayloadValidationErrors);
-
-  const disconnected = connectionStatus !== 'connected';
-  const validationBlocked = mode === 'visual' && totalErrors > 0;
-  const status = resolveStatus({
-    disconnected,
-    loading: doc.loading,
-    loadFailed: Boolean(doc.error),
-    yamlError: Boolean(visualParseError),
-    validationBlocked,
-    saving: doc.saving,
-    dirty: doc.isDirty,
-  });
-  const saveDisabled =
-    disconnected ||
-    doc.loading ||
-    doc.saving ||
-    !doc.isDirty ||
-    doc.diffModalOpen ||
-    Boolean(visualParseError && mode === 'visual') ||
-    validationBlocked;
-  const formDisabled =
-    disconnected || doc.loading || doc.saving || doc.diffModalOpen || doc.recoveryRequired;
-
-  const formValue = useMemo<SettingsFormValue>(
-    () => ({
-      values: visualValues,
-      validationErrors: visualValidationErrors,
-      hasPayloadValidationErrors: visualHasPayloadValidationErrors,
-      changedFieldIds: changedSet,
-      disabled: formDisabled,
-      focus,
-      onChange: setVisualValues,
-    }),
-    [
-      changedSet,
-      focus,
-      formDisabled,
-      setVisualValues,
-      visualHasPayloadValidationErrors,
-      visualValidationErrors,
-      visualValues,
-    ]
-  );
-
-  const reloadIfClean = useCallback(() => {
-    if (!doc.isDirty) void doc.loadConfig();
-  }, [doc]);
   const openYaml = useCallback(() => selectSection('yaml'), [selectSection]);
 
   const statusBadge = (() => {
@@ -279,14 +164,6 @@ export function SettingsPage() {
     }
   })();
 
-  const saveStatusText = doc.recoveryRequired
-    ? t('config_management.precise_save_recovery_required')
-    : status.key === 'disconnected' || status.key === 'yaml_error' || status.key === 'saving'
-      ? t(status.labelKey)
-      : undefined;
-
-  const initialLoading = doc.loading && doc.serverYaml === '';
-
   const renderSection = () => {
     switch (section) {
       case 'overview':
@@ -301,8 +178,6 @@ export function SettingsPage() {
         return <AccessSection />;
       case 'routing':
         return <RoutingSection />;
-      case 'logging':
-        return <LoggingSection onServerConfigChanged={reloadIfClean} />;
       case 'network':
         return <NetworkSection onOpenYaml={openYaml} />;
       case 'providers':
@@ -372,7 +247,7 @@ export function SettingsPage() {
           />
         ) : null}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[15rem_minmax(0,1fr)]">
           <aside className="md:sticky md:top-6 md:self-start">
             <SettingsNav
               active={section}

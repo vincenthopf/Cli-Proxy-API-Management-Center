@@ -57,15 +57,15 @@ export function LoggingSection({ onServerConfigChanged }: { onServerConfigChange
       <SettingsGroup
         title={t('settings.groups.request_log.title')}
         description={t('settings.groups.request_log.description')}
-      >
-        <div className="py-4">
+        notice={
           <Banner
             variant="alert"
             icon={<WarningIcon weight="fill" />}
             title={t('settings.logging.request_log_warning_title')}
             description={t('settings.logging.request_log_warning_description')}
           />
-        </div>
+        }
+      >
         <SettingRow
           fieldId="requestLog"
           layout="switch"

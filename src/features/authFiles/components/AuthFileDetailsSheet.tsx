@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { Banner, InputArea } from '@cloudflare/kumo';
@@ -44,13 +44,23 @@ export type AuthFileDetailsSheetProps = {
   onCopyText: (text: string) => void | Promise<void>;
   onSave: () => void;
   onChange: (field: PrefixProxyEditorField, value: PrefixProxyEditorFieldValue) => void;
+  header?: ReactNode;
 };
 
 export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { disableControls, editor, updatedText, dirty, onClose, onCopyText, onSave, onChange } =
-    props;
+  const {
+    disableControls,
+    editor,
+    updatedText,
+    dirty,
+    onClose,
+    onCopyText,
+    onSave,
+    onChange,
+    header,
+  } = props;
   const showConfirmation = useNotificationStore((state) => state.showConfirmation);
   const [revealSecrets, setRevealSecrets] = useState(false);
 
@@ -81,7 +91,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
       if (editor?.saving) return;
 
       void Promise.resolve(confirmClose()).then((ok) => {
-        if (ok) void navigate('/config?field=routingStrategy');
+        if (ok) void navigate('/settings/routing?field=routingStrategy');
       });
     },
     [confirmClose, editor?.saving, navigate]
@@ -165,6 +175,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
     >
       {editor && (
         <div className={styles.editor}>
+          {header}
           {editor.loading ? (
             <div className={styles.loading}>
               <LoadingSpinner size={14} />
@@ -172,9 +183,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
             </div>
           ) : (
             <>
-              {editor.error && (
-                <Banner variant="error" size="sm" description={editor.error} />
-              )}
+              {editor.error && <Banner variant="error" size="sm" description={editor.error} />}
               <div className={styles.jsonWrapper}>
                 <label className={styles.label} htmlFor="auth-file-info">
                   {t('auth_files.prefix_proxy_info_label')}
@@ -193,11 +202,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
                     ? t('auth_files.prefix_proxy_source_label')
                     : t('auth_files.prefix_proxy_invalid_content_label')}
                   {editor.json ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setRevealSecrets((v) => !v)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setRevealSecrets((v) => !v)}>
                       {revealSecrets ? t('connect.hide') : t('connect.reveal')}
                     </Button>
                   ) : null}
@@ -251,7 +256,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
                           settingsLink: (
                             <Link
                               className={styles.settingsLink}
-                              to="/config?field=routingStrategy"
+                              to="/settings/routing?field=routingStrategy"
                               onClick={handleSettingsLinkClick}
                             />
                           ),

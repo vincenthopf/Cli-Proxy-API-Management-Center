@@ -21,10 +21,6 @@ export interface WindowView {
 export type AccountStatus =
   'serving' | 'standby' | 'cooling' | 'paused' | 'unavailable' | 'exhausted';
 
-export type AccountAlert =
-  | { kind: 'expiring'; name: string; remaining: number; resetsAt: string }
-  | { kind: 'exhausted'; name: string; resetsAt: string | null };
-
 export interface RouterDecision {
   ts: string | null;
   runId: string | null;
@@ -38,8 +34,6 @@ export interface RouterDecision {
   recommendedPriority: number | null;
   error: string | null;
 }
-
-const DAY_MS = 24 * 3600 * 1000;
 
 const timeOf = (iso: string | null | undefined): number | null => {
   if (!iso) return null;
@@ -99,32 +93,6 @@ export const sortAccounts = (accounts: AccountRecord[]): AccountRecord[] =>
     if (ar !== br) return ar - br;
     return (a.name || '').localeCompare(b.name || '');
   });
-
-export const accountAlerts = (accounts: AccountRecord[], now: number): AccountAlert[] => {
-  const alerts: AccountAlert[] = [];
-  for (const account of accounts) {
-    if (account.disabled) continue;
-    const name = accountDisplayName(account);
-    const weekly = effectiveWindow(account.seven_day, now);
-    if (weekly.remaining === null) continue;
-    const resetAt = timeOf(weekly.resetsAt);
-    if (weekly.remaining > 1 && resetAt !== null && weekly.resetsAt) {
-      const until = resetAt - now;
-      if (until > 0 && until < DAY_MS) {
-        alerts.push({
-          kind: 'expiring',
-          name,
-          remaining: weekly.remaining,
-          resetsAt: weekly.resetsAt,
-        });
-      }
-    }
-    if (weekly.remaining <= 1) {
-      alerts.push({ kind: 'exhausted', name, resetsAt: weekly.resetsAt });
-    }
-  }
-  return alerts;
-};
 
 const str = (value: unknown): string | null =>
   typeof value === 'string' && value.length > 0 ? value : null;
