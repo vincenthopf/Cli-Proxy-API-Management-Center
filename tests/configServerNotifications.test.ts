@@ -51,40 +51,38 @@ describe('trusted proxy restart notification', () => {
 });
 
 describe('server configuration localization', () => {
-  for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
-    test(`${locale} has labels, hints, validation and restart text`, async () => {
-      const messages: unknown = await Bun.file(`src/i18n/locales/${locale}.json`).json();
-      const resolve = (key: string) =>
-        key.split('.').reduce<unknown>((node, part) => {
-          if (node && typeof node === 'object') return (node as Record<string, unknown>)[part];
-          return undefined;
-        }, messages);
-      for (const id of [
-        'trustedProxies',
-        'discoveryEnabled',
-        'discoveryServiceName',
-        'discoveryServiceType',
-        'discoverySubtypes',
-        'discoveryInterfacesInclude',
-        'discoveryInterfacesExclude',
-        'discoveryAuthRequired',
-        'discoveryAdvertiseManagement',
-      ]) {
-        const entry = findConfigFieldById(id);
-        expect(entry?.sectionId).toBe('connectivity');
-        expect(entry?.labelKey).toBe(`config_management.visual.serverExtras.${id}.label`);
-        expect(entry?.hintKey).toBe(`config_management.visual.serverExtras.${id}.hint`);
-        expect(resolve(entry!.labelKey)).toBeString();
-        expect(resolve(entry!.hintKey!)).toBeString();
-      }
-      for (const key of [
-        'notification.trusted_proxies_restart_required',
-        'config_management.visual.serverExtras.discoveryTitle',
-        'config_management.visual.serverExtras.discoveryHint',
-        'config_management.visual.validation.invalid_trusted_proxies',
-        'config_management.visual.validation.invalid_discovery_service_type',
-      ])
-        expect(resolve(key)).toBeString();
-    });
-  }
+  test('en has labels, hints, validation and restart text', async () => {
+    const messages: unknown = await Bun.file('src/i18n/locales/en.json').json();
+    const resolve = (key: string) =>
+      key.split('.').reduce<unknown>((node, part) => {
+        if (node && typeof node === 'object') return (node as Record<string, unknown>)[part];
+        return undefined;
+      }, messages);
+    for (const id of [
+      'trustedProxies',
+      'discoveryEnabled',
+      'discoveryServiceName',
+      'discoveryServiceType',
+      'discoverySubtypes',
+      'discoveryInterfacesInclude',
+      'discoveryInterfacesExclude',
+      'discoveryAuthRequired',
+      'discoveryAdvertiseManagement',
+    ]) {
+      const entry = findConfigFieldById(id);
+      expect(entry?.sectionId).toBe('connectivity');
+      expect(entry?.labelKey).toBe(`config_management.visual.serverExtras.${id}.label`);
+      expect(entry?.hintKey).toBe(`config_management.visual.serverExtras.${id}.hint`);
+      expect(resolve(entry!.labelKey)).toBeString();
+      expect(resolve(entry!.hintKey!)).toBeString();
+    }
+    for (const key of [
+      'notification.trusted_proxies_restart_required',
+      'config_management.visual.serverExtras.discoveryTitle',
+      'config_management.visual.serverExtras.discoveryHint',
+      'config_management.visual.validation.invalid_trusted_proxies',
+      'config_management.visual.validation.invalid_discovery_service_type',
+    ])
+      expect(resolve(key)).toBeString();
+  });
 });

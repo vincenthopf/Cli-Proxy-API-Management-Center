@@ -293,27 +293,20 @@ test('a stale claim answer cannot settle the replacement session operation', asy
   expect(operations.inspect('account')).toBeUndefined();
 });
 
-test('all grant messages and confirmation are translated in four locales', async () => {
-  const locales = await Promise.all(
-    ['en', 'zh-CN', 'zh-TW', 'ru'].map(
-      async (locale) => (await Bun.file(`src/i18n/locales/${locale}.json`).json()).claude_reset
-    )
-  );
-  for (const locale of locales) {
-    expect(Object.keys(locale).sort()).toEqual(Object.keys(locales[0]).sort());
-    expect(locale.confirm_text).toContain('{{name}}');
-    expect(locale.retry_confirm).toContain('{{name}}');
-    expect(typeof locale.remaining).toBe('string');
-    expect(locale.count).toContain('{{left}}');
-    for (const key of [
-      ...ANTHROPIC_RESET_RESULTS,
-      'auth_error',
-      'rate_limited',
-      'unknown',
-      'expired',
-    ]) {
-      expect(typeof locale[key]).toBe('string');
-    }
+test('all grant messages and confirmation are translated', async () => {
+  const locale = (await Bun.file('src/i18n/locales/en.json').json()).claude_reset;
+  expect(locale.confirm_text).toContain('{{name}}');
+  expect(locale.retry_confirm).toContain('{{name}}');
+  expect(typeof locale.remaining).toBe('string');
+  expect(locale.count).toContain('{{left}}');
+  for (const key of [
+    ...ANTHROPIC_RESET_RESULTS,
+    'auth_error',
+    'rate_limited',
+    'unknown',
+    'expired',
+  ]) {
+    expect(typeof locale[key]).toBe('string');
   }
 });
 

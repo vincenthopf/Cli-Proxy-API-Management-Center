@@ -853,27 +853,21 @@ export function OAuthPage() {
     );
   };
 
-  const featuredProviders = providerCards.filter((provider) =>
-    ['kimi', 'kimi-ai'].includes(provider.id)
-  );
-  const otherOAuthProviders = providerCards.filter(
-    (provider) => !['kimi', 'kimi-ai'].includes(provider.id)
-  );
+  const PRIMARY_ORDER = ['anthropic', 'claude', 'codex'];
+  const orderedProviders = [...providerCards].sort((left, right) => {
+    const l = PRIMARY_ORDER.indexOf(left.id);
+    const r = PRIMARY_ORDER.indexOf(right.id);
+    return (l === -1 ? 99 : l) - (r === -1 ? 99 : r);
+  });
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>{t('nav.oauth', { defaultValue: 'OAuth' })}</h1>
+      <h1 className={styles.pageTitle}>{t('nav.add_account')}</h1>
 
       <div className={styles.content}>
         <section className={styles.providerSection}>
           <div className={styles.providerList}>
-            {featuredProviders.map((provider) => renderOAuthProviderCard(provider, true))}
-          </div>
-        </section>
-
-        <section className={styles.providerSection}>
-          <div className={styles.providerList}>
-            {otherOAuthProviders.map((provider) => renderOAuthProviderCard(provider))}
+            {orderedProviders.map((provider) => renderOAuthProviderCard(provider))}
           </div>
         </section>
 

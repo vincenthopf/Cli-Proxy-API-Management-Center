@@ -38,37 +38,35 @@ function resolveKey(root: unknown, path: string): unknown {
 }
 
 describe('added configuration field localization', () => {
-  for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
-    test(`${locale} includes searchable labels, help, and accessible ICE actions`, async () => {
-      const messages: unknown = await Bun.file(`src/i18n/locales/${locale}.json`).json();
-      for (const fieldId of addedFieldIds) {
-        const entry = CONFIG_FIELD_SEARCH_INDEX.find((item) => item.fieldId === fieldId);
-        expect(entry).toBeDefined();
-        expect(entry?.labelKey).toBe(`config_management.visual.additions.${fieldId}.label`);
-        expect(entry?.hintKey).toBe(`config_management.visual.additions.${fieldId}.hint`);
-        expect(resolveKey(messages, entry!.labelKey)).toBeString();
-        expect(resolveKey(messages, entry!.hintKey!)).toBeString();
-      }
-      for (const key of [
-        'oauthTitle',
-        'oauthHint',
-        'claudeTitle',
-        'codexTitle',
-        'antigravityTitle',
-        'xaiTitle',
-        'liveRelayTitle',
-        'liveRelayHint',
-        'iceAdd',
-        'iceRemove',
-        'iceURLs',
-        'iceUsername',
-        'iceCredential',
-        'iceServer',
-      ]) {
-        const text = resolveKey(messages, `config_management.visual.additions.${key}`);
-        expect(text).toBeString();
-        expect(String(text).trim().length).toBeGreaterThan(0);
-      }
-    });
-  }
+  test('en includes searchable labels, help, and accessible ICE actions', async () => {
+    const messages: unknown = await Bun.file('src/i18n/locales/en.json').json();
+    for (const fieldId of addedFieldIds) {
+      const entry = CONFIG_FIELD_SEARCH_INDEX.find((item) => item.fieldId === fieldId);
+      expect(entry).toBeDefined();
+      expect(entry?.labelKey).toBe(`config_management.visual.additions.${fieldId}.label`);
+      expect(entry?.hintKey).toBe(`config_management.visual.additions.${fieldId}.hint`);
+      expect(resolveKey(messages, entry!.labelKey)).toBeString();
+      expect(resolveKey(messages, entry!.hintKey!)).toBeString();
+    }
+    for (const key of [
+      'oauthTitle',
+      'oauthHint',
+      'claudeTitle',
+      'codexTitle',
+      'antigravityTitle',
+      'xaiTitle',
+      'liveRelayTitle',
+      'liveRelayHint',
+      'iceAdd',
+      'iceRemove',
+      'iceURLs',
+      'iceUsername',
+      'iceCredential',
+      'iceServer',
+    ]) {
+      const text = resolveKey(messages, `config_management.visual.additions.${key}`);
+      expect(text).toBeString();
+      expect(String(text).trim().length).toBeGreaterThan(0);
+    }
+  });
 });

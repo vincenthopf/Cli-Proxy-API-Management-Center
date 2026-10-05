@@ -87,13 +87,11 @@ describe('log workspace layout contract', () => {
     expect(styles).not.toContain('height: 32px');
   });
 
-  test('all supported locales describe both filtering and display settings', () => {
-    for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
-      const messages = JSON.parse(readSource(`src/i18n/locales/${locale}.json`));
-      expect(messages.logs.filter_panel_title).toBeTruthy();
-      expect(messages.logs.show_raw_logs).toBeTruthy();
-      expect(messages.logs.wrap_lines).toBeTruthy();
-      expect(messages.logs.hide_management_logs).toBeTruthy();
-    }
+  test('the English locale describes both filtering and display settings', () => {
+    const messages = JSON.parse(readSource('src/i18n/locales/en.json'));
+    expect(messages.logs.filter_panel_title).toBeTruthy();
+    expect(messages.logs.show_raw_logs).toBeTruthy();
+    expect(messages.logs.wrap_lines).toBeTruthy();
+    expect(messages.logs.hide_management_logs).toBeTruthy();
   });
 });

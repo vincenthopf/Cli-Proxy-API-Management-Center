@@ -1,5 +1,9 @@
 import { Navigate, useRoutes, type Location } from 'react-router-dom';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { OverviewPage } from '@/features/overview/OverviewPage';
+import { UsagePage } from '@/features/usage/UsagePage';
+import { RoutingPage } from '@/features/routing/RoutingPage';
+import { ConnectPage } from '@/features/connect/ConnectPage';
 import { ProvidersWorkbenchPage } from '@/features/providers/ProvidersWorkbenchPage';
 import { AuthFilesPage } from '@/features/authFiles/AuthFilesPage';
 import { AuthFilesOAuthExcludedEditPage } from '@/pages/AuthFilesOAuthExcludedEditPage';
@@ -15,12 +19,16 @@ import { SystemPage } from '@/pages/SystemPage';
 import { useAuthStore } from '@/stores';
 
 const createMainRoutes = (supportsPlugin: boolean) => [
-  { path: '/', element: <DashboardPage /> },
-  { path: '/dashboard', element: <DashboardPage /> },
+  { path: '/', element: <OverviewPage /> },
+  { path: '/usage', element: <UsagePage /> },
+  { path: '/routing', element: <RoutingPage /> },
+  { path: '/connect', element: <ConnectPage /> },
+  { path: '/activity', element: <DashboardPage /> },
+  { path: '/dashboard', element: <Navigate to="/" replace /> },
   { path: '/settings', element: <Navigate to="/config" replace /> },
   { path: '/api-keys', element: <Navigate to="/config" replace /> },
-  { path: '/quick-start', element: <ProvidersWorkbenchPage fixedBrand="apikeyFun" /> },
-  { path: '/quick-start/*', element: <Navigate to="/quick-start" replace /> },
+  { path: '/quick-start', element: <Navigate to="/connect" replace /> },
+  { path: '/quick-start/*', element: <Navigate to="/connect" replace /> },
   { path: '/ai-providers', element: <ProvidersWorkbenchPage /> },
   { path: '/ai-providers/*', element: <Navigate to="/ai-providers" replace /> },
   { path: '/auth-files', element: <AuthFilesPage /> },

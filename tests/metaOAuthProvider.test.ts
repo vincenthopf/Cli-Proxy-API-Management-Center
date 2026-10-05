@@ -71,27 +71,25 @@ describe('Muse (Meta) provider and device OAuth', () => {
       /const CALLBACK_SUPPORTED = new Set<string>\(([^;]+)\);/
     );
     expect(callbackProviders?.[1]).not.toContain("'meta'");
-    for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
-      const translations = JSON.parse(readFileSync(`src/i18n/locales/${locale}.json`, 'utf8'));
-      for (const suffix of [
-        'oauth_title',
-        'oauth_button',
-        'oauth_hint',
-        'oauth_url_label',
-        'open_link',
-        'copy_link',
-        'oauth_status_waiting',
-        'oauth_status_success',
-        'oauth_status_error',
-        'oauth_start_error',
-        'oauth_polling_error',
-      ]) {
-        expect(translations.auth_login[`meta_${suffix}`]).toBeTruthy();
-      }
-      expect(translations.auth_files.filter_meta).toBe('Muse (Meta)');
-      expect(translations.providersPage.providerNames.meta).toBe('Muse (Meta)');
-      expect(translations.auth_login.device_code_label).toBeTruthy();
-      expect(translations.auth_login.device_code_copy).toBeTruthy();
+    const translations = JSON.parse(readFileSync('src/i18n/locales/en.json', 'utf8'));
+    for (const suffix of [
+      'oauth_title',
+      'oauth_button',
+      'oauth_hint',
+      'oauth_url_label',
+      'open_link',
+      'copy_link',
+      'oauth_status_waiting',
+      'oauth_status_success',
+      'oauth_status_error',
+      'oauth_start_error',
+      'oauth_polling_error',
+    ]) {
+      expect(translations.auth_login[`meta_${suffix}`]).toBeTruthy();
     }
+    expect(translations.auth_files.filter_meta).toBe('Muse (Meta)');
+    expect(translations.providersPage.providerNames.meta).toBe('Muse (Meta)');
+    expect(translations.auth_login.device_code_label).toBeTruthy();
+    expect(translations.auth_login.device_code_copy).toBeTruthy();
   });
 });

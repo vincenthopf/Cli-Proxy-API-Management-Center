@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { Sheet } from '@/components/ui/Sheet';
@@ -20,6 +20,7 @@ import { MAX_CREDENTIAL_WEIGHT } from '@/utils/credentialWeight';
 import { AuthFileExcludedModelsField } from './AuthFileExcludedModelsField';
 import { AuthFilePolicyFields } from './AuthFilePolicyFields';
 import { credentialPolicyError, readCredentialPolicy } from '../credentialPolicy';
+import { redactJsonText } from '@/utils/redactSecrets';
 import styles from './AuthFileDetailsSheet.module.scss';
 
 /** API 边界归一化补写的派生字段——INFO 视图里只展示后端原始形状，避免重复噪音。 */
@@ -56,6 +57,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
   const { disableControls, editor, updatedText, dirty, onClose, onCopyText, onSave, onChange } =
     props;
   const showConfirmation = useNotificationStore((state) => state.showConfirmation);
+  const [revealSecrets, setRevealSecrets] = useState(false);
 
   const confirmClose = useCallback((): boolean | Promise<boolean> => {
     if (!dirty || editor?.saving === true) return true;
@@ -98,7 +100,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
       return text;
     }
   };
-  const previewText = formatJsonText(updatedText);
+  const previewText = revealSecrets ? formatJsonText(updatedText) : redactJsonText(updatedText);
   const invalidContentPreview = editor?.invalidContentPreview ?? '';
   const fileInfoText = editor?.fileInfoText ?? '';
   const displayInfoText = useMemo(() => {
@@ -110,13 +112,15 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
         DERIVED_INFO_KEYS.forEach((key) => {
           delete record[key];
         });
-        return JSON.stringify(record, null, 2);
+        return revealSecrets
+          ? JSON.stringify(record, null, 2)
+          : redactJsonText(JSON.stringify(record));
       }
     } catch {
       /* 非 JSON 原样展示 */
     }
     return fileInfoText;
-  }, [fileInfoText]);
+  }, [fileInfoText, revealSecrets]);
 
   return (
     <Sheet
@@ -183,6 +187,15 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
                   {editor.json
                     ? t('auth_files.prefix_proxy_source_label')
                     : t('auth_files.prefix_proxy_invalid_content_label')}
+                  {editor.json ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRevealSecrets((v) => !v)}
+                    >
+                      {revealSecrets ? t('connect.hide') : t('connect.reveal')}
+                    </Button>
+                  ) : null}
                 </label>
                 {editor.json ? (
                   <textarea className={styles.textarea} rows={10} readOnly value={previewText} />

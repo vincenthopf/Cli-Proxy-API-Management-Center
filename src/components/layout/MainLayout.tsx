@@ -25,17 +25,18 @@ import {
   IconSidebarOauth,
   IconSidebarPlugins,
   IconSidebarProviders,
-  IconSidebarQuickStart,
   IconSidebarQuota,
   IconSidebarStore,
   IconSidebarSystem,
   IconChevronDown,
+  IconKey,
+  IconNetwork,
+  IconPlus,
 } from '@/components/ui/icons';
 import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
 import {
   useAuthStore,
   useConfigStore,
-  useLanguageStore,
   useNotificationStore,
   useThemeStore,
 } from '@/stores';
@@ -46,16 +47,12 @@ import {
   resolvePluginAssetURL,
   type PluginResourceEntry,
 } from '@/features/plugins/pluginResources';
-import { APIKEY_FUN_DISPLAY_NAME, hasApiKeyFunConfig } from '@/features/providers/sponsor';
 import { triggerHeaderRefresh } from '@/hooks/useHeaderRefresh';
-import { LANGUAGE_LABEL_KEYS, LANGUAGE_ORDER } from '@/utils/constants';
-import { isSupportedLanguage } from '@/utils/language';
 import { getSidebarShortcutLabel, isSidebarToggleShortcut } from '@/utils/sidebarShortcut';
 import type { Theme } from '@/types';
 
 const sidebarIcons: Record<string, ReactNode> = {
   dashboard: <IconSidebarDashboard size={18} />,
-  quickStart: <IconSidebarQuickStart size={18} />,
   aiProviders: <IconSidebarProviders size={18} />,
   authFiles: <IconSidebarAuthFiles size={18} />,
   oauth: <IconSidebarOauth size={18} />,
@@ -65,6 +62,10 @@ const sidebarIcons: Record<string, ReactNode> = {
   config: <IconSidebarConfig size={18} />,
   logs: <IconSidebarLogs size={18} />,
   system: <IconSidebarSystem size={18} />,
+  usage: <IconSidebarQuota size={18} />,
+  routing: <IconNetwork size={18} />,
+  connect: <IconKey size={18} />,
+  addAccount: <IconPlus size={18} />,
 };
 
 interface SidebarNavLinkItem {
@@ -190,13 +191,6 @@ const headerIcons = {
       <path d="m10 6 6 6-6 6" />
     </svg>
   ),
-  language: (
-    <svg {...headerIconProps}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  ),
   sun: (
     <svg {...headerIconProps}>
       <circle cx="12" cy="12" r="4" />
@@ -318,12 +312,9 @@ export function MainLayout() {
 
   const fetchConfig = useConfigStore((state) => state.fetchConfig);
   const clearCache = useConfigStore((state) => state.clearCache);
-  const config = useConfigStore((state) => state.config);
 
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
-  const language = useLanguageStore((state) => state.language);
-  const setLanguage = useLanguageStore((state) => state.setLanguage);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -335,7 +326,6 @@ export function MainLayout() {
     anchorTop: number;
     top: number;
   } | null>(null);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [pluginResources, setPluginResources] = useState<PluginResourceEntry[]>([]);
   const [expandedPluginResourceIDs, setExpandedPluginResourceIDs] = useState<Set<string>>(
@@ -345,7 +335,6 @@ export function MainLayout() {
   const authFilesCountRequestRef = useRef(0);
   const railTooltipRef = useRef<HTMLDivElement | null>(null);
   const focusedRailItemRef = useRef<HTMLElement | null>(null);
-  const languageMenuRef = useRef<HTMLDivElement | null>(null);
   const themeMenuRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
 
@@ -444,19 +433,11 @@ export function MainLayout() {
     };
   }, []);
 
-  const closeLanguageMenu = useCallback(() => setLanguageMenuOpen(false), []);
   const closeThemeMenu = useCallback(() => setThemeMenuOpen(false), []);
-  useMenuDismiss(languageMenuOpen, languageMenuRef, closeLanguageMenu);
   useMenuDismiss(themeMenuOpen, themeMenuRef, closeThemeMenu);
-
-  const toggleLanguageMenu = useCallback(() => {
-    setLanguageMenuOpen((prev) => !prev);
-    setThemeMenuOpen(false);
-  }, []);
 
   const toggleThemeMenu = useCallback(() => {
     setThemeMenuOpen((prev) => !prev);
-    setLanguageMenuOpen(false);
   }, []);
 
   const handleThemeSelect = useCallback(
@@ -465,17 +446,6 @@ export function MainLayout() {
       setThemeMenuOpen(false);
     },
     [setTheme]
-  );
-
-  const handleLanguageSelect = useCallback(
-    (nextLanguage: string) => {
-      if (!isSupportedLanguage(nextLanguage)) {
-        return;
-      }
-      setLanguage(nextLanguage);
-      setLanguageMenuOpen(false);
-    },
-    [setLanguage]
   );
 
   useEffect(() => {
@@ -583,43 +553,33 @@ export function MainLayout() {
       })
     : [];
 
-  const isApiKeyFunConfigured = hasApiKeyFunConfig(config);
-  const quickStartNavItem: SidebarNavLinkItem = {
-    path: '/quick-start',
-    label: isApiKeyFunConfigured ? APIKEY_FUN_DISPLAY_NAME : undefined,
-    labelKey: isApiKeyFunConfigured ? undefined : 'nav.quick_start',
-    metaKey: 'nav_meta.quick_start',
-    icon: sidebarIcons.quickStart,
-  };
-
   const navGroups: SidebarNavGroup[] = [
     {
-      id: 'operate',
-      labelKey: 'nav_groups.operate',
+      id: 'monitor',
+      labelKey: 'nav_groups.monitor',
       items: [
         {
           path: '/',
-          labelKey: 'nav.dashboard',
-          metaKey: 'nav_meta.dashboard',
+          labelKey: 'nav.overview',
+          metaKey: 'nav_meta.overview',
           icon: sidebarIcons.dashboard,
         },
-        ...(!isApiKeyFunConfigured ? [quickStartNavItem] : []),
+        {
+          path: '/usage',
+          labelKey: 'nav.usage',
+          metaKey: 'nav_meta.usage',
+          icon: sidebarIcons.usage,
+        },
       ],
     },
     {
-      id: 'gateway',
-      labelKey: 'nav_groups.gateway',
+      id: 'accounts',
+      labelKey: 'nav_groups.accounts',
       items: [
         {
-          path: '/ai-providers',
-          labelKey: 'nav.ai_providers',
-          metaKey: 'nav_meta.ai_providers',
-          icon: sidebarIcons.aiProviders,
-        },
-        {
           path: '/auth-files',
-          labelKey: 'nav.auth_files',
-          metaKey: 'nav_meta.auth_files',
+          labelKey: 'nav.accounts',
+          metaKey: 'nav_meta.accounts',
           badge: authFilesCount ?? undefined,
           badgeLabel:
             typeof authFilesCount === 'number'
@@ -629,22 +589,45 @@ export function MainLayout() {
         },
         {
           path: '/oauth',
-          labelKey: 'nav.oauth',
-          metaKey: 'nav_meta.oauth',
-          icon: sidebarIcons.oauth,
+          labelKey: 'nav.add_account',
+          metaKey: 'nav_meta.add_account',
+          icon: sidebarIcons.addAccount,
         },
-        ...(isApiKeyFunConfigured ? [quickStartNavItem] : []),
+        {
+          path: '/routing',
+          labelKey: 'nav.routing',
+          metaKey: 'nav_meta.routing',
+          icon: sidebarIcons.routing,
+        },
+        {
+          path: '/quota',
+          labelKey: 'nav.quota_detail',
+          metaKey: 'nav_meta.quota_detail',
+          icon: sidebarIcons.quota,
+        },
       ],
     },
     {
-      id: 'observe',
-      labelKey: 'nav_groups.observe',
+      id: 'setup',
+      labelKey: 'nav_groups.setup',
       items: [
         {
-          path: '/quota',
-          labelKey: 'nav.quota_management',
-          metaKey: 'nav_meta.quota_management',
-          icon: sidebarIcons.quota,
+          path: '/connect',
+          labelKey: 'nav.connect',
+          metaKey: 'nav_meta.connect',
+          icon: sidebarIcons.connect,
+        },
+        {
+          path: '/config',
+          labelKey: 'nav.settings',
+          metaKey: 'nav_meta.settings',
+          icon: sidebarIcons.config,
+        },
+        {
+          path: '/ai-providers',
+          labelKey: 'nav.api_key_providers',
+          metaKey: 'nav_meta.api_key_providers',
+          icon: sidebarIcons.aiProviders,
         },
         {
           path: '/logs',
@@ -652,38 +635,33 @@ export function MainLayout() {
           metaKey: 'nav_meta.logs',
           icon: sidebarIcons.logs,
         },
-      ],
-    },
-    {
-      id: 'control',
-      labelKey: 'nav_groups.control',
-      items: [
-        {
-          path: '/config',
-          labelKey: 'nav.config_management',
-          metaKey: 'nav_meta.config_management',
-          icon: sidebarIcons.config,
-        },
         ...(supportsPlugin
           ? [
               {
-                path: '/plugins',
-                labelKey: 'nav.plugins',
-                metaKey: 'nav_meta.plugins',
+                kind: 'drawer' as const,
+                id: 'extensions',
+                label: t('nav.extensions'),
+                meta: t('nav_meta.extensions'),
                 icon: sidebarIcons.plugins,
-              },
-              {
-                path: '/plugin-store',
-                labelKey: 'nav.plugin_store',
-                metaKey: 'nav_meta.plugin_store',
-                icon: sidebarIcons.pluginStore,
+                children: [
+                  {
+                    path: '/plugins',
+                    labelKey: 'nav.plugins_installed',
+                    icon: <span className="nav-sub-dot" aria-hidden="true" />,
+                  },
+                  {
+                    path: '/plugin-store',
+                    labelKey: 'nav.plugins_store',
+                    icon: <span className="nav-sub-dot" aria-hidden="true" />,
+                  },
+                ],
               },
             ]
           : []),
         {
           path: '/system',
-          labelKey: 'nav.system_info',
-          metaKey: 'nav_meta.system_info',
+          labelKey: 'nav.about',
+          metaKey: 'nav_meta.about',
           icon: sidebarIcons.system,
         },
       ],
@@ -1024,40 +1002,6 @@ export function MainLayout() {
           >
             {headerIcons.refresh}
           </Button>
-          <div className={`language-menu ${languageMenuOpen ? 'open' : ''}`} ref={languageMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguageMenu}
-              title={t('language.switch')}
-              aria-label={t('language.switch')}
-              aria-haspopup="menu"
-              aria-expanded={languageMenuOpen}
-            >
-              {headerIcons.language}
-            </Button>
-            {languageMenuOpen && (
-              <div
-                className="notification entering language-menu-popover"
-                role="menu"
-                aria-label={t('language.switch')}
-              >
-                {LANGUAGE_ORDER.map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    className={`language-menu-option ${language === lang ? 'active' : ''}`}
-                    onClick={() => handleLanguageSelect(lang)}
-                    role="menuitemradio"
-                    aria-checked={language === lang}
-                  >
-                    <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
-                    {language === lang ? <span className="language-menu-check">✓</span> : null}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
           <div className={`theme-menu ${themeMenuOpen ? 'open' : ''}`} ref={themeMenuRef}>
             <Button
               variant="ghost"

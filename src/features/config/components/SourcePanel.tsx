@@ -1,9 +1,10 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconChevronDown, IconChevronUp, IconSearch } from '@/components/ui/icons';
 import type { UseSourceSearchResult } from '../hooks/useSourceSearch';
+import { redactYamlText } from '@/utils/redactSecrets';
 import styles from './SourcePanel.module.scss';
 
 const LazyConfigSourceEditor = lazy(() => import('./ConfigSourceEditor'));
@@ -95,16 +96,24 @@ export type SourcePanelProps = {
 /** YAML 源码编辑面板：lazy CodeMirror（含语法高亮/折叠/内置搜索快捷键）。 */
 export function SourcePanel({ search, value, onChange, theme, editable }: SourcePanelProps) {
   const { t } = useTranslation();
+  const [revealed, setRevealed] = useState(false);
+  const masked = useMemo(() => redactYamlText(value), [value]);
 
   return (
     <div className={styles.editorWrapper}>
+      <div className={styles.revealBar}>
+        <span>{revealed ? t('connect.secrets_visible') : t('connect.secrets_masked')}</span>
+        <Button variant="ghost" size="sm" onClick={() => setRevealed((v) => !v)}>
+          {revealed ? t('connect.hide') : t('connect.reveal_to_edit')}
+        </Button>
+      </div>
       <Suspense fallback={null}>
         <LazyConfigSourceEditor
           editorRef={search.editorRef}
-          value={value}
-          onChange={onChange}
+          value={revealed ? value : masked}
+          onChange={revealed ? onChange : () => undefined}
           theme={theme}
-          editable={editable}
+          editable={editable && revealed}
           placeholder={t('config_management.editor_placeholder')}
         />
       </Suspense>

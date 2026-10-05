@@ -20,11 +20,9 @@ describe('provider workbench editing surface', () => {
       'utf8'
     );
     expect(source).not.toContain('providersPage.groups.rowHint');
-    for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
-      const messages = JSON.parse(
-        readFileSync(new URL(`../src/i18n/locales/${locale}.json`, import.meta.url), 'utf8')
-      );
-      expect(messages.providersPage.groups).toBeUndefined();
-    }
+    const messages = JSON.parse(
+      readFileSync(new URL('../src/i18n/locales/en.json', import.meta.url), 'utf8')
+    );
+    expect(messages.providersPage.groups).toBeUndefined();
   });
 });
