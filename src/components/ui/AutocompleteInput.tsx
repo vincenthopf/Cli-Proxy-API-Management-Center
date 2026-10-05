@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { inputVariants } from '@cloudflare/kumo';
 import { IconChevronDown } from './icons';
 
 interface AutocompleteInputProps {
@@ -141,10 +142,10 @@ export function AutocompleteInput({
   return (
     <div className={`form-group ${wrapperClassName}`} ref={containerRef} style={wrapperStyle}>
       {label && <label htmlFor={id}>{label}</label>}
-      <div style={{ position: 'relative' }} ref={inputWrapRef}>
+      <div className="relative" ref={inputWrapRef}>
         <input
           id={id}
-          className={`input ${className}`.trim()}
+          className={[inputVariants(), 'input !w-full pr-9', className].filter(Boolean).join(' ')}
           value={value}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
@@ -152,24 +153,16 @@ export function AutocompleteInput({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
-          style={{ paddingRight: 32 }}
         />
         <div
-          style={{
-            position: 'absolute',
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            pointerEvents: disabled ? 'none' : 'auto',
-            cursor: 'pointer',
-            height: '100%',
-          }}
+          className={[
+            'absolute top-0 right-2 flex h-full items-center gap-1 text-kumo-subtle',
+            disabled ? 'pointer-events-none' : 'cursor-pointer',
+          ].join(' ')}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           {rightElement}
-          <IconChevronDown size={16} style={{ opacity: 0.5, marginLeft: 4 }} />
+          <IconChevronDown size={16} />
         </div>
 
         {showDropdown &&
@@ -178,35 +171,22 @@ export function AutocompleteInput({
           createPortal(
             <div
               ref={dropdownRef}
-              className="autocomplete-dropdown"
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                overflowY: 'auto',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                ...dropdownStyle,
-              }}
+              className="autocomplete-dropdown overflow-y-auto rounded-lg bg-kumo-base p-1.5 text-kumo-default shadow-lg ring ring-kumo-line"
+              style={dropdownStyle}
             >
               {filteredOptions.map((opt, index) => (
                 <div
                   key={`${opt.value}-${index}`}
                   onClick={() => handleSelect(opt.value)}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    backgroundColor:
-                      index === highlightedIndex ? 'var(--bg-tertiary)' : 'transparent',
-                    color: 'var(--text-primary)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    fontSize: '0.9rem',
-                  }}
+                  className={[
+                    'flex cursor-pointer flex-col rounded-md px-2.5 py-1.5 text-base',
+                    index === highlightedIndex ? 'bg-kumo-tint' : '',
+                  ].join(' ')}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
-                  <span style={{ fontWeight: 500 }}>{opt.value}</span>
+                  <span className="font-medium">{opt.value}</span>
                   {opt.label && opt.label !== opt.value && (
-                    <span style={{ fontSize: '0.85em', color: 'var(--text-secondary)' }}>
+                    <span className="text-sm text-kumo-subtle">
                       {opt.label}
                     </span>
                   )}

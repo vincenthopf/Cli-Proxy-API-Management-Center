@@ -1,6 +1,5 @@
-import type { ChangeEvent, ReactNode } from 'react';
-import { IconCheck } from './icons';
-import styles from './SelectionCheckbox.module.scss';
+import type { ReactNode } from 'react';
+import { Checkbox } from '@cloudflare/kumo';
 
 interface SelectionCheckboxProps {
   checked: boolean;
@@ -23,28 +22,21 @@ export function SelectionCheckbox({
   className,
   labelClassName,
 }: SelectionCheckboxProps) {
-  const rootClassName = [styles.root, disabled ? styles.disabled : '', className]
-    .filter(Boolean)
-    .join(' ');
-  const boxClassName = [styles.box, checked ? styles.boxChecked : ''].filter(Boolean).join(' ');
-  const textClassName = [styles.label, labelClassName].filter(Boolean).join(' ');
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.checked);
-  };
-
   return (
-    <label className={rootClassName} title={title}>
-      <input
-        className={styles.input}
-        type="checkbox"
+    <span className={['inline-flex min-w-0', className].filter(Boolean).join(' ')} title={title}>
+      <Checkbox
         checked={checked}
-        onChange={handleChange}
+        onCheckedChange={(value) => onChange(value === true)}
         aria-label={ariaLabel}
         disabled={disabled}
+        label={
+          label ? (
+            <span className={['min-w-0 text-kumo-default', labelClassName].filter(Boolean).join(' ')}>
+              {label}
+            </span>
+          ) : undefined
+        }
       />
-      <span className={boxClassName}>{checked ? <IconCheck size={12} /> : null}</span>
-      {label ? <div className={textClassName}>{label}</div> : null}
-    </label>
+    </span>
   );
 }

@@ -32,8 +32,6 @@ export function ConfirmationModal() {
       hideConfirmation();
     } catch (error) {
       console.error('Confirmation action failed:', error);
-      // Optional: show error notification here if needed,
-      // but usually the calling component handles specific errors.
     } finally {
       setConfirmationLoading(false);
     }
@@ -50,20 +48,28 @@ export function ConfirmationModal() {
   };
 
   return (
-    <Modal open={isOpen} onClose={handleCancel} title={title} closeDisabled={isLoading}>
+    <Modal
+      open={isOpen}
+      onClose={handleCancel}
+      title={title}
+      closeDisabled={isLoading}
+      width={440}
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleCancel} disabled={isLoading}>
+            {cancelText || t('common.cancel')}
+          </Button>
+          <Button variant={variant} onClick={handleConfirm} loading={isLoading}>
+            {confirmText || t('common.confirm')}
+          </Button>
+        </>
+      }
+    >
       {typeof message === 'string' ? (
-        <p style={{ margin: '1rem 0' }}>{message}</p>
+        <p className="m-0 text-base text-kumo-default">{message}</p>
       ) : (
-        <div style={{ margin: '1rem 0' }}>{message}</div>
+        <div className="text-base text-kumo-default">{message}</div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-        <Button variant="ghost" onClick={handleCancel} disabled={isLoading}>
-          {cancelText || t('common.cancel')}
-        </Button>
-        <Button variant={variant} onClick={handleConfirm} loading={isLoading}>
-          {confirmText || t('common.confirm')}
-        </Button>
-      </div>
     </Modal>
   );
 }

@@ -1,20 +1,23 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
-import { IconEye, IconEyeOff } from '@/components/ui/icons';
+import { WarningCircleIcon } from '@phosphor-icons/react';
+import {
+  Banner,
+  Button,
+  Checkbox,
+  Input,
+  LayerCard,
+  Loader,
+  SensitiveInput,
+  Text,
+} from '@cloudflare/kumo';
+import { BrandMark } from '@/components/layout/MainLayout';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { detectApiBaseFromLocation, normalizeApiBase } from '@/utils/connection';
-import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
 import type { ApiError } from '@/types';
 import { LegacyBackendError } from '@/services/api/legacyBackendProbe';
-import styles from './LoginPage.module.scss';
 
-/**
- * 将 API 错误转换为本地化的用户友好消息
- */
 type RedirectState = { from?: { pathname?: string } };
 
 function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): string {
@@ -46,7 +49,6 @@ function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): s
     return `HTTP ${status}: ${summary}${backendDetail}`;
   };
 
-  // 根据 HTTP 状态码判断
   if (status === 401) {
     return withHttpStatus(t('login.error_unauthorized'));
   }
@@ -60,7 +62,6 @@ function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): s
     return withHttpStatus(t('login.error_server'));
   }
 
-  // 根据 axios 错误码判断
   if (code === 'ECONNABORTED' || message.toLowerCase().includes('timeout')) {
     return t('login.error_timeout');
   }
@@ -71,12 +72,10 @@ function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): s
     return t('login.error_ssl');
   }
 
-  // 检查 CORS 错误
   if (message.toLowerCase().includes('cors') || message.toLowerCase().includes('cross-origin')) {
     return t('login.error_cors');
   }
 
-  // 默认错误消息
   return withHttpStatus(t('login.error_invalid'));
 }
 
@@ -95,7 +94,6 @@ export function LoginPage() {
   const [apiBase, setApiBase] = useState('');
   const [managementKey, setManagementKey] = useState('');
   const [showCustomBase, setShowCustomBase] = useState(false);
-  const [showKey, setShowKey] = useState(false);
   const [rememberPassword, setRememberPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoLoading, setAutoLoading] = useState(true);
@@ -110,7 +108,6 @@ export function LoginPage() {
         const autoLoggedIn = await restoreSession();
         if (autoLoggedIn) {
           setAutoLoginSuccess(true);
-          // 延迟跳转，让用户看到成功动画
           setTimeout(() => {
             const redirect = (location.state as RedirectState | null)?.from?.pathname || '/';
             navigate(redirect, { replace: true });
@@ -121,7 +118,6 @@ export function LoginPage() {
           setRememberPassword(storedRememberPassword || Boolean(storedKey));
         }
       } finally {
-        // 自动登录成功时 showSplash 仍由 autoLoginSuccess 维持，可无条件结束 loading
         setAutoLoading(false);
       }
     };
@@ -165,136 +161,103 @@ export function LoginPage() {
     t,
   ]);
 
-  const handleSubmitKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' && !loading) {
-        event.preventDefault();
-        handleSubmit();
-      }
-    },
-    [loading, handleSubmit]
-  );
-
   if (isAuthenticated && !autoLoading && !autoLoginSuccess) {
     const redirect = (location.state as RedirectState | null)?.from?.pathname || '/';
     return <Navigate to={redirect} replace />;
   }
 
-  // 显示启动动画（自动登录中或自动登录成功）
   const showSplash = autoLoading || autoLoginSuccess;
 
   return (
-    <div className={styles.container}>
-      {/* 左侧品牌展示区 */}
-      <div className={styles.brandPanel}>
-        <div className={styles.brandContent}>
-          <span className={styles.brandWord}>CLI</span>
-          <span className={styles.brandWord}>PROXY</span>
-          <span className={styles.brandWord}>API</span>
+    <div className="flex min-h-dvh items-center justify-center bg-kumo-recessed px-4 py-10">
+      <div className="flex w-full max-w-md flex-col gap-6">
+        <div className="flex items-center justify-center gap-2.5">
+          <BrandMark size="lg" />
+          <span className="text-xl font-semibold text-kumo-default">{t('login.brand')}</span>
         </div>
-      </div>
 
-      {/* 右侧功能交互区 */}
-      <div className={styles.formPanel}>
         {showSplash ? (
-          /* 启动动画 */
-          <div className={styles.splashContent}>
-            <img src={INLINE_LOGO_JPEG} alt="CPAMC" className={styles.splashLogo} />
-            <h1 className={styles.splashTitle}>{t('splash.title')}</h1>
-            <p className={styles.splashSubtitle}>{t('splash.subtitle')}</p>
-            <div className={styles.splashLoader}>
-              <div className={styles.splashLoaderBar} />
-            </div>
-          </div>
+          <LayerCard>
+            <LayerCard.Primary className="flex flex-col items-center gap-3 py-10">
+              <Loader size="lg" />
+              <Text variant="heading" as="h1">
+                {t('login.restoring_title')}
+              </Text>
+              <Text variant="secondary">{t('login.restoring_subtitle')}</Text>
+            </LayerCard.Primary>
+          </LayerCard>
         ) : (
-          /* 登录表单 */
-          <div className={styles.formContent}>
-            {/* Logo */}
-            <img src={INLINE_LOGO_JPEG} alt="Logo" className={styles.logo} />
-
-            {/* 登录表单卡片 */}
-            <div className={styles.loginCard}>
-              <div className={styles.loginHeader}>
-                <div className={styles.titleRow}>
-                  <div className={styles.title}>{t('title.login')}</div>
+          <LayerCard>
+            <LayerCard.Secondary className="flex flex-col gap-0.5">
+              <Text variant="heading" as="h1">
+                {t('login.title')}
+              </Text>
+              <Text variant="secondary" size="sm">
+                {t('login.subtitle')}
+              </Text>
+            </LayerCard.Secondary>
+            <LayerCard.Primary>
+              <form
+                className="flex flex-col gap-5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!loading) void handleSubmit();
+                }}
+              >
+                <div className="flex flex-col gap-1 rounded-lg bg-kumo-recessed px-3 py-2.5">
+                  <span className="text-xs text-kumo-subtle">{t('login.connection_current')}</span>
+                  <span className="font-mono text-sm break-all text-kumo-default">
+                    {apiBase || detectedBase}
+                  </span>
                 </div>
-                <div className={styles.subtitle}>{t('login.subtitle')}</div>
-              </div>
 
-              <div className={styles.connectionBox}>
-                <div className={styles.label}>{t('login.connection_current')}</div>
-                <div className={styles.value}>{apiBase || detectedBase}</div>
-                <div className={styles.hint}>{t('login.connection_auto_hint')}</div>
-              </div>
-
-              <div className={styles.toggleAdvanced}>
-                <SelectionCheckbox
+                <Checkbox
+                  label={t('login.custom_connection_label')}
                   checked={showCustomBase}
-                  onChange={setShowCustomBase}
-                  ariaLabel={t('login.custom_connection_label')}
-                  label={t('login.custom_connection_label')}
-                  labelClassName={styles.toggleLabel}
+                  onCheckedChange={(checked) => setShowCustomBase(checked === true)}
                 />
-              </div>
 
-              {showCustomBase && (
-                <Input
-                  label={t('login.custom_connection_label')}
-                  placeholder={t('login.custom_connection_placeholder')}
-                  value={apiBase}
-                  onChange={(e) => setApiBase(e.target.value)}
-                  hint={t('login.custom_connection_hint')}
+                {showCustomBase ? (
+                  <Input
+                    label={t('login.custom_connection_input')}
+                    placeholder={t('login.custom_connection_placeholder')}
+                    value={apiBase}
+                    onChange={(e) => setApiBase(e.target.value)}
+                    description={t('login.custom_connection_hint')}
+                  />
+                ) : null}
+
+                <SensitiveInput
+                  autoFocus
+                  label={t('login.management_key_label')}
+                  placeholder={t('login.management_key_placeholder')}
+                  name="cpa-management-key"
+                  autoComplete="current-password"
+                  value={managementKey}
+                  onValueChange={setManagementKey}
                 />
-              )}
 
-              <Input
-                autoFocus
-                label={t('login.management_key_label')}
-                placeholder={t('login.management_key_placeholder')}
-                type={showKey ? 'text' : 'password'}
-                name="cpa-management-key"
-                autoComplete="current-password"
-                value={managementKey}
-                onChange={(e) => setManagementKey(e.target.value)}
-                onKeyDown={handleSubmitKeyDown}
-                rightElement={
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setShowKey((prev) => !prev)}
-                    aria-label={
-                      showKey
-                        ? t('login.hide_key', { defaultValue: '隐藏密钥' })
-                        : t('login.show_key', { defaultValue: '显示密钥' })
-                    }
-                    title={
-                      showKey
-                        ? t('login.hide_key', { defaultValue: '隐藏密钥' })
-                        : t('login.show_key', { defaultValue: '显示密钥' })
-                    }
-                  >
-                    {showKey ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                  </button>
-                }
-              />
-
-              <div className={styles.toggleAdvanced}>
-                <SelectionCheckbox
-                  checked={rememberPassword}
-                  onChange={setRememberPassword}
-                  ariaLabel={t('login.remember_password_label')}
+                <Checkbox
                   label={t('login.remember_password_label')}
-                  labelClassName={styles.toggleLabel}
+                  checked={rememberPassword}
+                  onCheckedChange={(checked) => setRememberPassword(checked === true)}
                 />
-              </div>
 
-              <Button fullWidth onClick={handleSubmit} loading={loading}>
-                {loading ? t('login.submitting') : t('login.submit_button')}
-              </Button>
+                {error ? (
+                  <Banner
+                    variant="error"
+                    icon={<WarningCircleIcon weight="fill" />}
+                    title={t('login.error_title')}
+                    description={error}
+                  />
+                ) : null}
 
-              {error && <div className={styles.errorBox}>{error}</div>}
-            </div>
-          </div>
+                <Button variant="primary" type="submit" className="w-full" loading={loading}>
+                  {loading ? t('login.submitting') : t('login.submit_button')}
+                </Button>
+              </form>
+            </LayerCard.Primary>
+          </LayerCard>
         )}
       </div>
     </div>

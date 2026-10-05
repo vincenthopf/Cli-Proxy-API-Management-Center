@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { Badge } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { ProviderStatusBar } from '@/components/providers/ProviderStatusBar';
 import {
@@ -29,7 +31,6 @@ import type { OpenAIProviderConfig } from '@/types';
 import type { StatusBarData } from '@/utils/recentRequests';
 import type { ProviderResource } from '../types';
 import { isMultiProtocolSponsorBrand } from '../sponsorDefinitions';
-import styles from './ProviderResourceTable.module.scss';
 import statusBarStyles from './providerStatusBar.module.scss';
 
 interface ProviderResourceTableProps {
@@ -42,6 +43,12 @@ interface ProviderResourceTableProps {
   onDelete: (resource: ProviderResource) => void;
   onToggleDisabled?: (resource: ProviderResource, disabled: boolean) => void;
 }
+
+const BASE_URL_CLASS = 'block w-full min-w-0 truncate font-mono text-xs text-kumo-subtle';
+const STICKY_HEAD_CLASS =
+  'sticky right-0 z-3 w-44 min-w-44 !bg-kumo-elevated shadow-[-12px_0_16px_-18px_var(--color-kumo-shadow-drop)]';
+const STICKY_CELL_CLASS =
+  'sticky right-0 z-2 w-44 min-w-44 bg-(--kumo-table-row-bg) shadow-[-12px_0_16px_-18px_var(--color-kumo-shadow-drop)]';
 
 const columnWidths = ['180px', '220px', '72px', '138px', '174px', '176px'];
 
@@ -91,16 +98,16 @@ export function ProviderResourceTable({
   const { t } = useTranslation();
 
   const renderMetric = (key: string, label: string, value: number) => (
-    <span key={key} className={styles.metric}>
-      <span className={styles.metricLabel}>{label}</span>
-      <span className={styles.metricValue}>{value}</span>
-    </span>
+    <Badge key={key} variant="secondary">
+      <span className="text-kumo-subtle">{label}</span>
+      <span className="font-semibold tabular-nums">{value}</span>
+    </Badge>
   );
 
   const renderFlagTag = (key: string, label: string) => (
-    <span key={key} className={styles.flagTag}>
+    <Badge key={key} variant="info">
       {label}
-    </span>
+    </Badge>
   );
 
   const renderProtocolSummary = (r: ProviderResource) =>
@@ -114,7 +121,7 @@ export function ProviderResourceTable({
       (r.flags.protocols ?? []).forEach((protocol) => {
         items.push(renderFlagTag(protocol, t(`providersPage.sponsor.protocols.${protocol}`)));
       });
-      return <div className={styles.metricsCell}>{items}</div>;
+      return <div className="flex flex-wrap items-center gap-1.5">{items}</div>;
     }
     if (r.brand === 'openaiCompatibility') {
       items.push(
@@ -137,32 +144,28 @@ export function ProviderResourceTable({
         items.push(renderFlagTag('cli-profile', t('providersPage.table.cliProfileTag')));
       }
     }
-    return <div className={styles.metricsCell}>{items}</div>;
+    return <div className="flex flex-wrap items-center gap-1.5">{items}</div>;
   };
 
-  const renderStatus = (r: ProviderResource) => {
-    if (r.disabled) {
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusDisabled}`}>
-          <IconAlertTriangle size={14} />
-          {t('providersPage.status.disabled')}
-        </span>
-      );
-    }
-    return (
-      <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-        <IconCheckCircle2 size={14} />
+  const renderStatus = (r: ProviderResource) =>
+    r.disabled ? (
+      <Badge variant="warning">
+        <IconAlertTriangle size={12} />
+        {t('providersPage.status.disabled')}
+      </Badge>
+    ) : (
+      <Badge variant="success">
+        <IconCheckCircle2 size={12} />
         {t('providersPage.status.active')}
-      </span>
+      </Badge>
     );
-  };
 
   const renderPrimary = (r: ProviderResource) => {
     if (isSponsorResource(r)) {
       return (
-        <div className={styles.primaryCell}>
-          <span className={styles.primaryName}>{r.name ?? r.identifier}</span>
-          <span className={styles.primarySub}>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="max-w-56 truncate font-medium text-kumo-default">{r.name ?? r.identifier}</span>
+          <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">
             {r.apiKeyPreview ?? t('providersPage.status.notConfigured')}
           </span>
         </div>
@@ -171,37 +174,37 @@ export function ProviderResourceTable({
     if (r.brand === 'openaiCompatibility') {
       const extra = r.apiKeyEntryCount > 1 ? ` · +${r.apiKeyEntryCount - 1}` : '';
       return (
-        <div className={styles.primaryCell}>
-          <span className={styles.primaryName}>{r.name ?? r.identifier}</span>
-          <span className={styles.primarySub}>{(r.apiKeyPreview ?? '—') + extra}</span>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="max-w-56 truncate font-medium text-kumo-default">{r.name ?? r.identifier}</span>
+          <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">{(r.apiKeyPreview ?? '—') + extra}</span>
         </div>
       );
     }
     return (
-      <div className={styles.primaryCell}>
-        <span className={styles.primaryName}>{r.apiKeyPreview ?? '—'}</span>
-        {r.authIndex ? <span className={styles.primarySub}>auth: {r.authIndex}</span> : null}
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="max-w-56 truncate font-medium text-kumo-default">{r.apiKeyPreview ?? '—'}</span>
+        {r.authIndex ? <span className="max-w-56 truncate font-mono text-xs text-kumo-subtle">auth: {r.authIndex}</span> : null}
       </div>
     );
   };
 
   const renderBaseUrl = (r: ProviderResource) => {
     if (isSponsorResource(r)) {
-      return <span className={styles.baseUrl}>{renderProtocolSummary(r)}</span>;
+      return <span className={BASE_URL_CLASS}>{renderProtocolSummary(r)}</span>;
     }
     if (r.brand === 'claude' && !r.baseUrl) {
       return (
-        <span className={styles.baseUrl}>
+        <span className={BASE_URL_CLASS}>
           https://api.anthropic.com {t('providersPage.status.defaultSuffix')}
         </span>
       );
     }
-    return <span className={styles.baseUrl}>{r.baseUrl ?? t('providersPage.status.notSet')}</span>;
+    return <span className={BASE_URL_CLASS}>{r.baseUrl ?? t('providersPage.status.notSet')}</span>;
   };
 
   return (
     <Table
-      className={styles.providerTable}
+      className="min-w-[960px] table-fixed"
       cols={columnWidths.map((w, i) => (
         <col key={i} style={{ width: w }} />
       ))}
@@ -213,7 +216,7 @@ export function ProviderResourceTable({
           <TableHead>{t('providersPage.table.prefix')}</TableHead>
           <TableHead>{t('providersPage.table.models')}</TableHead>
           <TableHead>{t('providersPage.table.status')}</TableHead>
-          <TableHead alignRight className={styles.actionsHead}>
+          <TableHead alignRight className={STICKY_HEAD_CLASS}>
             {t('providersPage.table.actions')}
           </TableHead>
         </TableRow>
@@ -226,31 +229,31 @@ export function ProviderResourceTable({
               <TableCell>{renderBaseUrl(resource)}</TableCell>
               <TableCell>
                 {resource.prefix ? (
-                  <span className={styles.chip}>{resource.prefix}</span>
+                  <Badge variant="outline">{resource.prefix}</Badge>
                 ) : (
-                  <span className={styles.baseUrl}>{t('providersPage.status.none')}</span>
+                  <span className={BASE_URL_CLASS}>{t('providersPage.status.none')}</span>
                 )}
               </TableCell>
               <TableCell>{renderModelsSummary(resource)}</TableCell>
               <TableCell>
-                <div className={styles.statusCell}>
+                <div className="flex max-w-48 min-w-0 flex-col items-start gap-1.5">
                   {renderStatus(resource)}
                   {usageByProvider && !isSponsorResource(resource) ? (
                     <>
                       {(() => {
                         const stats = resolveTotalStats(resource, usageByProvider);
                         return (
-                          <div className={styles.stats}>
-                            <span className={`${styles.statPill} ${styles.statSuccess}`}>
+                          <div className="flex max-w-full flex-wrap gap-1">
+                            <Badge variant="success" className="tabular-nums">
                               {t('stats.success')}: {stats.success}
-                            </span>
-                            <span className={`${styles.statPill} ${styles.statFailure}`}>
+                            </Badge>
+                            <Badge variant="error" className="tabular-nums">
                               {t('stats.failure')}: {stats.failure}
-                            </span>
+                            </Badge>
                           </div>
                         );
                       })()}
-                      <div className={styles.statusBarWrap}>
+                      <div className="w-[min(100%,178px)] min-w-0">
                         <ProviderStatusBar
                           statusData={resolveStatusBarData(resource, usageByProvider)}
                           styles={statusBarStyles}
@@ -262,16 +265,11 @@ export function ProviderResourceTable({
               </TableCell>
               <TableCell
                 alignRight
-                className={[
-                  styles.actionsCell,
-                  resource.id === selectedId ? styles.actionsCellSelected : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
+                className={STICKY_CELL_CLASS}
               >
-                <div className={styles.actions}>
+                <div className="flex min-w-0 items-center justify-end gap-1">
                   {onToggleDisabled ? (
-                    <span className={styles.toggleWrap} onClick={(e) => e.stopPropagation()}>
+                    <span className="mr-1 inline-flex items-center" onClick={(e) => e.stopPropagation()}>
                       <ToggleSwitch
                         checked={!resource.disabled}
                         disabled={disableMutations}
@@ -284,9 +282,9 @@ export function ProviderResourceTable({
                       />
                     </span>
                   ) : null}
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     aria-label={t('providersPage.actions.view')}
                     title={t('providersPage.actions.view')}
                     onClick={(e) => {
@@ -295,10 +293,10 @@ export function ProviderResourceTable({
                     }}
                   >
                     <IconEye size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     aria-label={t('providersPage.actions.edit')}
                     title={t('providersPage.actions.edit')}
                     disabled={disableMutations}
@@ -308,10 +306,11 @@ export function ProviderResourceTable({
                     }}
                   >
                     <IconPencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="!text-kumo-danger hover:!bg-kumo-danger-tint"
                     aria-label={t('providersPage.actions.delete')}
                     title={t('providersPage.actions.delete')}
                     disabled={disableMutations}
@@ -321,7 +320,7 @@ export function ProviderResourceTable({
                     }}
                   >
                     <IconTrash2 size={16} />
-                  </button>
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@cloudflare/kumo';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { AuthFileRefreshResult } from '@/services/api/authFiles';
@@ -9,7 +10,7 @@ export function AuthFileRefreshResultsContent({ results }: { results: AuthFileRe
   const success = results.filter((result) => result.success).length;
   return (
     <div>
-      <p role="status">
+      <p role="status" className="m-0 text-kumo-default">
         {results.length === 0
           ? t('auth_files.refresh_all_empty')
           : t('auth_files.refresh_all_summary', { success, failed: results.length - success })}
@@ -18,13 +19,13 @@ export function AuthFileRefreshResultsContent({ results }: { results: AuthFileRe
         {results.map((result, index) => (
           <li key={`${result.id}:${index}`} className={styles.result}>
             <strong className={styles.identity}>{result.id}</strong>
-            <span className={result.success ? styles.success : styles.failure}>
+            <Badge variant={result.success ? 'success' : 'error'}>
               {t(
                 result.success
                   ? 'auth_files.refresh_result_success'
                   : 'auth_files.refresh_result_failed'
               )}
-            </span>
+            </Badge>
             {!result.success && result.error && <p className={styles.error}>{result.error}</p>}
           </li>
         ))}

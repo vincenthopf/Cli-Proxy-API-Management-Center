@@ -5,6 +5,7 @@ import { useInterval } from '@/hooks/useInterval';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useRevealOnScroll } from '@/hooks/motion';
 import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer';
+import { Banner } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -659,15 +660,15 @@ export function AuthFilesPage() {
         />
 
         {error && (
-          <div className={styles.errorBanner} role="alert">
-            {error}
+          <div role="alert">
+            <Banner variant="error" size="sm" description={error} className="break-words" />
           </div>
         )}
 
         {loading ? (
           <div className={gridClasses} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-              <Skeleton key={index} height={206} rounded={14} />
+              <Skeleton key={index} height={206} rounded={8} />
             ))}
           </div>
         ) : isFirstRunEmpty ? (
@@ -675,18 +676,17 @@ export function AuthFilesPage() {
             title={t('auth_files.empty_title')}
             description={t('auth_files.empty_desc')}
             action={
-              <div className={styles.emptyActions}>
+              <>
                 <Button
-                  size="sm"
                   onClick={handleUploadClick}
                   disabled={disableControls || uploading}
                 >
                   {t('auth_files.upload_button')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/oauth')}>
+                <Button variant="secondary" onClick={() => navigate('/oauth')}>
                   {t('auth_files.empty_oauth_link')}
                 </Button>
-              </div>
+              </>
             }
           />
         ) : isNoResults ? (
@@ -694,7 +694,7 @@ export function AuthFilesPage() {
             title={t('auth_files.search_empty_title')}
             description={t('auth_files.search_empty_desc')}
             action={
-              <Button variant="secondary" size="sm" onClick={clearFilters}>
+              <Button variant="secondary" onClick={clearFilters}>
                 {t('auth_files.no_results_clear')}
               </Button>
             }

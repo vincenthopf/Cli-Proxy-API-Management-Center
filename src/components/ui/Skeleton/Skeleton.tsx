@@ -1,5 +1,4 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
-import styles from './Skeleton.module.scss';
 
 interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   width?: number | string;
@@ -14,6 +13,8 @@ export function Skeleton({ width, height, rounded, className, style, ...rest }: 
     height: height ?? style?.height,
     borderRadius: rounded ?? style?.borderRadius,
   };
-  const cls = [styles.skeleton, className].filter(Boolean).join(' ');
+  const cls = ['skeleton block rounded-md bg-kumo-fill motion-reduce:animate-none', className]
+    .filter(Boolean)
+    .join(' ');
   return <div className={cls} style={merged} aria-hidden="true" {...rest} />;
 }

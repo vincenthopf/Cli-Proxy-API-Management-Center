@@ -1,27 +1,30 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { Input as KumoInput } from '@cloudflare/kumo';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  /** 渲染在标签正下方的小字行（如赞助跳转链接）。 */
   labelExtra?: ReactNode;
-  /** 渲染在标签上方的占位行（用于与同排带 labelExtra 的字段保持输入框对齐）。 */
   topExtra?: ReactNode;
   hint?: ReactNode;
   error?: string;
   rightElement?: ReactNode;
 }
 
-export function Input({
-  label,
-  labelExtra,
-  topExtra,
-  hint,
-  error,
-  rightElement,
-  className = '',
-  id,
-  ...rest
-}: InputProps) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  {
+    label,
+    labelExtra,
+    topExtra,
+    hint,
+    error,
+    rightElement,
+    className = '',
+    id,
+    size: _size,
+    ...rest
+  },
+  ref
+) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const hintId = hint ? `${inputId}-hint` : undefined;
@@ -34,18 +37,21 @@ export function Input({
       {topExtra}
       {label && <label htmlFor={inputId}>{label}</label>}
       {labelExtra}
-      <div style={{ position: 'relative' }}>
-        <input
+      <div className="relative">
+        <KumoInput
+          ref={ref}
           id={inputId}
-          className={`input ${className}`.trim()}
+          variant={error ? 'error' : 'default'}
+          className={['input !w-full', rightElement ? 'pr-10' : '', className]
+            .filter(Boolean)
+            .join(' ')}
           aria-invalid={Boolean(error) || rest['aria-invalid']}
-          aria-describedby={describedBy}
           {...rest}
+          aria-label={rest['aria-label'] ?? label ?? rest.placeholder}
+          aria-describedby={describedBy}
         />
         {rightElement && (
-          <div
-            style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
-          >
+          <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
             {rightElement}
           </div>
         )}
@@ -62,4 +68,4 @@ export function Input({
       )}
     </div>
   );
-}
+});

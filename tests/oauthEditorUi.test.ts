@@ -14,6 +14,15 @@ const noop = () => {};
 const render = (element: ReturnType<typeof createElement>) =>
   renderToStaticMarkup(createElement(I18nextProvider, { i18n }, element));
 
+function countDisabledControls(markup: string) {
+  const tags = markup.match(/<(?:input|button|span)\b[^>]*>/g) ?? [];
+  return tags.filter(
+    (tag) =>
+      !tag.includes('aria-hidden="true"') &&
+      (tag.includes('disabled=""') || /role="(?:checkbox|switch)"[^>]*data-disabled=""|data-disabled=""[^>]*role="(?:checkbox|switch)"/.test(tag))
+  ).length;
+}
+
 function renderMapping(overrides: { disabled?: boolean; canRemove?: boolean } = {}) {
   return render(
     createElement(OAuthAliasMappingRow, {
@@ -39,7 +48,7 @@ describe('OAuth editor UI', () => {
         rightAction: createElement('button', null, 'Save'),
       })
     );
-    expect(markup).toContain('class="oauth-toolbar"');
+    expect(markup).toMatch(/class="[^"]*\boauth-toolbar\b[^"]*"/);
     expect(markup).toContain('title="Edit model aliases for a-long-provider-name"');
     expect(markup).toContain('<button>Save</button>');
     expect(markup).toContain('aria-label="Back"');
@@ -92,9 +101,9 @@ describe('OAuth editor UI', () => {
 
   test('preserves the last-row delete guard and disabled editing state', () => {
     const lastRow = renderMapping({ canRemove: false });
-    expect(lastRow.match(/disabled=""/g)).toHaveLength(1);
+    expect(countDisabledControls(lastRow)).toBe(1);
     const disabledRow = renderMapping({ disabled: true });
-    expect(disabledRow.match(/disabled=""/g)).toHaveLength(4);
+    expect(countDisabledControls(disabledRow)).toBe(4);
   });
 
   test('English includes editor guidance and accessible row labels', () => {

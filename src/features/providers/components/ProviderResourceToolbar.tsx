@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconChevronDown, IconChevronUp, IconSlidersHorizontal } from '@/components/ui/icons';
+import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
 import type { ProviderSortBy, SortDir } from '../types';
-import styles from './ProviderResourceToolbar.module.scss';
 
 interface ProviderResourceToolbarProps {
   sortBy: ProviderSortBy;
@@ -70,77 +70,80 @@ export function ProviderResourceToolbar({
           total: availableModels.length,
         });
 
+  const directionLabel =
+    sortDir === 'asc'
+      ? t('providersPage.toolbar.sort.directionAsc')
+      : t('providersPage.toolbar.sort.directionDesc');
+
   return (
-    <div className={styles.root}>
-      <div className={styles.sortGroup}>
-        <span className={styles.label}>{t('providersPage.toolbar.sortBy')}</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs whitespace-nowrap text-kumo-subtle">
+          {t('providersPage.toolbar.sortBy')}
+        </span>
         <Select
           value={sortBy}
           options={sortOptions}
           onChange={(value) => onSortBy(value as ProviderSortBy)}
           ariaLabel={t('providersPage.toolbar.sortBy')}
           size="sm"
+          fullWidth={false}
         />
-        <button
-          type="button"
-          className={styles.dirBtn}
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => onSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-          aria-label={
-            sortDir === 'asc'
-              ? t('providersPage.toolbar.sort.directionAsc')
-              : t('providersPage.toolbar.sort.directionDesc')
-          }
-          title={
-            sortDir === 'asc'
-              ? t('providersPage.toolbar.sort.directionAsc')
-              : t('providersPage.toolbar.sort.directionDesc')
-          }
+          aria-label={directionLabel}
+          title={directionLabel}
         >
           {sortDir === 'asc' ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
-        </button>
+        </Button>
       </div>
 
-      <div className={styles.filterGroup} ref={containerRef}>
-        <button
-          type="button"
-          className={styles.filterTrigger}
+      <div className="relative" ref={containerRef}>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setFilterOpen((v) => !v)}
           disabled={availableModels.length === 0}
+          aria-expanded={filterOpen}
         >
           <IconSlidersHorizontal size={14} />
           <span>{filterLabel}</span>
           <IconChevronDown size={12} />
-        </button>
+        </Button>
         {filterOpen ? (
-          <div className={styles.filterPanel}>
-            <div className={styles.filterToolbar}>
-              <button
-                type="button"
-                className={styles.filterToolbarBtn}
+          <div className="absolute top-[calc(100%+6px)] right-0 z-10 flex max-w-80 min-w-56 flex-col gap-1.5 rounded-lg bg-kumo-base p-2 shadow-lg ring ring-kumo-line">
+            <div className="flex items-center justify-end gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={selectAll}
                 disabled={availableModels.length === 0}
               >
                 {t('providersPage.toolbar.filter.selectAll')}
-              </button>
-              <button
-                type="button"
-                className={styles.filterToolbarBtn}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearAll}
                 disabled={selectedModels.size === 0}
               >
                 {t('providersPage.toolbar.filter.clear')}
-              </button>
+              </Button>
             </div>
             {availableModels.length === 0 ? (
-              <div className={styles.filterEmpty}>{t('providersPage.toolbar.filter.empty')}</div>
+              <div className="p-3 text-center text-sm text-kumo-subtle">
+                {t('providersPage.toolbar.filter.empty')}
+              </div>
             ) : (
-              <ul className={styles.filterList}>
+              <ul className="m-0 flex max-h-56 list-none flex-col gap-0.5 overflow-y-auto p-0">
                 {availableModels.map((name) => (
-                  <li key={name} className={styles.filterItem}>
+                  <li key={name} className="rounded-md px-1.5 py-1 hover:bg-kumo-tint">
                     <SelectionCheckbox
                       checked={selectedModels.has(name)}
                       onChange={() => toggleModel(name)}
-                      label={<span className={styles.filterItemLabel}>{name}</span>}
+                      label={<span className="font-mono text-sm break-all">{name}</span>}
                     />
                   </li>
                 ))}

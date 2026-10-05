@@ -42,7 +42,7 @@
 }
 
 .statusBlockIdle {
-  background-color: var(--border-color);
+  background-color: var(--color-kumo-fill);
 }
 
 .statusTooltip {
@@ -52,12 +52,12 @@
   transform: translateX(-50%);
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   font-size: 12px;
   line-height: 1.5;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--floating-shadow);
   z-index: $z-dropdown;
   pointer-events: none;
   color: var(--text-primary);
@@ -120,11 +120,11 @@
 }
 
 .tooltipSuccess {
-  color: var(--success-color, #22c55e);
+  color: var(--text-color-kumo-success);
 }
 
 .tooltipFailure {
-  color: var(--danger-color, #ef4444);
+  color: var(--text-color-kumo-danger);
 }
 
 .tooltipRate {
@@ -141,20 +141,20 @@
   font-weight: 600;
   white-space: nowrap;
   padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
+  border-radius: 9999px;
+  background: var(--color-kumo-fill);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .statusRateHigh {
-  color: var(--success-badge-text, #065f46);
-  background: var(--success-badge-bg, #d1fae5);
+  color: var(--success-badge-text);
+  background: var(--success-badge-bg);
 }
 
 .statusRateMedium {
-  color: var(--warning-text, #92400e);
-  background: var(--warning-bg, #fef3c7);
+  color: var(--warning-text);
+  background: var(--warning-bg);
 }
 
 .statusRateLow {

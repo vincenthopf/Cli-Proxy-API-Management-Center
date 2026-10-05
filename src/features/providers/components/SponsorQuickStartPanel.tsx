@@ -1,16 +1,16 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useNotificationStore } from '@/stores';
-import { IconCheckCircle2, IconExternalLink, IconLoader2, IconPlus } from '@/components/ui/icons';
+import { Empty, LayerCard, LinkButton } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
+import { IconCheckCircle2, IconExternalLink, IconPlus } from '@/components/ui/icons';
 import { PROVIDER_LOGOS } from '../brandLogos';
 import { APIKEY_FUN_AFFILIATE_URL, APIKEY_FUN_DASHBOARD_URL } from '../sponsor';
 import { isSponsorPartialMutationError } from '../sponsorMutationRecovery';
 import type { ProviderEntryFormInput, ProviderResource } from '../types';
 import type { UseProviderWorkbenchResult } from '../useProviderWorkbench';
 import { SponsorProviderForm } from '../sheets/forms/SponsorProviderForm';
-import formStyles from '../sheets/forms/sharedForm.module.scss';
-import styles from './SponsorQuickStartPanel.module.scss';
 
 interface SponsorQuickStartPanelProps {
   resource: ProviderResource | null;
@@ -77,42 +77,45 @@ export function SponsorQuickStartPanel({
     }
   };
 
+  const header = (extra?: ReactNode) => (
+    <div className="flex min-w-0 flex-wrap items-center gap-3">
+      <img src={logo.src} alt="" aria-hidden="true" className="size-8 shrink-0 rounded-md object-contain" />
+      <h2 className="m-0 min-w-0 text-2xl font-semibold text-kumo-default">
+        {t('providersPage.providerNames.apikeyFun')}
+      </h2>
+      {extra}
+    </div>
+  );
+
   if (!resource && !showCreateForm) {
     return (
-      <section className={styles.panel}>
-        <div className={styles.header}>
-          <div className={styles.titleRow}>
-            <img src={logo.src} alt="" aria-hidden="true" className={styles.logo} />
-            <div className={styles.titleText}>
-              <h2 className={styles.title}>{t('providersPage.providerNames.apikeyFun')}</h2>
+      <LayerCard className="flex min-w-0 flex-col gap-5 !overflow-visible p-5">
+        {header()}
+        <Empty
+          size="sm"
+          title={t('providersPage.sponsor.emptyRegisterHint')}
+          contents={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateForm(true)}
+                disabled={formMutating}
+              >
+                <IconPlus size={16} />
+                <span>{t('providersPage.actions.new')}</span>
+              </Button>
+              <LinkButton
+                href={APIKEY_FUN_AFFILIATE_URL}
+                external
+                variant="secondary"
+                icon={<IconExternalLink size={16} />}
+              >
+                {t('providersPage.sponsor.registerNow')}
+              </LinkButton>
             </div>
-          </div>
-        </div>
-
-        <div className={styles.empty}>
-          <div>{t('providersPage.sponsor.emptyRegisterHint')}</div>
-          <div className={styles.emptyActions}>
-            <button
-              type="button"
-              className={`${styles.emptyActionButton} ${styles.emptyActionButtonPrimary}`}
-              onClick={() => setShowCreateForm(true)}
-              disabled={formMutating}
-            >
-              <IconPlus size={16} />
-              <span>{t('providersPage.actions.new')}</span>
-            </button>
-            <a
-              className={`${styles.emptyActionButton} ${styles.emptyActionButtonEmphasis}`}
-              href={APIKEY_FUN_AFFILIATE_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <IconExternalLink size={16} />
-              <span>{t('providersPage.sponsor.registerNow')}</span>
-            </a>
-          </div>
-        </div>
-      </section>
+          }
+        />
+      </LayerCard>
     );
   }
 
@@ -122,19 +125,18 @@ export function SponsorQuickStartPanel({
     : t('providersPage.sponsor.registerLink');
 
   return (
-    <section className={styles.panel}>
-      <div className={styles.header}>
-        <div className={styles.titleRow}>
-          <img src={logo.src} alt="" aria-hidden="true" className={styles.logo} />
-          <div className={styles.titleText}>
-            <h2 className={styles.title}>{t('providersPage.providerNames.apikeyFun')}</h2>
-          </div>
-          <a className={styles.topLink} href={actionHref} target="_blank" rel="noreferrer">
-            <IconExternalLink size={14} />
-            <span>{actionLabel}</span>
-          </a>
-        </div>
-      </div>
+    <LayerCard className="flex min-w-0 flex-col gap-5 !overflow-visible p-4 sm:p-5">
+      {header(
+        <LinkButton
+          href={actionHref}
+          external
+          variant="ghost"
+          size="sm"
+          icon={<IconExternalLink size={14} />}
+        >
+          {actionLabel}
+        </LinkButton>
+      )}
 
       <SponsorProviderForm
         key={`${mode}:${resource?.id ?? 'new'}:${formVersion}`}
@@ -147,11 +149,10 @@ export function SponsorQuickStartPanel({
         onDirtyChange={setIsDirty}
       />
 
-      <div className={styles.footer}>
+      <div className="flex flex-col-reverse items-stretch gap-2 pt-1 sm:flex-row sm:items-center sm:justify-end">
         {!resource ? (
-          <button
-            type="button"
-            className={`${formStyles.footerBtn} ${formStyles.footerBtnGhost}`}
+          <Button
+            variant="ghost"
             onClick={() => {
               setShowCreateForm(false);
               setIsDirty(false);
@@ -160,19 +161,17 @@ export function SponsorQuickStartPanel({
             disabled={submitting}
           >
             {t('providersPage.actions.cancel')}
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="submit"
           form={formId}
-          className={`${formStyles.footerBtn} ${formStyles.footerBtnPrimary} ${
-            styles.primaryAction
-          }`}
+          variant="primary"
+          loading={submitting}
           disabled={submitDisabled}
+          className="justify-center"
         >
-          {submitting ? (
-            <IconLoader2 className={styles.spin} size={14} />
-          ) : mode === 'create' ? (
+          {submitting ? null : mode === 'create' ? (
             <IconPlus size={14} />
           ) : (
             <IconCheckCircle2 size={14} />
@@ -182,8 +181,8 @@ export function SponsorQuickStartPanel({
               ? t('providersPage.actions.create')
               : t('providersPage.actions.save')}
           </span>
-        </button>
+        </Button>
       </div>
-    </section>
+    </LayerCard>
   );
 }

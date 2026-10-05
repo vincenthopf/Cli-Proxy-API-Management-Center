@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@cloudflare/kumo';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { AuthFileModelItem } from '@/features/authFiles/constants';
 import { isModelExcluded } from '@/features/authFiles/constants';
 import styles from './AuthFileModelsModal.module.scss';
@@ -26,7 +28,7 @@ export function AuthFileModelsModal(props: AuthFileModelsModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title={t('auth_files.models_title', { defaultValue: '支持的模型' }) + ` - ${fileName}`}
+      title={t('auth_files.models_title') + ` - ${fileName}`}
       footer={
         <Button variant="secondary" onClick={onClose}>
           {t('common.close')}
@@ -34,29 +36,27 @@ export function AuthFileModelsModal(props: AuthFileModelsModalProps) {
       }
     >
       {loading ? (
-        <div className="hint">
-          {t('auth_files.models_loading', { defaultValue: '正在加载模型列表...' })}
+        <div className="flex items-center justify-center gap-2 py-6 text-sm text-kumo-subtle">
+          <LoadingSpinner size={14} />
+          {t('auth_files.models_loading')}
         </div>
       ) : error === 'unsupported' ? (
         <EmptyState
-          title={t('auth_files.models_unsupported', { defaultValue: '当前版本不支持此功能' })}
-          description={t('auth_files.models_unsupported_desc', {
-            defaultValue: '请更新 CLI Proxy API 到最新版本后重试',
-          })}
+          title={t('auth_files.models_unsupported')}
+          description={t('auth_files.models_unsupported_desc')}
         />
       ) : models.length === 0 ? (
         <EmptyState
-          title={t('auth_files.models_empty', { defaultValue: '该凭证暂无可用模型' })}
-          description={t('auth_files.models_empty_desc', {
-            defaultValue: '该认证凭证可能尚未被服务器加载或没有绑定任何模型',
-          })}
+          title={t('auth_files.models_empty')}
+          description={t('auth_files.models_empty_desc')}
         />
       ) : (
         <div className={styles.list}>
           {models.map((model) => {
             const excludedModel = isModelExcluded(model.id, fileType, excluded);
             return (
-              <div
+              <button
+                type="button"
                 key={model.id}
                 className={`${styles.item} ${excludedModel ? styles.itemExcluded : ''}`}
                 onClick={() => {
@@ -64,23 +64,21 @@ export function AuthFileModelsModal(props: AuthFileModelsModalProps) {
                 }}
                 title={
                   excludedModel
-                    ? t('auth_files.models_excluded_hint', {
-                        defaultValue: '此 OAuth 模型已被禁用',
-                      })
-                    : t('common.copy', { defaultValue: '点击复制' })
+                    ? t('auth_files.models_excluded_hint')
+                    : t('common.copy')
                 }
               >
                 <span className={styles.modelId}>{model.id}</span>
                 {model.display_name && model.display_name !== model.id && (
                   <span className={styles.modelDisplayName}>{model.display_name}</span>
                 )}
-                {model.type && <span className={styles.modelType}>{model.type}</span>}
+                {model.type && <Badge variant="outline">{model.type}</Badge>}
                 {excludedModel && (
                   <span className={styles.excludedBadge}>
-                    {t('auth_files.models_excluded_badge', { defaultValue: '已禁用' })}
+                    <Badge variant="error">{t('auth_files.models_excluded_badge')}</Badge>
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>

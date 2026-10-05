@@ -1,16 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type PropsWithChildren,
-  type ReactNode,
-} from 'react';
-import { createPortal } from 'react-dom';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button, Dialog, DialogRoot, DialogTitle } from '@cloudflare/kumo';
 import { IconX } from './icons';
-import { FOCUSABLE_SELECTOR, lockScroll, unlockScroll } from './scrollLock';
 
 interface ModalProps {
   open: boolean;
@@ -21,8 +12,6 @@ interface ModalProps {
   className?: string;
   closeDisabled?: boolean;
 }
-
-const CLOSE_ANIMATION_DURATION = 350;
 
 export function Modal({
   open,
@@ -35,186 +24,48 @@ export function Modal({
   children,
 }: PropsWithChildren<ModalProps>) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const getFocusableElements = useCallback(() => {
-    if (!modalRef.current) return [] as HTMLElement[];
-    return Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-      (element) => !element.hasAttribute('disabled') && element.tabIndex !== -1
-    );
-  }, []);
-
-  const startClose = useCallback(
-    (notifyParent: boolean) => {
-      if (closeTimerRef.current !== null) return;
-      setIsClosing(true);
-      closeTimerRef.current = window.setTimeout(() => {
-        setIsVisible(false);
-        setIsClosing(false);
-        closeTimerRef.current = null;
-        if (notifyParent) {
-          onClose();
-        }
-      }, CLOSE_ANIMATION_DURATION);
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (open) {
-      if (closeTimerRef.current !== null) {
-        window.clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-      queueMicrotask(() => {
-        if (cancelled) return;
-        setIsVisible(true);
-        setIsClosing(false);
-      });
-    } else if (isVisible) {
-      queueMicrotask(() => {
-        if (cancelled) return;
-        startClose(false);
-      });
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, isVisible, startClose]);
-
-  const handleClose = useCallback(() => {
-    startClose(true);
-  }, [startClose]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current !== null) {
-        window.clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, []);
-
-  const shouldLockScroll = open || isVisible;
-
-  useEffect(() => {
-    if (!shouldLockScroll) return;
-    lockScroll();
-    return () => unlockScroll();
-  }, [shouldLockScroll]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    previouslyFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const focusTimer = window.setTimeout(() => {
-      const firstFocusable = getFocusableElements()[0];
-      (firstFocusable ?? closeButtonRef.current ?? modalRef.current)?.focus();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(focusTimer);
-    };
-  }, [getFocusableElements, open]);
-
-  useEffect(() => {
-    if (open || isVisible) return;
-    previouslyFocusedRef.current?.focus();
-    previouslyFocusedRef.current = null;
-  }, [isVisible, open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (closeDisabled) return;
-        event.preventDefault();
-        handleClose();
-        return;
-      }
-
-      if (event.key !== 'Tab') return;
-
-      const focusableElements = getFocusableElements();
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        modalRef.current?.focus();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-      const activeElement = document.activeElement as HTMLElement | null;
-
-      if (event.shiftKey) {
-        if (activeElement === firstElement || activeElement === modalRef.current) {
-          event.preventDefault();
-          lastElement.focus();
-        }
-        return;
-      }
-
-      if (activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [closeDisabled, getFocusableElements, handleClose, open]);
-
-  if (!open && !isVisible) return null;
-
-  const overlayClass = `modal-overlay ${isClosing ? 'modal-overlay-closing' : 'modal-overlay-entering'}`;
-  const modalClass = `modal ${isClosing ? 'modal-closing' : 'modal-entering'}${className ? ` ${className}` : ''}`;
-
-  const modalContent = (
-    <div className={overlayClass}>
-      <div
-        ref={modalRef}
-        className={modalClass}
-        style={{ width, maxWidth: '100%' }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        tabIndex={-1}
+  return (
+    <DialogRoot
+      open={open}
+      disablePointerDismissal
+      onOpenChange={(next) => {
+        if (!next && !closeDisabled) onClose();
+      }}
+    >
+      <Dialog
+        className={['flex max-h-[calc(100dvh-4rem)] flex-col sm:max-h-[calc(100dvh-8rem)]', className]
+          .filter(Boolean)
+          .join(' ')}
+        style={{ width, maxWidth: 'calc(100vw - 2rem)' }}
       >
-        <button
-          ref={closeButtonRef}
-          type="button"
-          className="modal-close-floating"
-          onClick={closeDisabled ? undefined : handleClose}
-          aria-label={t('common.close')}
-          disabled={closeDisabled}
-        >
-          <IconX size={20} />
-        </button>
-        <div className="modal-header">
-          <div className="modal-title" id={title ? titleId : undefined}>
-            {title}
-          </div>
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-kumo-hairline py-3 pr-3 pl-5">
+          {title ? (
+            <DialogTitle className="min-w-0 pt-1 text-lg font-semibold text-kumo-default">
+              {title}
+            </DialogTitle>
+          ) : (
+            <span />
+          )}
+          <Button
+            variant="ghost"
+            shape="square"
+            size="sm"
+            icon={<IconX size={16} />}
+            aria-label={t('common.close')}
+            disabled={closeDisabled}
+            onClick={closeDisabled ? undefined : onClose}
+          />
         </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
-      </div>
-    </div>
+        <div className="modal-body min-h-0 flex-1 overflow-auto px-5 py-4 text-base">
+          {children}
+        </div>
+        {footer ? (
+          <div className="modal-footer flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-kumo-hairline bg-kumo-elevated px-5 py-3">
+            {footer}
+          </div>
+        ) : null}
+      </Dialog>
+    </DialogRoot>
   );
-
-  if (typeof document === 'undefined') {
-    return modalContent;
-  }
-
-  return createPortal(modalContent, document.body);
 }

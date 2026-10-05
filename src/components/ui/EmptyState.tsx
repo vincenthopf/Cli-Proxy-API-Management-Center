@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Empty } from '@cloudflare/kumo';
 import { IconInbox } from './icons';
 
 interface EmptyStateProps {
@@ -9,17 +10,12 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
-    <div className="empty-state">
-      <div className="empty-content">
-        <div className="empty-icon" aria-hidden="true">
-          <IconInbox size={20} />
-        </div>
-        <div>
-          <div className="empty-title">{title}</div>
-          {description && <div className="empty-desc">{description}</div>}
-        </div>
-      </div>
-      {action && <div className="empty-action">{action}</div>}
-    </div>
+    <Empty
+      size="sm"
+      icon={<IconInbox size={28} className="text-kumo-inactive" />}
+      title={title}
+      description={description}
+      contents={action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : undefined}
+    />
   );
 }

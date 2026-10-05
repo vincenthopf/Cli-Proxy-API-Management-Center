@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/Card';
+import { Badge, Banner, ClipboardText, LayerCard, Loader } from '@cloudflare/kumo';
+import {
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
+  FileArrowUpIcon,
+  WarningCircleIcon,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconPlug } from '@/components/ui/icons';
 import { useAuthStore, useNotificationStore, useThemeStore } from '@/stores';
 import { oauthApi, pluginsApi, type BuiltInOAuthProvider } from '@/services/api';
 import { vertexApi, type VertexImportResponse } from '@/services/api/vertex';
-import { copyToClipboard } from '@/utils/clipboard';
 import { getErrorMessage, isRecord } from '@/utils/helpers';
 import { notifyAuthFilesChanged } from '@/features/authFiles/authFilesEvents';
 import { getPluginTitle, resolvePluginAssetURL } from '@/features/plugins/pluginResources';
@@ -19,7 +24,7 @@ import {
 import type { PluginListEntry } from '@/types';
 import { createOAuthAttempts, type OAuthAttempt } from './oauthAttempts';
 import { validateDevinCallback } from './devinOAuth';
-import styles from './OAuthPage.module.scss';
+import { PageHeader } from '@/features/overview/components/PageHeader';
 import iconMeta from '@/assets/icons/meta.svg';
 import iconCodex from '@/assets/icons/codex.svg';
 import iconClaude from '@/assets/icons/claude.svg';
@@ -150,12 +155,10 @@ const getIcon = (icon: string | { light: string; dark: string }, theme: 'light' 
 function PluginOAuthIcon({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
   if (src && !failed) {
-    return (
-      <img src={src} alt="" className={styles.cardTitleIcon} onError={() => setFailed(true)} />
-    );
+    return <img src={src} alt="" className="size-6" onError={() => setFailed(true)} />;
   }
   return (
-    <span className={styles.cardTitleIconFallback} aria-hidden="true">
+    <span className="flex size-6 items-center justify-center text-kumo-subtle" aria-hidden="true">
       <IconPlug size={18} />
     </span>
   );
@@ -171,7 +174,7 @@ function OAuthProviderIcon({
   if (provider.kind === 'plugin') {
     return <PluginOAuthIcon src={provider.icon} />;
   }
-  return <img src={getIcon(provider.icon, theme)} alt="" className={styles.cardTitleIcon} />;
+  return <img src={getIcon(provider.icon, theme)} alt="" className="size-6" />;
 }
 
 const buildPluginOAuthProviderCards = (
@@ -523,15 +526,6 @@ export function OAuthPage() {
     }
   };
 
-  const copyLink = async (url?: string) => {
-    if (!url) return;
-    const copied = await copyToClipboard(url);
-    showNotification(
-      t(copied ? 'notification.link_copied' : 'notification.copy_failed'),
-      copied ? 'success' : 'error'
-    );
-  };
-
   const submitCallback = async (provider: string) => {
     const attempt = attempts.current.get(provider);
     if (!attempt?.isCurrent()) return;
@@ -661,6 +655,57 @@ export function OAuthPage() {
     }
   };
 
+  const renderStatusBadge = (status: ProviderState['status']) => {
+    if (status === 'waiting') {
+      return <Badge variant="info">{t('auth_login.oauth_badge_waiting')}</Badge>;
+    }
+    if (status === 'success') {
+      return <Badge variant="success">{t('auth_login.oauth_badge_success')}</Badge>;
+    }
+    if (status === 'error') {
+      return <Badge variant="error">{t('auth_login.oauth_badge_error')}</Badge>;
+    }
+    return null;
+  };
+
+  const renderStatusBanner = (provider: OAuthProviderCard, state: ProviderState) => {
+    if (state.status === 'waiting') {
+      return (
+        <Banner
+          size="sm"
+          icon={<Loader size="sm" />}
+          description={getProviderText(provider, 'oauth_status_waiting')}
+        />
+      );
+    }
+    if (state.status === 'success') {
+      return (
+        <Banner
+          size="sm"
+          variant="secondary"
+          icon={<CheckCircleIcon weight="fill" className="text-kumo-success" />}
+          description={getProviderText(provider, 'oauth_status_success')}
+          action={
+            <Banner.Action variant="secondary" onClick={() => navigate('/auth-files')}>
+              {t('auth_login.view_auth_files')}
+            </Banner.Action>
+          }
+        />
+      );
+    }
+    if (state.status === 'error') {
+      return (
+        <Banner
+          size="sm"
+          variant="error"
+          icon={<WarningCircleIcon weight="fill" />}
+          description={`${getProviderText(provider, 'oauth_status_error')} ${state.error || ''}`.trim()}
+        />
+      );
+    }
+    return null;
+  };
+
   const renderOAuthProviderCard = (provider: OAuthProviderCard, featured = false) => {
     const state = states[provider.id] || {};
     const showKimiSignUp =
@@ -671,28 +716,37 @@ export function OAuthPage() {
       state.status === 'success'
         ? t('auth_login.login_another_account')
         : getProviderText(provider, 'oauth_button');
-    const statusBadgeClassName = [
-      'status-badge',
-      state.status === 'success' ? 'success' : '',
-      state.status === 'error' ? 'error' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    const callbackLocked =
+      provider.id === 'devin' && (state.cancelling || state.status !== 'waiting');
+    const hasStatus = Boolean(state.status && state.status !== 'idle');
+    const hasDetails = hasStatus || Boolean(state.url) || Boolean(state.cancelError);
+    const titleId = `oauth-provider-${provider.id}`;
 
     return (
-      <Card
+      <li
         key={provider.id}
-        className={featured ? styles.featuredCard : undefined}
-        title={
-          <span className={styles.cardTitle}>
+        className="flex flex-col gap-4 px-4 py-4 sm:px-5"
+        aria-labelledby={titleId}
+      >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
             <OAuthProviderIcon provider={provider} theme={resolvedTheme} />
-            <span>{getProviderTitleText(provider)}</span>
           </span>
-        }
-        extra={
-          showKimiSignUp ? (
-            <div className={styles.featuredActions}>
+          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id={titleId} className="m-0 text-base font-semibold text-kumo-default">
+                {getProviderTitleText(provider)}
+              </h2>
+              {renderStatusBadge(state.status)}
+            </div>
+            <p className="m-0 text-sm text-kumo-subtle">
+              {getProviderText(provider, 'oauth_hint')}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {showKimiSignUp ? (
               <Button
+                variant="secondary"
                 onClick={() =>
                   window.open(
                     provider.id === 'kimi-ai'
@@ -705,151 +759,159 @@ export function OAuthPage() {
               >
                 {t('auth_login.kimi_sign_up_button')}
               </Button>
-              <Button onClick={() => startAuth(provider.id)} loading={state.polling}>
-                {loginButtonLabel}
-              </Button>
-            </div>
-          ) : (
+            ) : null}
             <Button
+              variant={state.status === 'success' ? 'secondary' : 'primary'}
               onClick={() => startAuth(provider.id)}
               loading={state.polling}
               disabled={provider.id === 'devin' && Boolean(state.state)}
             >
               {loginButtonLabel}
             </Button>
-          )
-        }
-      >
-        <div className={styles.cardContent}>
-          <div className={featured ? styles.featuredHint : styles.cardHint}>
-            {getProviderText(provider, 'oauth_hint')}
           </div>
-          {state.url && (
-            <div className={styles.authUrlBox}>
-              <div className={styles.authUrlLabel}>
-                {getProviderText(provider, 'oauth_url_label')}
-              </div>
-              <div className={styles.authUrlValue}>{state.url}</div>
-              {state.userCode && (
-                <div>
-                  <div className={styles.authUrlLabel}>{t('auth_login.device_code_label')}</div>
-                  <div className={styles.authUrlValue}>{state.userCode}</div>
-                  <Button variant="secondary" size="sm" onClick={() => copyLink(state.userCode)}>
-                    {t('auth_login.device_code_copy')}
-                  </Button>
+        </div>
+
+        {hasDetails && (
+          <div className="flex flex-col gap-4 rounded-lg bg-kumo-elevated p-4 ring ring-kumo-hairline sm:ml-14">
+            {renderStatusBanner(provider, state)}
+            {state.url && (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium text-kumo-default">
+                    {getProviderText(provider, 'oauth_url_label')}
+                  </span>
+                  <ClipboardText
+                    text={state.url}
+                    size="base"
+                    tooltip={{
+                      text: getProviderText(provider, 'copy_link'),
+                      copiedText: t('notification.link_copied'),
+                    }}
+                    labels={{ copyAction: getProviderText(provider, 'copy_link') }}
+                  />
                 </div>
-              )}
-              <div className={styles.authUrlActions}>
-                <Button variant="secondary" size="sm" onClick={() => copyLink(state.url!)}>
-                  {getProviderText(provider, 'copy_link')}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => window.open(state.url, '_blank', 'noopener,noreferrer')}
-                >
-                  {getProviderText(provider, 'open_link')}
-                </Button>
-                {provider.id === 'devin' && state.state && (
+                {state.userCode && (
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-sm font-medium text-kumo-default">
+                      {t('auth_login.device_code_label')}
+                    </span>
+                    <ClipboardText
+                      text={state.userCode}
+                      size="lg"
+                      className="max-w-xs font-mono tracking-widest"
+                      tooltip={{
+                        text: t('auth_login.device_code_copy'),
+                        copiedText: t('auth_login.device_code_copied'),
+                      }}
+                      labels={{ copyAction: t('auth_login.device_code_copy') }}
+                    />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => cancelAuth(provider.id)}
-                    loading={state.cancelling}
+                    onClick={() => window.open(state.url, '_blank', 'noopener,noreferrer')}
                   >
-                    {t('auth_login.devin_oauth_cancel')}
+                    <ArrowSquareOutIcon size={14} />
+                    {getProviderText(provider, 'open_link')}
                   </Button>
+                  {provider.id === 'devin' && state.state && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => cancelAuth(provider.id)}
+                      loading={state.cancelling}
+                    >
+                      {t('auth_login.devin_oauth_cancel')}
+                    </Button>
+                  )}
+                </div>
+                {provider.id === 'devin' && state.state && state.status === 'error' && (
+                  <p className="m-0 text-sm text-kumo-subtle">
+                    {t('auth_login.devin_oauth_retry_hint')}
+                  </p>
                 )}
               </div>
-              {provider.id === 'devin' && state.state && state.status === 'error' && (
-                <div className={styles.cardHintSecondary}>
-                  {t('auth_login.devin_oauth_retry_hint')}
-                </div>
-              )}
-              {state.cancelError && (
-                <div className="status-badge error">
-                  {t('auth_login.devin_oauth_cancel_error')} {state.cancelError}
-                </div>
-              )}
-            </div>
-          )}
-          {canSubmitCallback && (
-            <div className={styles.callbackSection}>
-              <Input
-                label={t(
-                  provider.id === 'xai'
-                    ? 'auth_login.xai_callback_label'
-                    : 'auth_login.oauth_callback_label'
-                )}
-                hint={t(
-                  provider.id === 'xai'
-                    ? 'auth_login.xai_callback_hint'
-                    : provider.id === 'devin'
-                      ? 'auth_login.devin_callback_hint'
-                      : 'auth_login.oauth_callback_hint'
-                )}
-                disabled={
-                  provider.id === 'devin' && (state.cancelling || state.status !== 'waiting')
-                }
-                value={state.callbackUrl || ''}
-                onChange={(e) =>
-                  updateProviderState(provider.id, {
-                    callbackUrl: e.target.value,
-                    callbackStatus: undefined,
-                    callbackError: undefined,
-                  })
-                }
-                placeholder={t(
-                  provider.id === 'xai'
-                    ? 'auth_login.xai_callback_placeholder'
-                    : provider.id === 'devin'
-                      ? 'auth_login.devin_callback_placeholder'
-                      : 'auth_login.oauth_callback_placeholder'
-                )}
+            )}
+            {state.cancelError && (
+              <Banner
+                size="sm"
+                variant="error"
+                icon={<WarningCircleIcon weight="fill" />}
+                description={`${t('auth_login.devin_oauth_cancel_error')} ${state.cancelError}`}
               />
-              <div className={styles.callbackActions}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => submitCallback(provider.id)}
-                  loading={state.callbackSubmitting}
-                  disabled={
-                    provider.id === 'devin' && (state.cancelling || state.status !== 'waiting')
+            )}
+            {canSubmitCallback && (
+              <div className="flex flex-col gap-2 border-t border-kumo-hairline pt-4">
+                <Input
+                  label={t(
+                    provider.id === 'xai'
+                      ? 'auth_login.xai_callback_label'
+                      : 'auth_login.oauth_callback_label'
+                  )}
+                  hint={t(
+                    provider.id === 'xai'
+                      ? 'auth_login.xai_callback_hint'
+                      : provider.id === 'devin'
+                        ? 'auth_login.devin_callback_hint'
+                        : 'auth_login.oauth_callback_hint'
+                  )}
+                  disabled={callbackLocked}
+                  value={state.callbackUrl || ''}
+                  onChange={(e) =>
+                    updateProviderState(provider.id, {
+                      callbackUrl: e.target.value,
+                      callbackStatus: undefined,
+                      callbackError: undefined,
+                    })
                   }
-                >
-                  {t('auth_login.oauth_callback_button')}
-                </Button>
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !callbackLocked && !state.callbackSubmitting) {
+                      event.preventDefault();
+                      void submitCallback(provider.id);
+                    }
+                  }}
+                  placeholder={t(
+                    provider.id === 'xai'
+                      ? 'auth_login.xai_callback_placeholder'
+                      : provider.id === 'devin'
+                        ? 'auth_login.devin_callback_placeholder'
+                        : 'auth_login.oauth_callback_placeholder'
+                  )}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => submitCallback(provider.id)}
+                    loading={state.callbackSubmitting}
+                    disabled={callbackLocked}
+                  >
+                    {t('auth_login.oauth_callback_button')}
+                  </Button>
+                </div>
+                {state.callbackStatus === 'success' && state.status === 'waiting' && (
+                  <Banner
+                    size="sm"
+                    variant="secondary"
+                    icon={<CheckCircleIcon weight="fill" className="text-kumo-success" />}
+                    description={t('auth_login.oauth_callback_status_success')}
+                  />
+                )}
+                {state.callbackStatus === 'error' && (
+                  <Banner
+                    size="sm"
+                    variant="error"
+                    icon={<WarningCircleIcon weight="fill" />}
+                    description={`${t('auth_login.oauth_callback_status_error')} ${state.callbackError || ''}`.trim()}
+                  />
+                )}
               </div>
-              {state.callbackStatus === 'success' && state.status === 'waiting' && (
-                <div className="status-badge success">
-                  {t('auth_login.oauth_callback_status_success')}
-                </div>
-              )}
-              {state.callbackStatus === 'error' && (
-                <div className="status-badge error">
-                  {t('auth_login.oauth_callback_status_error')} {state.callbackError || ''}
-                </div>
-              )}
-            </div>
-          )}
-          {state.status && state.status !== 'idle' && (
-            <div className={statusBadgeClassName}>
-              {state.status === 'success'
-                ? getProviderText(provider, 'oauth_status_success')
-                : state.status === 'error'
-                  ? `${getProviderText(provider, 'oauth_status_error')} ${state.error || ''}`
-                  : getProviderText(provider, 'oauth_status_waiting')}
-            </div>
-          )}
-          {state.status === 'success' && (
-            <div className={styles.successActions}>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/auth-files')}>
-                {t('auth_login.view_auth_files')}
-              </Button>
-            </div>
-          )}
-        </div>
-      </Card>
+            )}
+          </div>
+        )}
+      </li>
     );
   };
 
@@ -861,111 +923,122 @@ export function OAuthPage() {
   });
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.pageTitle}>{t('nav.add_account')}</h1>
+    <div className="flex w-full flex-col gap-8">
+      <PageHeader title={t('nav.add_account')} description={t('auth_login.page_description')} />
 
-      <div className={styles.content}>
-        <section className={styles.providerSection}>
-          <div className={styles.providerList}>
+      <section className="flex flex-col gap-3" aria-label={t('auth_login.oauth_section_title')}>
+        <LayerCard>
+          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
             {orderedProviders.map((provider) => renderOAuthProviderCard(provider))}
-          </div>
-        </section>
+          </ul>
+        </LayerCard>
+      </section>
 
-        {/* Vertex JSON 登录 */}
-        <section className={styles.providerSection}>
-          <h2 className={styles.sectionTitle}>{t('auth_login.other_login_methods')}</h2>
-          <Card
-            title={
-              <span className={styles.cardTitle}>
-                <img src={iconVertex} alt="" className={styles.cardTitleIcon} />
+      <section className="flex flex-col gap-3">
+        <h2 className="m-0 text-base font-semibold text-kumo-default">
+          {t('auth_login.other_login_methods')}
+        </h2>
+        <LayerCard className="flex flex-col gap-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
+              <img src={iconVertex} alt="" className="size-6" />
+            </span>
+            <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
+              <h3 className="m-0 text-base font-semibold text-kumo-default">
                 {t('vertex_import.title')}
-              </span>
-            }
-            extra={
-              <Button onClick={handleVertexImport} loading={vertexState.loading}>
-                {t('vertex_import.import_button')}
-              </Button>
-            }
-          >
-            <div className={styles.cardContent}>
-              <div className={styles.cardHint}>{t('vertex_import.description')}</div>
-              <Input
-                label={t('vertex_import.location_label')}
-                hint={t('vertex_import.location_hint')}
-                value={vertexState.location}
-                onChange={(e) =>
-                  setVertexState((prev) => ({
-                    ...prev,
-                    location: e.target.value,
-                  }))
-                }
-                placeholder={t('vertex_import.location_placeholder')}
-              />
-              <div className={styles.formItem}>
-                <label className={styles.formItemLabel}>{t('vertex_import.file_label')}</label>
-                <div className={styles.filePicker}>
-                  <Button variant="secondary" size="sm" onClick={handleVertexFilePick}>
-                    {t('vertex_import.choose_file')}
-                  </Button>
-                  <div
-                    className={`${styles.fileName} ${
-                      vertexState.fileName ? '' : styles.fileNamePlaceholder
-                    }`.trim()}
-                  >
-                    {vertexState.fileName || t('vertex_import.file_placeholder')}
-                  </div>
-                </div>
-                <div className={styles.cardHintSecondary}>{t('vertex_import.file_hint')}</div>
-                <input
-                  ref={vertexFileInputRef}
-                  type="file"
-                  accept=".json,application/json"
-                  style={{ display: 'none' }}
-                  onChange={handleVertexFileChange}
-                />
-              </div>
-              {vertexState.error && <div className="status-badge error">{vertexState.error}</div>}
-              {vertexState.result && (
-                <div className={styles.connectionBox}>
-                  <div className={styles.connectionLabel}>{t('vertex_import.result_title')}</div>
-                  <div className={styles.keyValueList}>
-                    {vertexState.result.projectId && (
-                      <div className={styles.keyValueItem}>
-                        <span className={styles.keyValueKey}>
-                          {t('vertex_import.result_project')}
-                        </span>
-                        <span className={styles.keyValueValue}>{vertexState.result.projectId}</span>
-                      </div>
-                    )}
-                    {vertexState.result.email && (
-                      <div className={styles.keyValueItem}>
-                        <span className={styles.keyValueKey}>
-                          {t('vertex_import.result_email')}
-                        </span>
-                        <span className={styles.keyValueValue}>{vertexState.result.email}</span>
-                      </div>
-                    )}
-                    {vertexState.result.location && (
-                      <div className={styles.keyValueItem}>
-                        <span className={styles.keyValueKey}>
-                          {t('vertex_import.result_location')}
-                        </span>
-                        <span className={styles.keyValueValue}>{vertexState.result.location}</span>
-                      </div>
-                    )}
-                    {vertexState.result.authFile && (
-                      <div className={styles.keyValueItem}>
-                        <span className={styles.keyValueKey}>{t('vertex_import.result_file')}</span>
-                        <span className={styles.keyValueValue}>{vertexState.result.authFile}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              </h3>
+              <p className="m-0 text-sm text-kumo-subtle">{t('vertex_import.description')}</p>
             </div>
-          </Card>
-        </section>
-      </div>
+            <Button onClick={handleVertexImport} loading={vertexState.loading}>
+              {t('vertex_import.import_button')}
+            </Button>
+          </div>
+
+          <div className="grid gap-4 sm:ml-14 md:grid-cols-2">
+            <Input
+              label={t('vertex_import.location_label')}
+              hint={t('vertex_import.location_hint')}
+              value={vertexState.location}
+              onChange={(e) =>
+                setVertexState((prev) => ({
+                  ...prev,
+                  location: e.target.value,
+                }))
+              }
+              placeholder={t('vertex_import.location_placeholder')}
+            />
+            <div className="flex flex-col gap-1.5">
+              <span id="vertex-file-label" className="text-base font-medium text-kumo-default">
+                {t('vertex_import.file_label')}
+              </span>
+              <div className="flex min-h-9 items-center gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={handleVertexFilePick}
+                  aria-describedby="vertex-file-label vertex-file-name"
+                >
+                  <FileArrowUpIcon size={16} />
+                  {t('vertex_import.choose_file')}
+                </Button>
+                <span
+                  id="vertex-file-name"
+                  className={[
+                    'min-w-0 truncate text-sm',
+                    vertexState.fileName ? 'font-mono text-kumo-default' : 'text-kumo-subtle',
+                  ].join(' ')}
+                >
+                  {vertexState.fileName || t('vertex_import.file_placeholder')}
+                </span>
+              </div>
+              <span className="text-sm text-kumo-subtle">{t('vertex_import.file_hint')}</span>
+              <input
+                ref={vertexFileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleVertexFileChange}
+              />
+            </div>
+          </div>
+
+          {vertexState.error && (
+            <Banner
+              size="sm"
+              variant="error"
+              icon={<WarningCircleIcon weight="fill" />}
+              description={vertexState.error}
+              className="sm:ml-14"
+            />
+          )}
+          {vertexState.result && (
+            <div className="flex flex-col gap-3 rounded-lg bg-kumo-elevated p-4 ring ring-kumo-hairline sm:ml-14">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon weight="fill" className="text-kumo-success" />
+                <span className="text-sm font-semibold text-kumo-default">
+                  {t('vertex_import.result_title')}
+                </span>
+              </div>
+              <dl className="m-0 grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-2 text-sm">
+                {(
+                  [
+                    ['vertex_import.result_project', vertexState.result.projectId],
+                    ['vertex_import.result_email', vertexState.result.email],
+                    ['vertex_import.result_location', vertexState.result.location],
+                    ['vertex_import.result_file', vertexState.result.authFile],
+                  ] as const
+                )
+                  .filter(([, value]) => Boolean(value))
+                  .map(([labelKey, value]) => (
+                    <div key={labelKey} className="contents">
+                      <dt className="text-kumo-subtle">{t(labelKey)}</dt>
+                      <dd className="m-0 min-w-0 font-mono break-all text-kumo-default">{value}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </div>
+          )}
+        </LayerCard>
+      </section>
     </div>
   );
 }

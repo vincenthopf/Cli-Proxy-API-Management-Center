@@ -1,26 +1,40 @@
-// 配置项零遗漏守卫：三方对账
-//   ① 搜索索引（searchIndex.ts，唯一的机器可读字段清单）
-//   ② 值键映射（constants.ts FIELD_VALUE_KEYS ↔ VisualConfigValues 叶值键）
-//   ③ 分区 JSX 里实际渲染的 <FieldAnchor fieldId="…"> 锚点（源码扫描）
-// 任何一方增删字段而漏改其余两方，本套件即红。
-
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
-import {
-  COMMON_FIELD_IDS,
-  CONFIG_SECTION_IDS,
-  CONFIG_TAB_IDS,
-  FIELD_VALUE_KEYS,
-  SECTION_VALIDATION_FIELDS,
-} from '@/features/config/constants';
+import { FIELD_VALUE_KEYS } from '@/features/config/constants';
 import {
   CONFIG_FIELD_SEARCH_INDEX,
   findConfigFieldById,
   searchConfigFields,
 } from '@/features/config/searchIndex';
+import {
+  SETTINGS_FIELD_SECTIONS,
+  fieldIdForValueKey,
+  type SettingsSectionId,
+} from '@/features/settings/settingsLayout';
 import { getVisualConfigValidationErrors } from '@/hooks/useVisualConfig';
 import { DEFAULT_VISUAL_VALUES } from '@/types/visualConfig';
+
+const SEARCH_SECTION_IDS = new Set([
+  'connectivity',
+  'network',
+  'logging',
+  'quota',
+  'streaming',
+  'advanced',
+  'payload',
+]);
+
+const SECTION_FILES: Record<string, SettingsSectionId> = {
+  'AccessSection.tsx': 'access',
+  'RoutingSection.tsx': 'routing',
+  'LoggingSection.tsx': 'logging',
+  'NetworkSection.tsx': 'network',
+  'ProvidersSection.tsx': 'providers',
+  'AdvancedSection.tsx': 'advanced',
+};
+
+const NON_YAML_VISUAL_FIELDS = new Set(['requestLog']);
 
 const INDEX_FIELD_IDS = CONFIG_FIELD_SEARCH_INDEX.map((entry) => entry.fieldId);
 const INDEX_FIELD_ID_SET = new Set(INDEX_FIELD_IDS);
@@ -41,10 +55,9 @@ describe('search index integrity', () => {
     expect(INDEX_FIELD_ID_SET.size).toBe(INDEX_FIELD_IDS.length);
   });
 
-  test('every entry belongs to a canonical section', () => {
-    const sectionIds = new Set<string>(CONFIG_SECTION_IDS);
+  test('every entry belongs to a canonical search section', () => {
     for (const entry of CONFIG_FIELD_SEARCH_INDEX) {
-      expect(sectionIds.has(entry.sectionId)).toBe(true);
+      expect(SEARCH_SECTION_IDS.has(entry.sectionId)).toBe(true);
     }
   });
 
@@ -84,55 +97,42 @@ describe('value-key coverage (index ↔ VisualConfigValues)', () => {
   });
 });
 
-describe('JSX anchor parity (source scan)', () => {
-  test('every index entry is rendered by exactly the section JSX, and vice versa', () => {
-    const componentsDir = join(import.meta.dir, '../src/features/config/components');
-    const sectionsDir = join(componentsDir, 'sections');
-    const scannedFiles = [
-      ...readdirSync(sectionsDir)
-        .filter((name) => name.endsWith('.tsx'))
-        .map((name) => join(sectionsDir, name)),
-      join(componentsDir, 'fields/sharedFields.tsx'),
-    ];
+describe('settings layout coverage', () => {
+  test('every index field has exactly one settings section', () => {
+    expect(sorted(Object.keys(SETTINGS_FIELD_SECTIONS))).toEqual(sorted(INDEX_FIELD_ID_SET));
+  });
 
-    const renderedFieldIds = new Set<string>();
-    for (const filePath of scannedFiles) {
-      const source = readFileSync(filePath, 'utf8');
-      for (const match of source.matchAll(/fieldId="([^"]+)"/g)) {
-        renderedFieldIds.add(match[1]);
+  test('each section file renders exactly the fields mapped to it', () => {
+    const sectionsDir = join(import.meta.dir, '../src/features/settings/sections');
+    const seen = new Set<string>();
+    for (const name of readdirSync(sectionsDir).filter((file) => file.endsWith('.tsx'))) {
+      const source = readFileSync(join(sectionsDir, name), 'utf8');
+      const rendered = new Set<string>();
+      for (const match of source.matchAll(/fieldId="([^"]+)"/g)) rendered.add(match[1]);
+      for (const match of source.matchAll(/configFieldDomId\('([^']+)'\)/g)) rendered.add(match[1]);
+      for (const id of NON_YAML_VISUAL_FIELDS) rendered.delete(id);
+      const section = SECTION_FILES[name];
+      const expected = section
+        ? Object.entries(SETTINGS_FIELD_SECTIONS)
+            .filter(([, owner]) => owner === section)
+            .map(([fieldId]) => fieldId)
+        : [];
+      expect({ name, fields: sorted(rendered) }).toEqual({ name, fields: sorted(expected) });
+      for (const id of rendered) {
+        expect(seen.has(id)).toBe(false);
+        seen.add(id);
       }
     }
-
-    const missingFromJsx = sorted(INDEX_FIELD_IDS).filter((id) => !renderedFieldIds.has(id));
-    const unknownInJsx = sorted(renderedFieldIds).filter((id) => !INDEX_FIELD_ID_SET.has(id));
-
-    // 分区 JSX 静默丢字段 → missingFromJsx 非空；新增字段没进索引 → unknownInJsx 非空
-    expect(missingFromJsx).toEqual([]);
-    expect(unknownInJsx).toEqual([]);
-  });
-});
-
-describe('registry consistency', () => {
-  test('tab id registry is common + the seven canonical sections', () => {
-    expect([...CONFIG_TAB_IDS]).toEqual(['common', ...CONFIG_SECTION_IDS]);
+    expect(sorted(seen)).toEqual(sorted(INDEX_FIELD_ID_SET));
   });
 
-  test('every validation field path lives in exactly one section bucket', () => {
-    const allPaths = Object.keys(getVisualConfigValidationErrors(DEFAULT_VISUAL_VALUES)).sort();
-    const bucketed = Object.values(SECTION_VALIDATION_FIELDS).flat();
-    expect(new Set(bucketed).size).toBe(bucketed.length); // 不允许一个字段进两个桶
-    expect(sorted(bucketed)).toEqual(allPaths);
-  });
-
-  test('validation field paths are real value keys', () => {
-    for (const path of Object.values(SECTION_VALIDATION_FIELDS).flat()) {
+  test('every validation field path maps to a field with a settings section', () => {
+    const allPaths = Object.keys(getVisualConfigValidationErrors(DEFAULT_VISUAL_VALUES));
+    for (const path of allPaths) {
       expect(LEAF_VALUE_KEYS.has(path)).toBe(true);
-    }
-  });
-
-  test('common tab fields are a subset of the index', () => {
-    for (const fieldId of COMMON_FIELD_IDS) {
-      expect(INDEX_FIELD_ID_SET.has(fieldId)).toBe(true);
+      const fieldId = fieldIdForValueKey(path);
+      expect(fieldId).toBeDefined();
+      expect(SETTINGS_FIELD_SECTIONS[fieldId!]).toBeDefined();
     }
   });
 });

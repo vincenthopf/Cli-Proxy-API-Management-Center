@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/stores';
 import { IconAlertTriangle, IconCheckCircle2, IconInfo, IconX } from '@/components/ui/icons';
@@ -143,7 +144,7 @@ export function NotificationContainer() {
     setRendered((previous) => previous.filter((notification) => notification.id !== id));
   }, []);
 
-  return (
+  const region = (
     <section
       className={styles.container}
       aria-label={t('notification.region_label')}
@@ -164,4 +165,7 @@ export function NotificationContainer() {
       ))}
     </section>
   );
+
+  if (typeof document === 'undefined') return region;
+  return createPortal(region, document.body);
 }

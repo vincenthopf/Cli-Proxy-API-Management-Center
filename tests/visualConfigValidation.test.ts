@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { parse as parseYaml } from 'yaml';
-import i18n from '../src/i18n';
-import { SectionStreaming } from '../src/features/config/components/sections/SectionStreaming';
+import { NetworkSection } from '../src/features/settings/sections/NetworkSection';
+import { isDisabledBySentinel } from '../src/features/settings/settingsLayout';
 import { getVisualConfigValidationErrors } from '../src/hooks/useVisualConfig';
 import { DEFAULT_VISUAL_VALUES } from '../src/types/visualConfig';
+import { renderSection, translations } from './helpers/settingsRender';
 import { runVisualConfig } from './helpers/visualConfig';
 
 const signedFields = [
@@ -161,15 +161,15 @@ oauth:
       ['-1.5', false],
     ] as const) {
       const values = withSignedValues(value);
-      const markup = renderToStaticMarkup(
-        createElement(SectionStreaming, {
-          values,
-          validationErrors: getVisualConfigValidationErrors(values),
-          disabled: false,
-          onChange: () => {},
-        })
-      );
-      const label = i18n.t('config_management.visual.sections.streaming.disabled');
+      const validationErrors = getVisualConfigValidationErrors(values);
+      expect(
+        isDisabledBySentinel(value, Boolean(validationErrors['streaming.keepaliveSeconds']))
+      ).toBe(disabled);
+      const markup = renderSection(createElement(NetworkSection, { onOpenYaml: () => {} }), {
+        values,
+        validationErrors,
+      });
+      const label = translations.t('settings.off');
       expect(markup.split(`>${label}</span>`).length - 1).toBe(disabled ? 2 : 0);
     }
   });

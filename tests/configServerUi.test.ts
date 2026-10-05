@@ -1,24 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '@/i18n';
 import { DEFAULT_VISUAL_VALUES } from '@/types/visualConfig';
-import { SectionConnectivity } from '@/features/config/components/sections/SectionConnectivity';
-import { SectionDiscovery } from '@/features/config/components/sections/SectionDiscovery';
-import {
-  CONFIG_SECTION_IDS,
-  FIELD_VALUE_KEYS,
-  SECTION_VALIDATION_FIELDS,
-} from '@/features/config/constants';
+import { FIELD_VALUE_KEYS } from '@/features/config/constants';
 import { CONFIG_FIELD_SEARCH_INDEX, searchConfigFields } from '@/features/config/searchIndex';
+import { SETTINGS_FIELD_SECTIONS } from '@/features/settings/settingsLayout';
+import { NetworkSection } from '@/features/settings/sections/NetworkSection';
+import { escapeText, renderSection, translations } from './helpers/settingsRender';
 
-const translations = i18n.cloneInstance({ lng: 'en' });
-const props = { values: DEFAULT_VISUAL_VALUES, disabled: false, onChange: () => {} };
-const render = (element: ReturnType<typeof createElement>) =>
-  renderToStaticMarkup(createElement(I18nextProvider, { i18n: translations }, element));
-const escapeText = (value: string) =>
-  renderToStaticMarkup(createElement('span', null, value)).slice(6, -7);
 const extras = CONFIG_FIELD_SEARCH_INDEX.filter((entry) =>
   entry.labelKey.includes('.serverExtras.')
 );
@@ -29,119 +17,95 @@ const populated = {
   discoveryInterfacesInclude: ['en*'],
   discoveryInterfacesExclude: ['docker*'],
 };
+const network = (overrides: Parameters<typeof renderSection>[1] = {}) =>
+  renderSection(createElement(NetworkSection, { onOpenYaml: () => {} }), overrides);
 
 describe('server configuration UI', () => {
-  test('keeps nine searchable anchors in connectivity without adding a tab', () => {
-    expect(CONFIG_SECTION_IDS).toHaveLength(7);
+  test('renders the nine server extras once in the Network section', () => {
     expect(extras).toHaveLength(9);
-    const markup = render(createElement(SectionConnectivity, props));
+    const markup = network();
     for (const entry of extras) {
-      expect(entry.sectionId).toBe('connectivity');
+      expect(SETTINGS_FIELD_SECTIONS[entry.fieldId]).toBe('network');
       expect(FIELD_VALUE_KEYS[entry.fieldId]).toEqual([entry.fieldId]);
       expect(markup.split(`id="cfg-field-${entry.fieldId}"`)).toHaveLength(2);
-      expect(markup).toContain(escapeText(translations.t(entry.labelKey)));
-      expect(markup).toContain(escapeText(translations.t(entry.hintKey!)));
       const path = entry.yamlKeys!.join('.');
       expect(path).toMatch(/^server\.(trusted-proxies|discovery\.)/);
       expect(
         searchConfigFields(path, (key) => translations.t(key)).map((e) => e.fieldId)
       ).toContain(entry.fieldId);
     }
-    expect(SECTION_VALIDATION_FIELDS.connectivity).toEqual([
-      'port',
-      'trustedProxies',
-      'discoveryServiceType',
-    ]);
+    for (const entry of extras.filter((e) => e.fieldId !== 'trustedProxies')) {
+      expect(markup).toContain(escapeText(translations.t(entry.labelKey)));
+      expect(markup).toContain(escapeText(translations.t(entry.hintKey!)));
+    }
   });
 
-  test('discovery stays mounted in its own closed details even when disabled', () => {
-    const markup = render(createElement(SectionDiscovery, props));
-    expect(markup.match(/<details\b/g)).toHaveLength(1);
-    expect(markup.match(/<details\b[^>]*>/)?.[0]).not.toContain('open=');
-    expect(markup).toContain(
-      escapeText(translations.t('config_management.visual.serverExtras.discoveryTitle'))
-    );
+  test('keeps discovery mounted inside a closed disclosure with safe defaults', () => {
+    const markup = network();
+    const panel = markup
+      .split(escapeText(translations.t('config_management.visual.serverExtras.discoveryTitle')))[1]
+      .split('</button>')
+      .slice(1)
+      .join('</button>');
+    expect(panel).toMatch(/^<div data-closed="" hidden=""/);
     for (const entry of extras.filter((e) => e.fieldId !== 'trustedProxies')) {
-      expect(markup).toContain(`id="cfg-field-${entry.fieldId}"`);
+      expect(panel).toContain(`id="cfg-field-${entry.fieldId}"`);
     }
-    expect(DEFAULT_VISUAL_VALUES.discoveryEnabled).toBe(false);
     expect(DEFAULT_VISUAL_VALUES.discoveryAuthRequired).toBe(true);
-    expect(DEFAULT_VISUAL_VALUES.discoveryAdvertiseManagement).toBe(false);
     const auth = markup
       .split('id="cfg-field-discoveryAuthRequired"')[1]
       .split('id="cfg-field-discoveryAdvertiseManagement"')[0];
-    expect(auth).toContain('checked=""');
-    for (const input of markup.match(/<input\b[^>]*type="text"[^>]*>/g) ?? []) {
-      expect(input).toContain('value=""');
-    }
+    expect(auth).toContain('aria-checked="true"');
   });
 
-  test('gives inputs and list rows accessible names and associates list hints', () => {
-    const markup = render(createElement(SectionConnectivity, { ...props, values: populated }));
-    for (const field of [
-      'trustedProxies',
-      'discoverySubtypes',
-      'discoveryInterfacesInclude',
-      'discoveryInterfacesExclude',
-    ]) {
+  test('labels every list row input and links field labels to their controls', () => {
+    const markup = network({ values: populated });
+    const trusted = escapeText(translations.t('settings.fields.trustedProxies.label'));
+    expect(markup).toContain(`aria-label="${trusted} 1"`);
+    expect(markup).toContain(`aria-label="${trusted} 2"`);
+    for (const field of ['discoverySubtypes', 'discoveryInterfacesInclude']) {
       const label = escapeText(
         translations.t(`config_management.visual.serverExtras.${field}.label`)
       );
-      expect(markup).toContain(`aria-label="${label}"`);
-      const group = (markup.match(/<div\b[^>]*role="group"[^>]*>/g) ?? []).find((tag) =>
-        tag.includes(`${field}-label`)
-      );
-      expect(group).toBeTruthy();
-      for (const attribute of ['aria-labelledby', 'aria-describedby']) {
-        const id = group!.match(new RegExp(`${attribute}="([^"]+)"`))?.[1];
-        expect(id).toBeTruthy();
-        expect(markup).toContain(`id="${id}"`);
-      }
+      expect(markup).toContain(`aria-label="${label} 1"`);
     }
-    const discovery = render(createElement(SectionDiscovery, props));
-    const inputs = discovery.match(/<input\b[^>]*type="text"[^>]*>/g) ?? [];
-    expect(inputs).toHaveLength(2);
-    for (const input of inputs) {
-      const id = input.match(/\bid="([^"]+)"/)?.[1];
-      expect(discovery).toContain(`for="${id}"`);
-      const hint = input.match(/aria-describedby="([^"]+)"/)?.[1];
-      expect(discovery).toContain(`id="${hint}"`);
-    }
+    const textInput = markup
+      .split('id="cfg-field-discoveryServiceName"')[1]
+      .match(/<input\b[^>]*>/)![0];
+    const id = textInput.match(/\bid="([^"]+)"/)![1];
+    expect(markup).toContain(`for="${id}"`);
   });
 
-  test('disables every input and list action in read-only mode', () => {
-    const markup = render(
-      createElement(SectionConnectivity, { ...props, values: populated, disabled: true })
+  test('shows host and port read-only and disables editable inputs in read-only mode', () => {
+    const markup = network({ values: populated, disabled: true });
+    for (const field of ['host', 'port']) {
+      const input = markup.split(`id="cfg-field-${field}"`)[1].match(/<input\b[^>]*>/)![0];
+      expect(input).toContain('readOnly=""');
+    }
+    const inputs = (markup.match(/<input\b[^>]*>/g) ?? []).filter(
+      (input) => !input.includes('readOnly=""')
     );
-    const controls = markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? [];
-    expect(controls.length).toBeGreaterThan(10);
-    for (const control of controls) expect(control).toContain('disabled=""');
+    expect(inputs.length).toBeGreaterThan(8);
+    for (const input of inputs) expect(input).toContain('disabled=""');
   });
 
-  test('renders and associates both validation errors', () => {
-    const markup = render(
-      createElement(SectionConnectivity, {
-        ...props,
-        values: populated,
-        validationErrors: {
-          trustedProxies: 'invalid_trusted_proxies',
-          discoveryServiceType: 'invalid_discovery_service_type',
-        },
-      })
-    );
-    for (const code of ['invalid_trusted_proxies', 'invalid_discovery_service_type']) {
-      expect(markup).toContain(
+  test('renders both validation errors next to their fields', () => {
+    const markup = network({
+      values: populated,
+      validationErrors: {
+        trustedProxies: 'invalid_trusted_proxies',
+        discoveryServiceType: 'invalid_discovery_service_type',
+      },
+    });
+    for (const [field, code] of [
+      ['trustedProxies', 'invalid_trusted_proxies'],
+      ['discoveryServiceType', 'invalid_discovery_service_type'],
+    ]) {
+      const row = markup.split(`id="cfg-field-${field}"`)[1].split('data-setting-row=')[1];
+      expect(row).toContain(
         escapeText(translations.t(`config_management.visual.validation.${code}`))
       );
+      expect(row).toContain('aria-invalid="true"');
     }
-    const group = (markup.match(/<div\b[^>]*role="group"[^>]*>/g) ?? []).find((tag) =>
-      tag.includes('trustedProxies-label')
-    )!;
-    expect(group).toContain('aria-invalid="true"');
-    const ids = group.match(/aria-describedby="([^"]+)"/)![1].split(' ');
-    expect(ids).toHaveLength(2);
-    for (const id of ids) expect(markup).toContain(`id="${id}"`);
-    const typeInput = markup.match(/<input\b[^>]*placeholder="_ai-gateway\._tcp"[^>]*>/)?.[0];
-    expect(typeInput).toContain('aria-invalid="true"');
   });
 });

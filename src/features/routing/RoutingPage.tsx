@@ -1,13 +1,43 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ArrowsSplitIcon,
+  GearIcon,
+  ListBulletsIcon,
+  WarningCircleIcon,
+} from '@phosphor-icons/react';
+import {
+  Badge,
+  Banner,
+  Empty,
+  LayerCard,
+  LinkButton,
+  Radio,
+  Table,
+  Text,
+  type BadgeVariant,
+} from '@cloudflare/kumo';
 import { sidecarApi, type RouterMode } from '@/services/api/sidecar';
 import { useConfigStore } from '@/stores';
+import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { usePolling } from '@/features/overview/usePolling';
-import { formatDateTime, formatRelative } from '@/features/overview/format';
-import styles from '@/features/overview/Overview.module.scss';
+import { useNow } from '@/features/overview/useNow';
+import { accountDisplayName, parseDecisions } from '@/features/overview/accounts';
+import {
+  credentialName,
+  formatDateTime,
+  formatRelative,
+  maskEmail,
+} from '@/features/overview/format';
+import { PageHeader } from '@/features/overview/components/PageHeader';
+import { SectionHeader } from '@/features/overview/components/SectionHeader';
+import { ResetTime } from '@/features/overview/components/ResetTime';
 
 const MODES: RouterMode[] = ['active', 'shadow', 'off'];
+const DECISION_LIMIT = 12;
+
+const isMode = (value: unknown): value is RouterMode =>
+  typeof value === 'string' && (MODES as string[]).includes(value);
 
 const pick = (source: unknown, path: string[]): unknown =>
   path.reduce<unknown>(
@@ -16,39 +46,75 @@ const pick = (source: unknown, path: string[]): unknown =>
     source
   );
 
-const show = (value: unknown): string => {
-  if (value === undefined || value === null || value === '') return '—';
-  if (typeof value === 'boolean') return value ? 'on' : 'off';
-  return String(value);
+const actionBadge = (action: string, error: string | null): BadgeVariant => {
+  if (error) return 'error';
+  if (action === 'unchanged') return 'neutral';
+  if (action === 'skipped') return 'warning';
+  return 'info';
 };
 
 export function RoutingPage() {
   const { t } = useTranslation();
   const router = usePolling(() => sidecarApi.router(), 30_000);
+  const accounts = usePolling(() => sidecarApi.accounts(), 60_000);
   const config = useConfigStore((s) => s.config);
   const fetchConfig = useConfigStore((s) => s.fetchConfig);
+  const now = useNow();
   const [saving, setSaving] = useState<RouterMode | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchConfig();
+    void fetchConfig().catch(() => undefined);
   }, [fetchConfig]);
 
+  const refreshRouter = router.refresh;
+  const refreshAccounts = accounts.refresh;
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshRouter(), refreshAccounts()]);
+  }, [refreshRouter, refreshAccounts]);
+  useHeaderRefresh(refreshAll);
+
+  const names = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const account of accounts.data?.accounts ?? []) {
+      map.set(account.auth_index, accountDisplayName(account));
+    }
+    return map;
+  }, [accounts.data]);
+  const nameOf = (authIndex: string, fallback: string) =>
+    names.get(authIndex) ?? (maskEmail(credentialName(fallback)) || credentialName(fallback));
+
+  const decisions = useMemo(
+    () => parseDecisions(router.data).slice(0, DECISION_LIMIT),
+    [router.data]
+  );
+  const ranking = router.data?.ranking ?? [];
+  const mode = router.data?.mode;
+
+  const boolText = (value: unknown) =>
+    typeof value === 'boolean' ? (value ? t('routing.value_on') : t('routing.value_off')) : value;
   const raw = config?.raw ?? {};
   const settings: Array<[string, unknown]> = [
     [t('routing.strategy'), pick(raw, ['routing', 'strategy']) ?? config?.routingStrategy],
-    [t('routing.affinity'), pick(raw, ['routing', 'session-affinity'])],
+    [t('routing.affinity'), boolText(pick(raw, ['routing', 'session-affinity']))],
     [t('routing.affinity_ttl'), pick(raw, ['routing', 'session-affinity-ttl'])],
-    [t('routing.affinity_subagents'), pick(raw, ['routing', 'session-affinity-subagents'])],
+    [
+      t('routing.affinity_subagents'),
+      boolText(pick(raw, ['routing', 'session-affinity-subagents'])),
+    ],
     [t('routing.retry'), pick(raw, ['routing', 'retry', 'request-retry']) ?? config?.requestRetry],
-    [t('routing.model_cooling'), pick(raw, ['upstream', 'claude', 'model-level-cooling'])],
+    [
+      t('routing.model_cooling'),
+      boolText(pick(raw, ['upstream', 'claude', 'model-level-cooling'])),
+    ],
   ];
 
-  const setMode = async (mode: RouterMode) => {
-    setSaving(mode);
+  const setMode = async (next: RouterMode) => {
+    if (next === mode) return;
+    setSaving(next);
     setError(null);
     try {
-      await sidecarApi.setRouterMode(mode);
+      await sidecarApi.setRouterMode(next);
       await router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -57,95 +123,225 @@ export function RoutingPage() {
     }
   };
 
-  const mode = router.data?.mode;
-
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>{t('routing.title')}</h1>
-          <p className={styles.subtitle}>{t('routing.subtitle')}</p>
-        </div>
-      </header>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t('routing.title')} description={t('routing.subtitle')} />
 
       {router.error && !router.data ? (
-        <div className={styles.notice}>{t('overview.sidecar_down', { error: router.error })}</div>
+        <Banner
+          variant="error"
+          icon={<WarningCircleIcon weight="fill" />}
+          title={t('overview.alert_sidecar_title')}
+          description={t('overview.sidecar_down', { error: router.error })}
+        />
       ) : null}
-      {error ? <div className={styles.notice}>{error}</div> : null}
+      {error ? (
+        <Banner
+          variant="error"
+          icon={<WarningCircleIcon weight="fill" />}
+          title={t('routing.mode_error_title')}
+          description={error}
+        />
+      ) : null}
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>{t('routing.router_title')}</h2>
-          <div className={styles.segmented} role="radiogroup" aria-label={t('routing.router_title')}>
-            {MODES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                role="radio"
-                aria-checked={mode === m}
-                disabled={saving !== null}
-                className={`${styles.segment} ${mode === m ? styles.segmentActive : ''}`}
-                onClick={() => void setMode(m)}
-              >
-                {t(`routing.mode_${m}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <p className={styles.footnote}>
-          {t(`routing.mode_${mode ?? 'off'}_help`)}{' '}
-          {router.data?.last_run
-            ? t('routing.last_run', { when: formatRelative(router.data.last_run) })
-            : ''}
-        </p>
-        <div className={styles.table}>
-          <div className={`${styles.row} ${styles.rowHead}`}>
-            <span>{t('overview.col_account')}</span>
-            <span>{t('routing.weekly_reset')}</span>
-            <span>{t('routing.reason')}</span>
-            <span>{t('routing.current')}</span>
-            <span>{t('routing.target')}</span>
-          </div>
-          {(router.data?.ranking ?? []).length === 0 ? (
-            <div className={styles.empty}>{t('overview.no_accounts')}</div>
-          ) : null}
-          {(router.data?.ranking ?? []).map((r, i) => (
-            <div className={styles.row} key={r.auth_index}>
-              <span className={styles.account}>
-                <span className={styles.accountName}>{r.name.replace(/^[a-z]+-/, '').replace(/\.json$/, '')}</span>
-                <span className={styles.accountMeta}>
-                  <span className={`${styles.dot} ${r.eligible ? styles.dot_ok : styles.dot_low}`} />
-                  {r.eligible ? t('routing.rank', { rank: i + 1 }) : t('routing.skipped')}
-                </span>
-              </span>
-              <span className={styles.usage}>
-                {formatRelative(r.seven_day_resets_at)}
-                <span className={styles.usageMeta}>{formatDateTime(r.seven_day_resets_at)}</span>
-              </span>
-              <span className={styles.usageMeta}>{r.reason}</span>
-              <span>{r.priority}</span>
-              <span>{r.recommended_priority}</span>
-            </div>
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title={t('routing.router_title')}
+          description={
+            router.data?.last_run
+              ? t('routing.last_run', { when: formatRelative(router.data.last_run, now) })
+              : t('routing.router_help')
+          }
+        />
+        <Radio.Group
+          legend={t('routing.router_title')}
+          appearance="card"
+          orientation="horizontal"
+          value={saving ?? mode ?? ''}
+          disabled={saving !== null || !router.data}
+          onValueChange={(value) => isMode(value) && void setMode(value)}
+          className="[&_legend]:sr-only"
+        >
+          {MODES.map((item) => (
+            <Radio.Item
+              key={item}
+              value={item}
+              label={t(`routing.mode_${item}`)}
+              description={t(`routing.mode_${item}_help`)}
+            />
           ))}
-        </div>
+        </Radio.Group>
       </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>{t('routing.proxy_title')}</h2>
-          <div className={styles.sectionLinks}>
-            <Link to="/config">{t('routing.edit_config')}</Link>
-          </div>
-        </div>
-        <div className={styles.table}>
-          {settings.map(([label, value]) => (
-            <div className={styles.kv} key={label}>
-              <span className={styles.kvLabel}>{label}</span>
-              <span>{show(value)}</span>
-              <span />
-            </div>
-          ))}
-        </div>
+      <section className="flex flex-col gap-3">
+        <SectionHeader title={t('routing.ranking_title')} description={t('routing.ranking_help')} />
+        {ranking.length === 0 ? (
+          <LayerCard>
+            <LayerCard.Primary>
+              <Empty
+                size="sm"
+                icon={<ArrowsSplitIcon size={32} className="text-kumo-inactive" />}
+                title={t('overview.no_accounts')}
+              />
+            </LayerCard.Primary>
+          </LayerCard>
+        ) : (
+          <LayerCard className="overflow-x-auto p-0">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>{t('routing.rank_col')}</Table.Head>
+                  <Table.Head>{t('overview.col_account')}</Table.Head>
+                  <Table.Head>{t('routing.weekly_reset')}</Table.Head>
+                  <Table.Head>{t('routing.eligibility')}</Table.Head>
+                  <Table.Head>{t('routing.current')}</Table.Head>
+                  <Table.Head>{t('routing.target')}</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {ranking.map((row, index) => {
+                  const changes = row.priority !== row.recommended_priority;
+                  return (
+                    <Table.Row key={row.auth_index}>
+                      <Table.Cell className="font-medium tabular-nums">
+                        {row.eligible ? `#${index + 1}` : '—'}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="font-medium text-kumo-default">
+                          {nameOf(row.auth_index, row.name)}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <ResetTime
+                          iso={row.seven_day_resets_at}
+                          now={now}
+                          className="text-sm text-kumo-default"
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge variant={row.eligible ? 'success' : 'warning'} appearance="dot">
+                            {row.eligible ? t('routing.eligible') : t('routing.skipped')}
+                          </Badge>
+                          {row.reason && row.reason !== 'eligible' ? (
+                            <span className="text-xs text-kumo-subtle">{row.reason}</span>
+                          ) : null}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="tabular-nums">{row.priority}</Table.Cell>
+                      <Table.Cell>
+                        <span className="flex items-center gap-2 tabular-nums">
+                          {row.recommended_priority}
+                          {changes ? (
+                            <Badge variant="info">{t('routing.will_change')}</Badge>
+                          ) : null}
+                        </span>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table>
+          </LayerCard>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title={t('routing.decisions_title')}
+          description={t('routing.decisions_help')}
+        />
+        {decisions.length === 0 ? (
+          <LayerCard>
+            <LayerCard.Primary>
+              <Empty
+                size="sm"
+                icon={<ListBulletsIcon size={32} className="text-kumo-inactive" />}
+                title={t('routing.no_decisions')}
+              />
+            </LayerCard.Primary>
+          </LayerCard>
+        ) : (
+          <LayerCard className="overflow-x-auto p-0">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>{t('routing.decision_when')}</Table.Head>
+                  <Table.Head>{t('overview.col_account')}</Table.Head>
+                  <Table.Head>{t('routing.decision_action')}</Table.Head>
+                  <Table.Head>{t('routing.decision_priority')}</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {decisions.map((decision, index) => (
+                  <Table.Row key={`${decision.runId ?? 'run'}-${decision.authIndex}-${index}`}>
+                    <Table.Cell>
+                      <span
+                        className="text-sm text-kumo-subtle"
+                        title={formatDateTime(decision.ts)}
+                      >
+                        {formatRelative(decision.ts, now)}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-kumo-default">
+                          {nameOf(decision.authIndex, decision.name)}
+                        </span>
+                        <span className="text-xs text-kumo-subtle">
+                          {decision.rank
+                            ? t('routing.rank', { rank: decision.rank })
+                            : decision.reason}
+                        </span>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge variant={actionBadge(decision.action, decision.error)}>
+                          {decision.action}
+                        </Badge>
+                        {decision.error ? (
+                          <span className="text-xs text-kumo-danger">{decision.error}</span>
+                        ) : null}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="tabular-nums">
+                      {decision.previousPriority ?? '—'} → {decision.recommendedPriority ?? '—'}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          </LayerCard>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title={t('routing.proxy_title')}
+          description={t('routing.proxy_help')}
+          actions={
+            <LinkButton variant="secondary" size="sm" icon={GearIcon} href="/settings#routing">
+              {t('routing.edit_config')}
+            </LinkButton>
+          }
+        />
+        <LayerCard>
+          <LayerCard.Primary>
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+              {settings.map(([label, value]) => (
+                <div key={label} className="flex flex-col gap-0.5">
+                  <Text variant="secondary" size="xs" as="dt">
+                    {label}
+                  </Text>
+                  <Text as="dd" bold>
+                    {value === undefined || value === null || value === '' ? '—' : String(value)}
+                  </Text>
+                </div>
+              ))}
+            </dl>
+          </LayerCard.Primary>
+        </LayerCard>
       </section>
     </div>
   );

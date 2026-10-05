@@ -1,17 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-  type PropsWithChildren,
-} from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, type PropsWithChildren, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button, Dialog, DialogDescription, DialogRoot, DialogTitle } from '@cloudflare/kumo';
 import { IconX } from '../icons';
-import { FOCUSABLE_SELECTOR, lockScroll, unlockScroll } from '../scrollLock';
-import styles from './Sheet.module.scss';
 
 export type SheetSize = 'md' | 'lg' | 'xl';
 
@@ -26,20 +16,24 @@ interface SheetProps {
   closeDisabled?: boolean;
   className?: string;
   ariaLabel?: string;
-  /**
-   * If provided, called before starting the close animation when the user
-   * triggers a close (Escape, overlay click, or close button). Return false
-   * (or a Promise that resolves to false) to keep the sheet open.
-   */
   confirmClose?: () => boolean | Promise<boolean>;
 }
 
-const CLOSE_ANIMATION_DURATION = 280;
-const SIZE_CLASS: Record<SheetSize, string> = {
-  md: styles.sizeMd,
-  lg: styles.sizeLg,
-  xl: styles.sizeXl,
+const SIZE_WIDTH: Record<SheetSize, string> = {
+  md: 'min(640px, 100vw)',
+  lg: 'min(720px, 100vw)',
+  xl: 'min(960px, 100vw)',
 };
+
+const SHEET_CLASSES = [
+  'flex flex-col',
+  '!top-0 sm:!top-0 !right-0 !bottom-0 !left-auto !h-dvh !max-w-full !translate-x-0',
+  '!rounded-none sm:!rounded-l-xl',
+  'data-starting-style:!scale-100 data-ending-style:!scale-100',
+  'data-starting-style:!translate-x-full data-ending-style:!translate-x-full',
+  'data-starting-style:!opacity-100 data-ending-style:!opacity-100',
+  'motion-reduce:!transition-none',
+].join(' ');
 
 export function Sheet({
   open,
@@ -56,65 +50,9 @@ export function Sheet({
   children,
 }: PropsWithChildren<SheetProps>) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const descId = useId();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sheetRef = useRef<HTMLDivElement | null>(null);
-  const bodyRef = useRef<HTMLDivElement | null>(null);
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const getFocusableElements = useCallback(() => {
-    if (!sheetRef.current) return [] as HTMLElement[];
-    return Array.from(sheetRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-      (el) => !el.hasAttribute('disabled') && el.tabIndex !== -1
-    );
-  }, []);
-
-  const startClose = useCallback(
-    (notifyParent: boolean) => {
-      if (closeTimerRef.current !== null) return;
-      setIsClosing(true);
-      closeTimerRef.current = window.setTimeout(() => {
-        setIsVisible(false);
-        setIsClosing(false);
-        closeTimerRef.current = null;
-        if (notifyParent) {
-          onClose();
-        }
-      }, CLOSE_ANIMATION_DURATION);
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (open) {
-      if (closeTimerRef.current !== null) {
-        window.clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-      queueMicrotask(() => {
-        if (cancelled) return;
-        setIsVisible(true);
-        setIsClosing(false);
-      });
-    } else if (isVisible) {
-      queueMicrotask(() => {
-        if (cancelled) return;
-        startClose(false);
-      });
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, isVisible, startClose]);
-
-  const handleClose = useCallback(async () => {
+  const requestClose = useCallback(async () => {
+    if (closeDisabled) return;
     if (confirmClose) {
       try {
         const ok = await confirmClose();
@@ -123,139 +61,69 @@ export function Sheet({
         return;
       }
     }
-    startClose(true);
-  }, [confirmClose, startClose]);
+    onClose();
+  }, [closeDisabled, confirmClose, onClose]);
 
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current !== null) {
-        window.clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, []);
+  const hasHeader = Boolean(eyebrow || title || description);
 
-  const shouldLockScroll = open || isVisible;
-
-  useEffect(() => {
-    if (!shouldLockScroll) return;
-    lockScroll();
-    return () => unlockScroll();
-  }, [shouldLockScroll]);
-
-  useEffect(() => {
-    if (!open) return;
-    previouslyFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const t = window.setTimeout(() => {
-      if (bodyRef.current) bodyRef.current.scrollTop = 0;
-      const first = getFocusableElements()[0];
-      (first ?? closeBtnRef.current ?? sheetRef.current)?.focus({ preventScroll: true });
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, [getFocusableElements, open]);
-
-  useEffect(() => {
-    if (open || isVisible) return;
-    previouslyFocusedRef.current?.focus();
-    previouslyFocusedRef.current = null;
-  }, [isVisible, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (closeDisabled) return;
-        event.preventDefault();
-        handleClose();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusables = getFocusableElements();
-      if (focusables.length === 0) {
-        event.preventDefault();
-        sheetRef.current?.focus();
-        return;
-      }
-      const firstEl = focusables[0];
-      const lastEl = focusables[focusables.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-      if (event.shiftKey) {
-        if (active === firstEl || active === sheetRef.current) {
-          event.preventDefault();
-          lastEl.focus();
-        }
-        return;
-      }
-      if (active === lastEl) {
-        event.preventDefault();
-        firstEl.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [closeDisabled, getFocusableElements, handleClose, open]);
-
-  if (!open && !isVisible) return null;
-
-  const stateClass = isClosing ? styles.exiting : styles.entering;
-  const overlayCls = `${styles.overlay} ${stateClass}`.trim();
-  const contentCls = [styles.content, SIZE_CLASS[size], stateClass, className]
-    .filter(Boolean)
-    .join(' ');
-
-  const content = (
-    <div
-      className={overlayCls}
-      role="presentation"
-      onMouseDown={(e) => {
-        if (closeDisabled) return;
-        if (e.target === e.currentTarget) handleClose();
+  return (
+    <DialogRoot
+      open={open}
+      disablePointerDismissal={closeDisabled}
+      onOpenChange={(next) => {
+        if (!next) void requestClose();
       }}
     >
-      <div
-        ref={sheetRef}
-        className={contentCls}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        aria-describedby={description ? descId : undefined}
-        aria-label={!title && ariaLabel ? ariaLabel : undefined}
-        tabIndex={-1}
-        onMouseDown={(e) => e.stopPropagation()}
+      <Dialog
+        className={[SHEET_CLASSES, className].filter(Boolean).join(' ')}
+        style={{
+          width: SIZE_WIDTH[size],
+          transitionProperty: 'translate',
+          transitionDuration: '240ms',
+          transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
       >
-        <button
-          ref={closeBtnRef}
-          type="button"
-          className={styles.closeBtn}
-          onClick={closeDisabled ? undefined : handleClose}
-          disabled={closeDisabled}
-          aria-label={t('common.close')}
+        {!title && ariaLabel ? <DialogTitle className="sr-only">{ariaLabel}</DialogTitle> : null}
+        <div
+          className={[
+            'flex shrink-0 items-start justify-between gap-4 py-4 pr-3 pl-6',
+            hasHeader ? 'border-b border-kumo-hairline' : '',
+          ].join(' ')}
         >
-          <IconX size={18} />
-        </button>
-        {(eyebrow || title || description) && (
-          <div className={styles.header}>
-            {eyebrow ? <div className={styles.eyebrow}>{eyebrow}</div> : null}
+          <div className="flex min-w-0 flex-col gap-1">
+            {eyebrow ? (
+              <div className="text-xs font-medium tracking-wide text-kumo-subtle uppercase">
+                {eyebrow}
+              </div>
+            ) : null}
             {title ? (
-              <h2 id={titleId} className={styles.title}>
+              <DialogTitle className="m-0 text-lg font-semibold text-kumo-default">
                 {title}
-              </h2>
+              </DialogTitle>
             ) : null}
             {description ? (
-              <p id={descId} className={styles.description}>
+              <DialogDescription className="m-0 text-sm text-kumo-subtle">
                 {description}
-              </p>
+              </DialogDescription>
             ) : null}
           </div>
-        )}
-        <div ref={bodyRef} className={styles.body}>
-          {children}
+          <Button
+            variant="ghost"
+            shape="square"
+            size="sm"
+            icon={<IconX size={16} />}
+            aria-label={t('common.close')}
+            disabled={closeDisabled}
+            onClick={() => void requestClose()}
+          />
         </div>
-        {footer ? <div className={styles.footer}>{footer}</div> : null}
-      </div>
-    </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
+        {footer ? (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-kumo-hairline bg-kumo-elevated px-4 py-3 sm:px-6">
+            {footer}
+          </div>
+        ) : null}
+      </Dialog>
+    </DialogRoot>
   );
-
-  if (typeof document === 'undefined') return content;
-  return createPortal(content, document.body);
 }

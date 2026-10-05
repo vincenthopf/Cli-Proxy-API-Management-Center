@@ -1,124 +1,180 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
+import { CopyIcon, KeyIcon, PlugsConnectedIcon } from '@phosphor-icons/react';
+import {
+  Badge,
+  Button,
+  ClipboardText,
+  Code,
+  Empty,
+  LayerCard,
+  LinkButton,
+  SensitiveInput,
+} from '@cloudflare/kumo';
+import { modelsApi } from '@/services/api/models';
 import { useAuthStore, useConfigStore } from '@/stores';
-import styles from '@/features/overview/Overview.module.scss';
+import { buildEnvSnippet, buildSettingsSnippet, KEY_PLACEHOLDER, maskKey } from './snippets';
+import { PageHeader } from '@/features/overview/components/PageHeader';
+import { SectionHeader } from '@/features/overview/components/SectionHeader';
 
-const mask = (value: string) =>
-  value.length <= 10 ? '••••••' : `${value.slice(0, 6)}••••••${value.slice(-4)}`;
+type TestResult =
+  | { state: 'idle' }
+  | { state: 'running' }
+  | { state: 'ok'; count: number }
+  | { state: 'error'; message: string };
+
+function CopyButton({ text }: { text: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <Button variant="secondary" size="sm" icon={CopyIcon} onClick={() => void copy()}>
+      {copied ? t('connect.copied') : t('connect.copy')}
+    </Button>
+  );
+}
+
+function Snippet({
+  title,
+  help,
+  display,
+  copyText,
+  lang,
+}: {
+  title: string;
+  help: string;
+  display: string;
+  copyText: string;
+  lang: 'bash' | 'jsonc';
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <SectionHeader title={title} description={help} actions={<CopyButton text={copyText} />} />
+      <Code.Block lang={lang} code={display} />
+    </section>
+  );
+}
 
 export function ConnectPage() {
   const { t } = useTranslation();
   const apiBase = useAuthStore((s) => s.apiBase);
   const config = useConfigStore((s) => s.config);
   const fetchConfig = useConfigStore((s) => s.fetchConfig);
-  const [revealed, setRevealed] = useState<number | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [test, setTest] = useState<TestResult>({ state: 'idle' });
 
   useEffect(() => {
-    void fetchConfig();
+    void fetchConfig().catch(() => undefined);
   }, [fetchConfig]);
 
   const baseUrl = useMemo(() => apiBase.replace(/\/+$/, ''), [apiBase]);
-  const keys = config?.apiKeys ?? [];
-  const firstKey = keys[0] ?? '<client key>';
+  const keys = useMemo(() => config?.apiKeys ?? [], [config?.apiKeys]);
+  const firstKey = keys[0] ?? '';
+  const shownKey = firstKey ? maskKey(firstKey) : KEY_PLACEHOLDER;
+  const realKey = firstKey || KEY_PLACEHOLDER;
 
-  const copy = async (id: string, text: string) => {
+  const runTest = async () => {
+    setTest({ state: 'running' });
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(id);
-      window.setTimeout(() => setCopied(null), 1500);
-    } catch {
-      setCopied(null);
+      const models = await modelsApi.fetchModels(baseUrl, firstKey || undefined);
+      setTest({ state: 'ok', count: models.length });
+    } catch (err) {
+      setTest({ state: 'error', message: err instanceof Error ? err.message : String(err) });
     }
   };
 
-  const envSnippet = `export ANTHROPIC_BASE_URL="${baseUrl}"\nexport ANTHROPIC_AUTH_TOKEN="${mask(firstKey)}"\nexport CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1\nexport API_TIMEOUT_MS=600000`;
-  const envCopy = envSnippet.replace(mask(firstKey), firstKey);
-  const settingsSnippet = JSON.stringify(
-    {
-      env: {
-        ANTHROPIC_BASE_URL: baseUrl,
-        ANTHROPIC_AUTH_TOKEN: mask(firstKey),
-        CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
-        API_TIMEOUT_MS: '600000',
-      },
-    },
-    null,
-    2
-  );
-  const settingsCopy = settingsSnippet.replace(mask(firstKey), firstKey);
-
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>{t('connect.title')}</h1>
-          <p className={styles.subtitle}>{t('connect.subtitle')}</p>
-        </div>
-      </header>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t('connect.title')} description={t('connect.subtitle')} />
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>{t('connect.endpoint')}</h2>
-        </div>
-        <div className={styles.table}>
-          <div className={styles.kv}>
-            <span className={styles.kvLabel}>{t('connect.base_url')}</span>
-            <span className={styles.mono}>{baseUrl}</span>
-            <Button variant="ghost" size="sm" onClick={() => void copy('base', baseUrl)}>
-              {copied === 'base' ? t('connect.copied') : t('connect.copy')}
-            </Button>
-          </div>
-          {keys.length === 0 ? (
-            <div className={styles.empty}>{t('connect.no_keys')}</div>
-          ) : null}
-          {keys.map((key, i) => (
-            <div className={styles.kv} key={`${i}-${key.slice(-4)}`}>
-              <span className={styles.kvLabel}>{t('connect.client_key', { n: i + 1 })}</span>
-              <span className={styles.mono}>{revealed === i ? key : mask(key)}</span>
-              <span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setRevealed(revealed === i ? null : i)}
-                >
-                  {revealed === i ? t('connect.hide') : t('connect.reveal')}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => void copy(`key-${i}`, key)}>
-                  {copied === `key-${i}` ? t('connect.copied') : t('connect.copy')}
-                </Button>
-              </span>
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title={t('connect.endpoint')}
+          description={t('connect.endpoint_help')}
+          actions={
+            <>
+              {test.state === 'ok' ? (
+                <Badge variant="success">{t('connect.test_ok', { count: test.count })}</Badge>
+              ) : null}
+              {test.state === 'error' ? (
+                <Badge variant="error">{t('connect.test_failed')}</Badge>
+              ) : null}
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={PlugsConnectedIcon}
+                loading={test.state === 'running'}
+                onClick={() => void runTest()}
+              >
+                {t('connect.test_button')}
+              </Button>
+            </>
+          }
+        />
+        <LayerCard>
+          <LayerCard.Primary className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-kumo-default">{t('connect.base_url')}</span>
+              <ClipboardText
+                text={baseUrl}
+                size="base"
+                tooltip={{ text: t('connect.copy'), copiedText: t('connect.copied') }}
+                labels={{ copyAction: t('connect.copy') }}
+              />
             </div>
-          ))}
-        </div>
+            {test.state === 'error' ? (
+              <span className="text-xs text-kumo-danger">{test.message}</span>
+            ) : null}
+            {keys.length === 0 ? (
+              <Empty
+                size="sm"
+                icon={<KeyIcon size={32} className="text-kumo-inactive" />}
+                title={t('connect.no_keys_title')}
+                description={t('connect.no_keys')}
+                contents={
+                  <LinkButton variant="secondary" size="sm" href="/settings">
+                    {t('connect.open_settings')}
+                  </LinkButton>
+                }
+              />
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {keys.map((key, index) => (
+                  <SensitiveInput
+                    key={`${index}-${key.slice(-4)}`}
+                    label={t('connect.client_key', { n: index + 1 })}
+                    value={key}
+                    readOnly
+                  />
+                ))}
+              </div>
+            )}
+          </LayerCard.Primary>
+        </LayerCard>
       </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>{t('connect.shell_title')}</h2>
-          <Button variant="secondary" size="sm" onClick={() => void copy('env', envCopy)}>
-            {copied === 'env' ? t('connect.copied') : t('connect.copy')}
-          </Button>
-        </div>
-        <div className={styles.table}>
-          <pre className={styles.code}>{envSnippet}</pre>
-        </div>
-        <p className={styles.footnote}>{t('connect.shell_help')}</p>
-      </section>
+      <Snippet
+        title={t('connect.shell_title')}
+        help={t('connect.shell_help')}
+        lang="bash"
+        display={buildEnvSnippet(baseUrl, shownKey)}
+        copyText={buildEnvSnippet(baseUrl, realKey)}
+      />
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>{t('connect.settings_title')}</h2>
-          <Button variant="secondary" size="sm" onClick={() => void copy('settings', settingsCopy)}>
-            {copied === 'settings' ? t('connect.copied') : t('connect.copy')}
-          </Button>
-        </div>
-        <div className={styles.table}>
-          <pre className={styles.code}>{settingsSnippet}</pre>
-        </div>
-        <p className={styles.footnote}>{t('connect.settings_help')}</p>
-      </section>
+      <Snippet
+        title={t('connect.settings_title')}
+        help={t('connect.settings_help')}
+        lang="jsonc"
+        display={buildSettingsSnippet(baseUrl, shownKey)}
+        copyText={buildSettingsSnippet(baseUrl, realKey)}
+      />
     </div>
   );
 }

@@ -1,22 +1,9 @@
 @use '../../../styles/mixins' as *;
 
-/* ============================================================
- * 额度卡片 body 的全页外衣（类型化契约见 features/quota/types.ts）。
- *
- * 两段构成：
- * 1. 额度行 / 水位条 / Antigravity 分组 —— mono 遥测风，与紧凑外衣同族；
- * 2. 套餐徽章区（.codexPlan* 起至文件末尾）—— 从 pages/QuotaPage.module.scss
- *    第 429–1023 行逐字节搬迁的定稿资产（金卡 + Pro 20x 液态铂金，含暗色 /
- *    HDR / 减动效冻结帧 / 移动端降级）。**该区块禁止改动**：改配方等于重设计
- *    已验收的徽章，验证方式是与 git 历史做 diff（应为空）。
- * ============================================================ */
-
-/* ---------- 额度行 ---------- */
-
 .quotaRow {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -30,82 +17,70 @@
 
 .quotaModel {
   min-width: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-color-kumo-default);
   @include text-ellipsis;
 }
 
-/* 遥测：mono + 等宽数字，刷新时数字不跳位 */
 .quotaMeta {
   display: inline-flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 6px;
   flex-shrink: 0;
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
 }
 
-/* 百分比穿墨色而非填充色 —— 文字不承担状态编码，颜色留给水位条 */
 .quotaPercent {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-color-kumo-default);
 }
 
 .quotaReset {
-  color: var(--text-quaternary);
+  color: var(--text-color-kumo-subtle);
 }
 
-/* Countdown beside the absolute reset time. The separator is a pseudo-element
-   so the two spans stay independently styleable (the relative half turns
-   warning-coloured when this is the row that recovers first). */
 .quotaResetRelative {
-  color: var(--text-tertiary);
+  color: var(--text-color-kumo-subtle);
 
   &::before {
     content: '·';
     margin: 0 4px;
-    color: var(--text-quaternary);
+    color: var(--text-color-kumo-inactive);
   }
 }
 
 .quotaResetRelativeSoon {
-  color: var(--warning-text);
+  color: var(--text-color-kumo-warning);
   font-weight: 600;
 }
 
 .quotaAmount {
   font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
+  color: var(--text-color-kumo-subtle);
 }
 
 .quotaMessage {
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   line-height: 1.5;
-  color: var(--text-tertiary);
+  color: var(--text-color-kumo-subtle);
   text-align: center;
   padding: 6px 4px;
 }
 
-/* ---------- 水位条（QuotaMeter）----------
- * 轨道退居背景（8% 墨色），填充按剩余量三档着色；
- * percent === null 时宽度为 0 —— 未知不着色。 */
-
 .quotaBar {
-  height: 6px;
+  position: relative;
+  height: 8px;
   border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  background: var(--color-kumo-fill);
   overflow: hidden;
 }
 
 .quotaBarFill {
   height: 100%;
   border-radius: $radius-full;
-  /* 刷新时平滑重定向到新水位（可中断） */
-  transition: width 360ms var(--ease-out-strong, ease);
-  /* 数据到达是本页的高潮时刻：水位逐行铺开（每行 40ms 级差）。
-   * 走 scaleX 而非 width，避免与上面的 width 过渡互相抢夺同一属性。 */
+  transition: width 300ms var(--ease-out-strong, ease);
   transform-origin: left center;
   animation: quota-meter-fill 480ms var(--ease-out-strong, ease-out) both;
   animation-delay: calc(var(--meter-index, 0) * 40ms);
@@ -118,28 +93,26 @@
 }
 
 .quotaBarFillHigh {
-  background: var(--viz-success);
+  background: var(--color-kumo-success);
 }
 
 .quotaBarFillMedium {
-  background: var(--quota-medium-color);
+  background: var(--color-kumo-warning);
 }
 
 .quotaBarFillLow {
-  background: var(--viz-failure);
+  background: var(--color-kumo-danger);
 }
-
-/* ---------- Antigravity 分组 ---------- */
 
 .antigravityQuotaGroup {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 
   & + & {
-    margin-top: 3px;
-    padding-top: 9px;
-    border-top: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-kumo-hairline);
   }
 }
 
@@ -151,18 +124,17 @@
 }
 
 .antigravityQuotaGroupTitle {
-  font-family: $font-mono;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-color-kumo-subtle);
 }
 
 .antigravityQuotaGroupDescription {
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.4;
-  color: var(--text-quaternary);
+  color: var(--text-color-kumo-subtle);
 }
 
 @include mobile {

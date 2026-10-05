@@ -65,14 +65,14 @@
     "subtitle": "Management Center"
   },
   "login": {
-    "subtitle": "Connect to CLI Proxy API v8 or later",
+    "subtitle": "Connect to CLI Proxy API v8 or later.",
     "connection_current": "Current URL",
     "connection_auto_hint": "The system will automatically use the current URL for connection",
-    "custom_connection_label": "Custom Connection URL:",
+    "custom_connection_label": "Use a custom connection URL",
     "custom_connection_placeholder": "Eg: https://example.com:8317",
     "custom_connection_hint": "By default the current URL is used. Override it here if needed.",
     "remember_password_label": "Remember password",
-    "management_key_label": "Management Key:",
+    "management_key_label": "Management key",
     "management_key_placeholder": "Enter the management key",
     "submit_button": "Login",
     "submitting": "Connecting...",
@@ -87,11 +87,27 @@
     "error_legacy_backend": "This backend accepts v0 Management API but does not provide v8. Upgrade CLIProxyAPI to v8 or later to use this management page.",
     "error_server": "Backend failed while handling the management request, check the server logs",
     "error_cors": "Cross-origin request blocked, please check server configuration",
-    "error_ssl": "SSL/TLS certificate verification failed"
+    "error_ssl": "SSL/TLS certificate verification failed",
+    "brand": "CLI Proxy",
+    "title": "Sign in",
+    "error_title": "Could not connect",
+    "custom_connection_input": "Connection URL",
+    "restoring_title": "Restoring session",
+    "restoring_subtitle": "Connecting to the saved server."
   },
   "header": {
-    "refresh_all": "Refresh All",
-    "logout": "Logout"
+    "refresh_all": "Refresh all",
+    "logout": "Log out",
+    "navigation": "Main navigation",
+    "open_navigation": "Open navigation",
+    "collapse_sidebar": "Collapse sidebar",
+    "expand_sidebar": "Expand sidebar",
+    "toggle_hint": "{{shortcut}} to toggle",
+    "details": "Details",
+    "theme": "Theme",
+    "theme_auto": "System",
+    "theme_light": "Light",
+    "theme_dark": "Dark"
   },
   "connection": {
     "status": "Connection Status:"
@@ -99,15 +115,15 @@
   "nav": {
     "dashboard": "Dashboard",
     "quick_start": "Quick Start",
-    "ai_providers": "AI Providers",
+    "ai_providers": "API key providers",
     "auth_files": "Auth Files",
-    "oauth": "OAuth Login",
-    "quota_management": "Quota Management",
+    "oauth": "Add account",
+    "quota_management": "Quota details",
     "plugins": "Plugins",
     "plugin_store": "Plugin Store",
     "config_management": "Settings",
     "logs": "Logs",
-    "system_info": "Management Center Info",
+    "system_info": "About",
     "overview": "Overview",
     "usage": "Usage",
     "accounts": "Accounts",
@@ -120,7 +136,9 @@
     "extensions": "Extensions",
     "plugins_installed": "Installed",
     "plugins_store": "Store",
-    "about": "About"
+    "about": "About",
+    "brand": "CLI Proxy",
+    "accounts_count": "{{count}} accounts"
   },
   "nav_groups": {
     "operate": "Operate",
@@ -244,7 +262,7 @@
     "routing_strategy_fill_first": "fill-first (prioritize)"
   },
   "auth_files": {
-    "title": "Auth Files Management",
+    "title": "Accounts",
     "meta_total": "{{count}} credentials",
     "meta_active": "{{count}} active",
     "meta_problem": "{{count}} problem",
@@ -948,7 +966,13 @@
     "iflow_oauth_status_error": "Authentication failed:",
     "iflow_oauth_start_error": "Failed to start iFlow OAuth:",
     "iflow_oauth_polling_error": "Failed to check authentication status:",
-    "remote_access_disabled": "This login method is not available for remote access. Please access from localhost."
+    "remote_access_disabled": "This login method is not available for remote access. Please access from localhost.",
+    "page_description": "Sign in to a provider to save its credentials as an account.",
+    "oauth_section_title": "Sign-in providers",
+    "oauth_badge_waiting": "Waiting",
+    "oauth_badge_success": "Added",
+    "oauth_badge_error": "Failed",
+    "device_code_copied": "Device code copied"
   },
   "stats": {
     "success": "Success",
@@ -980,7 +1004,7 @@
     "clear_search": "Clear search",
     "reading_enabled": "Continuous reading",
     "filter_load_more": "Show more matching logs",
-    "title": "Logs Viewer",
+    "title": "Logs",
     "refresh_button": "Refresh Logs",
     "clear_button": "Clear Logs",
     "fullscreen_button": "Full Screen",
@@ -1571,7 +1595,7 @@
     "search_empty_title": "No matching accounts",
     "search_empty_desc": "Try another filename or email, or clear the search.",
     "search_clear": "Clear search",
-    "title": "Quota Management",
+    "title": "Quota details",
     "description": "Monitor OAuth quota status for Antigravity, Codex, Claude, Kimi, and xAI credentials.",
     "refresh_all_credentials": "Refresh all credentials",
     "sort_label": "Sort",
@@ -1613,7 +1637,7 @@
     "weekday_sat": "Sat"
   },
   "plugin_management": {
-    "title": "Plugin Management",
+    "title": "Extensions",
     "description": "Review discovered and registered plugins, then manage instance toggles, config fields, and resource links.",
     "refresh": "Refresh",
     "load_failed": "Failed to load plugins",
@@ -1778,7 +1802,7 @@
     "empty_src_desc": "This plugin menu does not provide an embeddable page URL."
   },
   "system_info": {
-    "title": "Management Center Info",
+    "title": "About",
     "about_title": "CLI Proxy API Management Center",
     "models_title": "Available Models",
     "models_desc": "Shows the /models response and uses saved API keys for auth automatically.",
@@ -1940,7 +1964,7 @@
       }
     },
     "header": {
-      "title": "AI Providers",
+      "title": "API key providers",
       "activeResources": "{{active}}/{{total}} active resources",
       "providerFamilies": "{{count}} provider families",
       "updatedAt": "Updated {{time}}"
@@ -2257,10 +2281,10 @@
     "title": "Overview",
     "subtitle": "Account health, quota left and what is using it.",
     "refresh": "Refresh",
-    "sidecar_down": "Analytics service unreachable ({{error}}). Check the cpa-sidecar service on the proxy host.",
-    "alert_expiring": "{{name}} has {{remaining}} weekly quota left that expires {{when}}. Use it first.",
-    "alert_exhausted": "{{name}} is out of weekly quota until {{when}}.",
-    "alert_router_off": "Reset-aware routing is {{mode}}. Accounts are not being reordered automatically.",
+    "sidecar_down": "{{error}}. Check the cpa-sidecar service on the proxy host.",
+    "alert_expiring": "{{remaining}} left, resets {{when}}. Use this account first.",
+    "alert_exhausted": "Weekly quota resets {{when}}.",
+    "alert_router_off": "Mode is {{mode}}. Account priorities are not being reordered.",
     "stat_requests": "Requests (24h)",
     "stat_failures": "{{count}} failed",
     "stat_tokens": "Tokens (24h)",
@@ -2277,7 +2301,7 @@
     "col_weekly": "Weekly window",
     "col_24h": "Tokens 24h",
     "col_priority": "Order",
-    "no_accounts": "No accounts connected yet.",
+    "no_accounts": "Sign in a Claude or Codex account to start serving requests.",
     "remaining": "left",
     "last_served": "served {{when}}",
     "requests_count": "{{count}} requests",
@@ -2288,7 +2312,24 @@
     "status_serving": "Serving now",
     "status_standby": "Standby",
     "status_exhausted": "Out of quota",
-    "footnote": "Percentages are quota remaining. Order is the sequence the proxy uses: #1 serves new conversations until its quota runs low or its weekly window resets."
+    "footnote": "Order is the sequence the proxy uses. #1 serves new conversations until its quota runs low or its weekly window resets.",
+    "add_account": "Add account",
+    "col_status": "Status",
+    "alert_sidecar_title": "Analytics service unreachable",
+    "alert_expiring_title": "{{name}}: weekly quota expires soon",
+    "alert_exhausted_title": "{{name}} is out of weekly quota",
+    "alert_router_title": "Reset-aware routing is not active",
+    "empty_title": "No accounts yet",
+    "hover_hint": "Hover a reset time to see the local date and time.",
+    "no_quota_data": "No quota data",
+    "no_reset": "No reset scheduled",
+    "priority_value": "Priority {{value}}",
+    "quota_left": "{{value}} left",
+    "quota_used": "{{value}} used",
+    "resets_in": "Resets in {{when}}",
+    "reset_ago": "Reset {{when}} ago",
+    "resets_at": "Resets {{time}}",
+    "window_reset": "Window has reset"
   },
   "usage": {
     "title": "Usage",
@@ -2327,7 +2368,13 @@
     "recent_requests": "Recent requests",
     "model_account": "Model / account",
     "status": "Status",
-    "when": "When"
+    "when": "When",
+    "chart_description": "Stacked bars of input, output, cache read and cache write tokens over time.",
+    "failed": "Failed",
+    "ok": "OK",
+    "latency": "Latency",
+    "no_requests": "No requests recorded yet.",
+    "no_sessions": "No Claude Code sessions recorded yet."
   },
   "routing": {
     "title": "Routing",
@@ -2336,9 +2383,9 @@
     "mode_active": "Active",
     "mode_shadow": "Shadow",
     "mode_off": "Off",
-    "mode_active_help": "Account priorities are rewritten every few minutes so the account whose weekly window resets soonest serves first.",
-    "mode_shadow_help": "Rankings are calculated and logged but priorities are not changed.",
-    "mode_off_help": "Priorities are left as they are.",
+    "mode_active_help": "Rewrites account priorities every few minutes so the account whose weekly window resets soonest serves first.",
+    "mode_shadow_help": "Calculates and logs the ranking but does not change priorities.",
+    "mode_off_help": "Leaves priorities as they are.",
     "last_run": "Last run {{when}}.",
     "weekly_reset": "Weekly reset",
     "reason": "Reason",
@@ -2353,7 +2400,24 @@
     "affinity_ttl": "Affinity TTL",
     "affinity_subagents": "Subagents share account",
     "retry": "Retry rounds",
-    "model_cooling": "Per-model cooling"
+    "model_cooling": "Per-model cooling",
+    "decision_action": "Action",
+    "decision_priority": "Priority change",
+    "decisions_title": "Recent decisions",
+    "decisions_help": "What the router did on its latest runs.",
+    "decision_when": "When",
+    "eligibility": "Eligibility",
+    "eligible": "Eligible",
+    "mode_error_title": "Could not change router mode",
+    "no_decisions": "No router runs recorded yet.",
+    "proxy_help": "Read-only. Change these in Settings.",
+    "rank_col": "Rank",
+    "ranking_title": "Ranking",
+    "ranking_help": "Accounts whose weekly window resets soonest go first.",
+    "router_help": "Choose how the router manages account priorities.",
+    "value_on": "On",
+    "value_off": "Off",
+    "will_change": "Will change"
   },
   "connect": {
     "title": "Connect",
@@ -2361,7 +2425,7 @@
     "endpoint": "Endpoint",
     "base_url": "Base URL",
     "client_key": "Client key {{n}}",
-    "no_keys": "No client keys configured. Add one in Settings.",
+    "no_keys": "Add a client key in Settings before connecting Claude Code.",
     "reveal": "Reveal",
     "hide": "Hide",
     "copy": "Copy",
@@ -2369,9 +2433,518 @@
     "shell_title": "Shell",
     "shell_help": "Add to your shell profile or run before claude. Copy includes the full key.",
     "settings_title": "Claude Code settings.json",
-    "settings_help": "Or put this in ~/.claude/settings.json to make every Claude Code session use the proxy.",
+    "settings_help": "Or put this in ~/.claude/settings.json so every Claude Code session uses the proxy. Copy includes the full key.",
     "reveal_to_edit": "Reveal to edit",
     "secrets_masked": "Keys and secrets are masked. Reveal to view or edit the full file.",
-    "secrets_visible": "Secrets are visible."
+    "secrets_visible": "Secrets are visible.",
+    "endpoint_help": "Clients send requests to this URL with one of the client keys.",
+    "no_keys_title": "No client keys",
+    "open_settings": "Open Settings",
+    "test_button": "Test connection",
+    "test_failed": "Connection failed",
+    "test_ok": "Connected, {{count}} models"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Proxy configuration for your Claude and Codex account pool. Changes are written to config.yaml.",
+    "reload": "Reload",
+    "edited": "Changed, not saved",
+    "status": {
+      "saved": "Saved"
+    },
+    "errors": {
+      "load_title": "Could not load the configuration",
+      "recovery_title": "Save did not finish"
+    },
+    "nav": {
+      "label": "Settings sections",
+      "changed_one": "{{count}} change",
+      "changed_other": "{{count}} changes",
+      "errors_one": "{{count}} error",
+      "errors_other": "{{count}} errors",
+      "edited": "Edited"
+    },
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "description": "The values that matter most, at a glance."
+      },
+      "access": {
+        "title": "Access",
+        "description": "Who can use the proxy and who can manage it."
+      },
+      "routing": {
+        "title": "Routing",
+        "description": "How requests are spread across your accounts and what happens when one hits a limit."
+      },
+      "logging": {
+        "title": "Logging and diagnostics",
+        "description": "Server logs, request capture and usage statistics."
+      },
+      "network": {
+        "title": "Network",
+        "description": "Upstream proxy, listener and streaming behaviour."
+      },
+      "providers": {
+        "title": "Providers and models",
+        "description": "Model handling and provider-specific behaviour."
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Server tuning, storage paths and plugins."
+      },
+      "yaml": {
+        "title": "YAML source",
+        "description": "Edit config.yaml directly. Use this for anything not shown in the other sections."
+      }
+    },
+    "save_bar": {
+      "label": "Unsaved changes",
+      "changes_one": "{{count}} unsaved change",
+      "changes_other": "{{count}} unsaved changes",
+      "yaml_changes": "Unsaved YAML edits",
+      "errors_one": "{{count}} field needs fixing before you can save",
+      "errors_other": "{{count}} fields need fixing before you can save",
+      "discard": "Discard",
+      "save": "Save"
+    },
+    "diff": {
+      "title": "Review changes",
+      "description": "These lines will change in config.yaml.",
+      "show_secrets": "Show secrets",
+      "hide_secrets": "Hide secrets",
+      "back": "Back to editing",
+      "confirm": "Save changes"
+    },
+    "list": {
+      "add": "Add",
+      "remove_item": "Remove {{label}} {{index}}"
+    },
+    "overview": {
+      "summary_title": "Current configuration",
+      "includes_unsaved": "Includes unsaved changes",
+      "listen_address": "Listen address",
+      "client_keys": "Client API keys",
+      "client_keys_value_one": "{{count}} key",
+      "client_keys_value_other": "{{count}} keys",
+      "client_keys_none": "No keys configured",
+      "routing_strategy": "Routing strategy",
+      "session_affinity": "Session affinity",
+      "request_logging": "Request logging",
+      "on": "On",
+      "off": "Off",
+      "on_with_ttl": "On, {{ttl}}",
+      "unknown": "Unknown",
+      "edit": "Edit"
+    },
+    "access": {
+      "keys_empty_title": "No client API keys",
+      "keys_empty_description": "Add a key so clients can authenticate with the proxy.",
+      "key_n": "Key {{index}}",
+      "add_key": "Add key",
+      "update_key": "Update key",
+      "edit_key": "Edit {{label}}",
+      "remove_key": "Remove {{label}}",
+      "add_key_title": "Add client API key",
+      "edit_key_title": "Edit client API key",
+      "key_label": "API key",
+      "key_name_label": "Name (optional)",
+      "key_name_description": "Stored in this browser only, not in the server configuration.",
+      "key_save_note": "The key is used after you save the configuration.",
+      "key_duplicate": "This key is already in the list.",
+      "remove_title": "Remove {{label}}?",
+      "remove_description": "Clients that use this key are rejected once you save the configuration.",
+      "remove_confirm": "Remove key",
+      "new_management_key": "Enter a new key to replace it",
+      "management_key_set_title": "A management key is set",
+      "management_key_set_description": "The server stores it hashed, so it cannot be shown here. Enter a new key above to replace it.",
+      "management_key_unset_title": "No management key is set",
+      "management_key_unset_description": "Remote management stays unavailable until a key is set."
+    },
+    "routing": {
+      "strategies": {
+        "round_robin": {
+          "label": "Round robin",
+          "description": "Use each account in turn so load spreads evenly across the pool."
+        },
+        "weighted": {
+          "label": "Weighted round robin",
+          "description": "Use each account in turn, sending more requests to accounts with higher priority."
+        },
+        "fill_first": {
+          "label": "Fill first",
+          "description": "Use one account until it hits a limit, then move to the next one."
+        }
+      },
+      "model_cooling_title": "Claude subscription limits apply to the whole account",
+      "model_cooling_description": "When a Claude Pro or Max account hits its limit, every model on that account is limited. Leave per-model cooldown off for Claude unless you know the limit is model-specific.",
+      "reset_aware_title": "Reset-aware ordering",
+      "reset_aware_description": "Ordering accounts by when their usage windows reset is managed on the Routing page.",
+      "reset_aware_link": "Open Routing"
+    },
+    "logging": {
+      "request_log_label": "Request logging",
+      "request_log_description": "Applies immediately. It is not part of Save.",
+      "request_log_warning_title": "Request logs contain full prompts and responses",
+      "request_log_warning_description": "Each request and response is written to disk in plain text and can include code, secrets and personal data. Turn this on only while debugging.",
+      "request_log_confirm_title": "Turn on request logging?",
+      "request_log_confirm_description": "Full prompts and responses will be written to disk until you turn this off.",
+      "request_log_confirm": "Turn on"
+    },
+    "network": {
+      "all_interfaces": "all interfaces",
+      "default_port": "default port",
+      "listener_note_title": "Listen address and port are read-only here",
+      "listener_note_description": "Changing them needs a server restart and can disconnect this console. Edit them in YAML source if you need to.",
+      "open_yaml": "Open YAML source"
+    },
+    "advanced": {
+      "yaml_title": "Something not listed?",
+      "yaml_description": "Every option in config.yaml can be edited in YAML source.",
+      "yaml_open": "Open YAML source"
+    },
+    "yaml": {
+      "parse_error_title": "The YAML has a syntax error",
+      "dirty_title": "Unsaved YAML edits",
+      "dirty_description": "Save or discard these edits before switching to another section.",
+      "search_label": "Search YAML",
+      "search_placeholder": "Search config.yaml",
+      "search_count": "{{current}} of {{total}}",
+      "search_none": "No matches",
+      "search_prev": "Previous match",
+      "search_next": "Next match",
+      "secrets_masked": "Secrets are masked.",
+      "secrets_visible": "Secrets are visible.",
+      "reveal": "Reveal to edit",
+      "hide": "Hide secrets"
+    },
+    "groups": {
+      "client_keys": {
+        "title": "Client API keys",
+        "description": "Every client must send one of these keys."
+      },
+      "management": {
+        "title": "Management access",
+        "description": "Access to the management API and this console."
+      },
+      "selection": {
+        "title": "Account selection",
+        "description": "Which account handles the next request."
+      },
+      "affinity": {
+        "title": "Session affinity",
+        "description": "Pin a conversation to one account."
+      },
+      "retries": {
+        "title": "Retries",
+        "description": "What happens when an upstream request fails."
+      },
+      "cooldowns": {
+        "title": "Cooldowns",
+        "description": "How long an account rests after a failure or rate limit."
+      },
+      "logs": {
+        "title": "Server logs",
+        "description": "What the server writes to its own log."
+      },
+      "request_log": {
+        "title": "Request capture",
+        "description": "Full request and response logging for debugging."
+      },
+      "usage": {
+        "title": "Usage statistics",
+        "description": "In-memory counters behind the usage views."
+      },
+      "upstream": {
+        "title": "Upstream",
+        "description": "How the proxy reaches provider APIs."
+      },
+      "listener": {
+        "title": "Listener",
+        "description": "Where the proxy accepts connections."
+      },
+      "tls": {
+        "title": "HTTPS",
+        "description": "Certificate and key for serving HTTPS."
+      },
+      "streaming": {
+        "title": "Streaming",
+        "description": "Keepalives and early retries for long responses."
+      },
+      "models": {
+        "title": "Models",
+        "description": "Model names, image generation and request payload rules."
+      },
+      "payload": {
+        "title": "Payload rules",
+        "description": "Default, override and filter rules applied to request bodies."
+      },
+      "claude": {
+        "title": "Claude",
+        "description": "Behaviour for Claude OAuth accounts."
+      },
+      "claude_headers": {
+        "title": "Claude header defaults",
+        "description": "Headers sent when the client does not set them."
+      },
+      "codex": {
+        "title": "Codex",
+        "description": "Behaviour for Codex OAuth accounts."
+      },
+      "codex_headers": {
+        "title": "Codex header defaults",
+        "description": "Headers sent when the client does not set them."
+      },
+      "other_providers": {
+        "title": "Other providers",
+        "description": "Gemini, Antigravity, Devin, xAI and AI Studio.",
+        "toggle": "Other provider settings",
+        "toggle_description": "Only relevant if you use providers other than Claude and Codex."
+      },
+      "gemini": {
+        "title": "Gemini"
+      },
+      "aistudio": {
+        "title": "AI Studio"
+      },
+      "server": {
+        "title": "Server",
+        "description": "Performance and storage settings."
+      },
+      "plugins": {
+        "title": "Plugins",
+        "description": "Plugin loading and plugin store sources."
+      }
+    },
+    "fields": {
+      "apiKeys": {
+        "label": "Client API keys",
+        "description": "Keys that Claude Code, Codex and other clients send to use this proxy."
+      },
+      "rmAllowRemote": {
+        "label": "Allow remote management",
+        "description": "Accept management API calls from other hosts, not only this machine."
+      },
+      "rmSecretKey": {
+        "label": "Management key",
+        "description": "Required by the management API and this console."
+      },
+      "rmDisableControlPanel": {
+        "label": "Disable built-in console",
+        "description": "Stop the server from serving this management console."
+      },
+      "rmDisableAutoUpdatePanel": {
+        "label": "Do not auto-update the console",
+        "description": "Download the console once if it is missing, then never update it from GitHub."
+      },
+      "rmPanelRepo": {
+        "label": "Console repository",
+        "description": "GitHub repository the server downloads this console from."
+      },
+      "routingStrategy": {
+        "label": "Routing strategy"
+      },
+      "routingSessionAffinity": {
+        "label": "Session affinity",
+        "description": "Keep each conversation on the same account so prompt caches stay warm."
+      },
+      "routingSessionAffinityTTL": {
+        "label": "Affinity duration",
+        "description": "How long a session stays pinned to its account, such as 30m or 1h."
+      },
+      "routingSessionAffinitySubagents": {
+        "label": "Subagents share the parent account",
+        "description": "Subagents reuse their parent session's account. Turn off to spread subagents across the pool."
+      },
+      "requestRetry": {
+        "label": "Retry rounds",
+        "description": "How many times a failed request is retried."
+      },
+      "maxRetryInterval": {
+        "label": "Maximum retry wait (seconds)",
+        "description": "Longest wait for an account cooldown between retry rounds. 0 or less skips the wait."
+      },
+      "maxRetryCredentials": {
+        "label": "Accounts tried per request",
+        "description": "Empty keeps the server default. 0 or less tries every available account."
+      },
+      "disableCooling": {
+        "label": "Disable cooldowns",
+        "description": "Never rest an account after a failure. Rate-limited accounts keep receiving requests."
+      },
+      "transientErrorCooldownSeconds": {
+        "label": "Cooldown after server errors (seconds)",
+        "description": "Rest after upstream 408 and 5xx errors. 0 uses 60 seconds; a negative value turns it off."
+      },
+      "saveCooldownStatus": {
+        "label": "Remember cooldowns across restarts",
+        "description": "Store each account's cooldown in a .cds file next to its auth file."
+      },
+      "claudeModelLevelCooling": {
+        "label": "Claude: per-model cooldown",
+        "description": "Rest only the model that hit a limit instead of the whole account."
+      },
+      "codexModelLevelCooling": {
+        "label": "Codex: per-model cooldown",
+        "description": "Rest only the model that hit usage_limit_reached instead of the whole account."
+      },
+      "debug": {
+        "label": "Debug logging",
+        "description": "Write verbose debug output to the server log."
+      },
+      "loggingToFile": {
+        "label": "Log to file",
+        "description": "Write server logs to files on disk."
+      },
+      "logsMaxTotalSizeMb": {
+        "label": "Maximum log size (MB)",
+        "description": "Total size limit for log files on disk."
+      },
+      "errorLogsMaxFiles": {
+        "label": "Error log files kept",
+        "description": "Number of error log files kept before the oldest is deleted."
+      },
+      "usageStatisticsEnabled": {
+        "label": "Usage statistics",
+        "description": "Count requests and tokens in memory."
+      },
+      "redisUsageQueueRetentionSeconds": {
+        "label": "Usage queue retention (seconds)",
+        "description": "How long usage records wait for RESP LPOP/RPOP readers. 1 to 3600."
+      },
+      "host": {
+        "label": "Listen host",
+        "description": "Address the proxy binds to. Empty means all interfaces."
+      },
+      "port": {
+        "label": "Listen port",
+        "description": "TCP port for the proxy API and this console."
+      },
+      "tlsEnable": {
+        "label": "Serve HTTPS",
+        "description": "Use the certificate and key below."
+      },
+      "tlsCert": {
+        "label": "Certificate file",
+        "description": "Path to the PEM certificate on the server."
+      },
+      "tlsKey": {
+        "label": "Private key file",
+        "description": "Path to the PEM private key on the server."
+      },
+      "trustedProxies": {
+        "label": "Trusted proxies",
+        "description": "Reverse proxies whose forwarded client IP headers are trusted. Needs a restart."
+      },
+      "proxyUrl": {
+        "label": "Upstream proxy URL",
+        "description": "HTTP, HTTPS or SOCKS5 proxy for all provider traffic. Empty connects directly."
+      },
+      "passthroughHeaders": {
+        "label": "Pass upstream response headers",
+        "description": "Forward filtered upstream response headers to clients."
+      },
+      "streamingKeepaliveSeconds": {
+        "label": "Stream keepalive (seconds)",
+        "description": "Send keepalives on idle streams. 0 or empty turns it off."
+      },
+      "streamingBootstrapRetries": {
+        "label": "Retries before first byte",
+        "description": "Retry on another account when a stream fails before any output. 0 or empty turns it off."
+      },
+      "streamingNonstreamKeepalive": {
+        "label": "Non-stream keepalive (seconds)",
+        "description": "Send blank lines while waiting for non-streaming responses. 0 or empty turns it off."
+      },
+      "forceModelPrefix": {
+        "label": "Require model prefix",
+        "description": "Model names without a prefix only use accounts that have no prefix."
+      },
+      "disableImageGeneration": {
+        "label": "Image generation",
+        "description": "Controls the image generation tool injected into requests."
+      },
+      "gptImage2BaseModel": {
+        "label": "GPT Image 2 base model",
+        "description": "Model used for gpt-image-2 requests. Empty uses the server default."
+      },
+      "videoResultAuthCacheTTL": {
+        "label": "Video result account binding",
+        "description": "How long a video ID stays bound to the account that created it, such as 3h."
+      },
+      "claudeDisableCloakMode": {
+        "label": "Disable Claude Code cloaking",
+        "description": "Send the client's own system prompt instead of presenting requests as Claude Code."
+      },
+      "claudeCodeDisableCloakingModelList": {
+        "label": "Show real model IDs",
+        "description": "Return original model IDs in Anthropic model list responses."
+      },
+      "claudeHeaderTimezone": {
+        "label": "Fallback timezone",
+        "description": "IANA timezone for the cloaked current date, or Local."
+      },
+      "codexDisableCloaking": {
+        "label": "Disable Codex cloaking",
+        "description": "Stop forcing the official Codex User-Agent and Originator headers."
+      },
+      "codexStreamBootstrapBuffering": {
+        "label": "Buffer stream start",
+        "description": "Hold early empty events so a rate-limited account can fail over before output starts."
+      },
+      "codexStreamBootstrapTimeout": {
+        "label": "Stream start buffer limit",
+        "description": "Maximum buffering time, such as 20s. 0 means no time limit."
+      },
+      "codexOptimizeMultiAgentV2": {
+        "label": "Optimize multi-agent v2",
+        "description": "Rewrite official Codex multi-agent requests for compatibility."
+      },
+      "codexOrphanDelegationCompatibility": {
+        "label": "Orphan delegation compatibility",
+        "description": "Turn unmatched subagent thread outputs into user messages."
+      },
+      "codexResponseSteering": {
+        "label": "Response steering (experimental)",
+        "description": "Full-duplex Codex Responses WebSockets, each bound to one account and model."
+      },
+      "quotaSwitchProject": {
+        "label": "Switch project on quota limit",
+        "description": "Move to another project when quota runs out."
+      },
+      "quotaSwitchPreviewModel": {
+        "label": "Switch to preview model on quota limit",
+        "description": "Fall back to a preview model when quota runs out."
+      },
+      "wsAuth": {
+        "label": "WebSocket authentication",
+        "description": "Require authentication for AI Studio WebSocket connections."
+      },
+      "commercialMode": {
+        "label": "Commercial mode",
+        "description": "Turn off high-overhead middleware for high concurrency. Needs a restart."
+      },
+      "authDir": {
+        "label": "Auth files directory",
+        "description": "Directory where OAuth account files are stored. Supports ~."
+      },
+      "authAutoRefreshWorkers": {
+        "label": "Token refresh workers",
+        "description": "Parallel workers that refresh OAuth tokens. Empty or 0 uses 16."
+      },
+      "pluginsEnabled": {
+        "label": "Plugin system",
+        "description": "Load dynamic-library plugins. Manage individual plugins on the Plugins page."
+      },
+      "pluginStoreSources": {
+        "label": "Extra plugin sources",
+        "description": "Additional registry.json URLs. The official source is always kept."
+      },
+      "pluginStoreAuth": {
+        "label": "Plugin store authentication",
+        "description": "Auth rules for private registries, release metadata or downloads."
+      }
+    },
+    "off": "Off"
   }
 }

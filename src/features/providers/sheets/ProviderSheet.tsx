@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sheet } from '@/components/ui/Sheet';
-import { IconLoader2, IconPencil } from '@/components/ui/icons';
+import { IconPencil } from '@/components/ui/icons';
 import type { ProviderRecentUsageMap } from '@/components/providers/utils';
 import { useNotificationStore } from '@/stores';
 import { PROVIDER_DESCRIPTORS } from '../descriptors';
@@ -11,7 +11,7 @@ import type { UseProviderWorkbenchResult } from '../useProviderWorkbench';
 import { BaseProviderForm } from './forms/BaseProviderForm';
 import { ResourceDetailView } from './ResourceDetailView';
 import { SponsorProviderForm } from './forms/SponsorProviderForm';
-import styles from './forms/sharedForm.module.scss';
+import { Button } from '@/components/ui/Button';
 
 type SheetMode = 'detail' | 'create' | 'edit';
 
@@ -175,53 +175,35 @@ export function ProviderSheet({
     state.mode === 'detail' ? (
       state.resource ? (
         <>
-          <button
-            type="button"
-            className={`${styles.footerBtn} ${styles.footerBtnGhost}`}
-            onClick={onClose}
-          >
+          <Button variant="secondary" onClick={onClose}>
             {t('providersPage.actions.cancel')}
-          </button>
-          <button
-            type="button"
-            className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
-            onClick={onSwitchToEdit}
-            disabled={formMutating}
-          >
+          </Button>
+          <Button variant="primary" onClick={onSwitchToEdit} disabled={formMutating}>
             <IconPencil size={14} />
             {t('providersPage.actions.edit')}
-          </button>
+          </Button>
         </>
       ) : (
-        <button
-          type="button"
-          className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
-          onClick={onClose}
-        >
+        <Button variant="secondary" onClick={onClose}>
           {t('providersPage.actions.cancel')}
-        </button>
+        </Button>
       )
     ) : (
       <>
-        <button
-          type="button"
-          className={`${styles.footerBtn} ${styles.footerBtnGhost}`}
-          onClick={handleCancelClick}
-          disabled={submitting}
-        >
+        <Button variant="secondary" onClick={handleCancelClick} disabled={submitting}>
           {t('providersPage.actions.cancel')}
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           form={formId}
-          className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
+          variant="primary"
+          loading={submitting}
           disabled={submitDisabled}
         >
-          {submitting ? <IconLoader2 size={14} /> : null}
           {state.mode === 'create'
             ? t('providersPage.actions.create')
             : t('providersPage.actions.save')}
-        </button>
+        </Button>
       </>
     );
 

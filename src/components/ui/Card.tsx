@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
+import { LayerCard } from '@cloudflare/kumo';
 
 interface CardProps {
   title?: ReactNode;
@@ -8,7 +9,7 @@ interface CardProps {
 
 export function Card({ title, extra, children, className }: PropsWithChildren<CardProps>) {
   return (
-    <div className={className ? `card ${className}` : 'card'}>
+    <LayerCard className={['card !overflow-visible', className].filter(Boolean).join(' ')}>
       {(title || extra) && (
         <div className="card-header">
           <div className="title">{title}</div>
@@ -16,6 +17,6 @@ export function Card({ title, extra, children, className }: PropsWithChildren<Ca
         </div>
       )}
       {children}
-    </div>
+    </LayerCard>
   );
 }

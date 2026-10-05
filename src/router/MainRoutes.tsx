@@ -13,7 +13,8 @@ import { QuotaPage } from '@/features/quota/QuotaPage';
 import { PluginResourcePage } from '@/features/plugins/PluginResourcePage';
 import { PluginsPage } from '@/features/plugins/PluginsPage';
 import { PluginStorePage } from '@/features/plugins/PluginStorePage';
-import { ConfigPage } from '@/features/config/ConfigPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
+import { LegacyConfigRedirect } from '@/features/settings/LegacyConfigRedirect';
 import { LogsPage } from '@/features/logs/LogsPage';
 import { SystemPage } from '@/pages/SystemPage';
 import { useAuthStore } from '@/stores';
@@ -25,8 +26,8 @@ const createMainRoutes = (supportsPlugin: boolean) => [
   { path: '/connect', element: <ConnectPage /> },
   { path: '/activity', element: <DashboardPage /> },
   { path: '/dashboard', element: <Navigate to="/" replace /> },
-  { path: '/settings', element: <Navigate to="/config" replace /> },
-  { path: '/api-keys', element: <Navigate to="/config" replace /> },
+  { path: '/settings/*', element: <SettingsPage /> },
+  { path: '/api-keys', element: <Navigate to="/settings/access" replace /> },
   { path: '/quick-start', element: <Navigate to="/connect" replace /> },
   { path: '/quick-start/*', element: <Navigate to="/connect" replace /> },
   { path: '/ai-providers', element: <ProvidersWorkbenchPage /> },
@@ -48,7 +49,7 @@ const createMainRoutes = (supportsPlugin: boolean) => [
         { path: '/plugins/*', element: <Navigate to="/" replace /> },
         { path: '/plugin-store', element: <Navigate to="/" replace /> },
       ]),
-  { path: '/config', element: <ConfigPage /> },
+  { path: '/config', element: <LegacyConfigRedirect /> },
   { path: '/logs', element: <LogsPage /> },
   { path: '/system', element: <SystemPage /> },
   { path: '*', element: <Navigate to="/" replace /> },

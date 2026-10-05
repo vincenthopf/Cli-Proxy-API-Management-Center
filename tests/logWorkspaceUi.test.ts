@@ -47,7 +47,7 @@ describe('log workspace layout contract', () => {
   });
 
   test('row actions do not wrap into an empty line or remove keyboard access', () => {
-    const copy = styles.match(/^\.copyButton:global\(\.btn\) \{([^}]+)\}/m)?.[1] ?? '';
+    const copy = styles.match(/^\.copyButton \{([^}]+)\}/m)?.[1] ?? '';
     expect(copy).toContain('position: sticky');
     expect(page).toContain("useLocalStorage('logsPage.wrapLogs', false)");
     expect(styles).toContain('width: max-content');
@@ -76,15 +76,18 @@ describe('log workspace layout contract', () => {
     expect(page).toContain("t('logs.cursor_reset_notice')");
   });
 
-  test('toolbar controls share one sizing rule rather than mixing small variants', () => {
+  test('toolbar controls share one Kumo size rather than mixing small variants', () => {
     expect(page).toContain('className={styles.levelSelect}');
-    expect(styles).toMatch(
-      /\.searchInput:global\(\.input\),\s*\.levelSelect > button,\s*\.filterPanelToggle:global\(\.btn\),\s*\.actionButton:global\(\.btn\) \{[^}]*height: var\(--log-control-height\)/
+    const toolbar = page.slice(
+      page.indexOf('<div className={styles.filters}>'),
+      page.indexOf('<Modal\n')
     );
-    expect(styles).toContain('--log-control-height: 40px');
-    expect(styles).toContain('--log-control-height: 36px');
-    expect(styles).toContain('width: var(--log-control-height)');
-    expect(styles).not.toContain('height: 32px');
+    expect(toolbar).toContain('className={styles.actionButton}');
+    expect(toolbar).not.toMatch(
+      /size="sm"\s+(?:className=\{styles\.(?:actionButton|filterPanelToggle)\}|onClick=\{\(\) => loadLogs)/
+    );
+    expect(styles).not.toContain('--log-control-height');
+    expect(styles).not.toMatch(/:global\(\.(?:btn|input)\)/);
   });
 
   test('the English locale describes both filtering and display settings', () => {

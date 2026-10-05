@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Badge, LinkButton } from '@cloudflare/kumo';
 import {
   IconBot,
   IconFileText,
@@ -23,15 +24,13 @@ import styles from './dashboard.module.scss';
 
 const DASH = '—';
 
-/** KPI 卡左上角色签：有语义色调的卡用状态色，其余保持中性 */
 const TILE_ACCENTS: Record<MeterTone, string> = {
-  good: 'var(--viz-success)',
-  warning: 'var(--amber-color)',
-  critical: 'var(--viz-failure)',
-  idle: 'var(--text-quaternary)',
+  good: 'var(--color-kumo-success)',
+  warning: 'var(--color-kumo-warning)',
+  critical: 'var(--color-kumo-danger)',
+  idle: 'var(--color-kumo-interact)',
 };
 
-/** 大数字：六位以内用千分位，再往上压缩，避免撑破排版 */
 const formatHeadline = (value: number): string =>
   value < 100_000 ? value.toLocaleString() : formatCompactNumber(value);
 
@@ -45,7 +44,6 @@ export function DashboardPage() {
 
   useHeaderRefresh(refresh, connected);
 
-  /* Hero 与静态网格走分组级联；异步内容区（图表/供应商）保持整块 reveal */
   const heroRef = useRevealGroup<HTMLElement>();
   const statsRef = useRevealGroup<HTMLElement>(0.12);
   const trafficRef = useRevealOnScroll<HTMLElement>();
@@ -82,15 +80,14 @@ export function DashboardPage() {
   const unknownProviderLabel = t('dashboard.provider_unknown');
   const successRateTone = toneForSuccessRate(traffic.successRate);
 
-  /** 标题是算出来的判词，不是写死的口号；句尾句号充当状态灯 */
   const verdict = useMemo(() => {
     if (!connected) {
       return connectionStatus === 'connecting'
-        ? { key: 'hero_verdict_connecting', accent: 'var(--amber-color)' }
-        : { key: 'hero_verdict_offline', accent: 'var(--text-quaternary)' };
+        ? { key: 'hero_verdict_connecting', accent: 'var(--color-kumo-warning)' }
+        : { key: 'hero_verdict_offline', accent: 'var(--text-color-kumo-inactive)' };
     }
     if (traffic.total === 0 || traffic.successRate === null) {
-      return { key: 'hero_verdict_idle', accent: 'var(--text-quaternary)' };
+      return { key: 'hero_verdict_idle', accent: 'var(--text-color-kumo-inactive)' };
     }
     const keyByTone: Record<MeterTone, string> = {
       good: 'hero_verdict_good',
@@ -101,7 +98,6 @@ export function DashboardPage() {
     return { key: keyByTone[successRateTone], accent: TILE_ACCENTS[successRateTone] };
   }, [connected, connectionStatus, traffic.total, traffic.successRate, successRateTone]);
 
-  /* 句号状态灯只在「有活着的流量」时呼吸；离线/静默时保持安静 */
   const heroAlive = connected && traffic.total > 0;
 
   const connectionLabel = t(
@@ -223,12 +219,6 @@ export function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.ambient} aria-hidden="true">
-        <span className={styles.washTop} />
-        <span className={styles.gridWash} />
-      </div>
-
-      {/* ---------- Hero ---------- */}
       <section className={styles.hero} ref={heroRef}>
         <div className={styles.heroCopy}>
           <h1 className={styles.heroTitle} data-reveal>
@@ -244,15 +234,12 @@ export function DashboardPage() {
             {heroMetaLine}
           </p>
           <div className={styles.heroActions} data-reveal>
-            <Link to="/ai-providers" className={styles.primaryAction}>
+            <LinkButton href="/ai-providers" variant="primary">
               {t('dashboard.cta_manage_providers')}
-            </Link>
-            <Link to="/logs" className={styles.ghostAction}>
-              {t('dashboard.cta_inspect_logs')}{' '}
-              <span className={styles.linkArrow} aria-hidden="true">
-                →
-              </span>
-            </Link>
+            </LinkButton>
+            <LinkButton href="/logs" variant="secondary">
+              {t('dashboard.cta_inspect_logs')}
+            </LinkButton>
           </div>
         </div>
 
@@ -260,10 +247,10 @@ export function DashboardPage() {
           <div className={styles.heroPanelTop}>
             <span className={styles.heroPanelLabel}>{t('dashboard.hero_requests_label')}</span>
             {connected && (
-              <span className={styles.liveBadge}>
+              <Badge variant="success">
                 <i className={styles.liveDot} aria-hidden="true" />
                 {t('dashboard.hero_live')}
-              </span>
+              </Badge>
             )}
           </div>
           <strong className={styles.heroFigure}>
@@ -310,7 +297,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ---------- KPI ---------- */}
       <section className={styles.statsRow} ref={statsRef} aria-label={t('dashboard.stats_aria')}>
         {statTiles.map((tile) => (
           <article
@@ -319,7 +305,7 @@ export function DashboardPage() {
             data-reveal
             style={
               {
-                '--tile-accent': tile.tone ? TILE_ACCENTS[tile.tone] : 'var(--border-hover)',
+                '--tile-accent': tile.tone ? TILE_ACCENTS[tile.tone] : 'var(--color-kumo-interact)',
               } as React.CSSProperties
             }
           >
@@ -338,7 +324,6 @@ export function DashboardPage() {
         ))}
       </section>
 
-      {/* ---------- Traffic ---------- */}
       <section className={styles.section} ref={trafficRef}>
         <header className={styles.sectionHead}>
           <span className={styles.eyebrow}>{t('dashboard.traffic_eyebrow')}</span>
@@ -352,7 +337,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ---------- Provider fleet ---------- */}
       <section className={styles.section} ref={fleetRef}>
         <header className={styles.sectionHead}>
           <span className={styles.eyebrow}>{t('dashboard.fleet_eyebrow')}</span>
@@ -405,7 +389,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ---------- Credential health + runtime ---------- */}
       <section className={styles.detailGrid} ref={detailRef}>
         <div className={styles.panel} data-reveal>
           <header className={styles.panelHead}>
@@ -498,12 +481,11 @@ export function DashboardPage() {
           {runtimeToggles.length > 0 && (
             <ul className={styles.toggleList}>
               {runtimeToggles.map((toggle) => (
-                <li
-                  key={toggle.label}
-                  className={`${styles.togglePill} ${toggle.on ? styles.toggleOn : styles.toggleOff}`}
-                >
-                  {toggle.label}
-                  <b>{toggle.on ? t('common.yes') : t('common.no')}</b>
+                <li key={toggle.label}>
+                  <Badge variant={toggle.on ? 'success' : 'neutral'}>
+                    {toggle.label}
+                    <b className="font-semibold">{toggle.on ? t('common.yes') : t('common.no')}</b>
+                  </Badge>
                 </li>
               ))}
             </ul>
@@ -517,7 +499,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ---------- CTA ---------- */}
       <section className={styles.section} ref={ctaRef}>
         <header className={styles.sectionHead} data-reveal>
           <span className={styles.eyebrow}>{t('dashboard.cta_eyebrow')}</span>

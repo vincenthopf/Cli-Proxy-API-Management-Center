@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Badge, Banner, InputArea, LayerCard, buttonVariants } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import {
   IconGithub,
@@ -13,7 +14,6 @@ import {
   IconRefreshCw,
   IconSearch,
   IconSettings,
-  IconSidebarStore,
   IconTrash2,
 } from '@/components/ui/icons';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
@@ -39,6 +39,7 @@ import {
 } from './pluginResources';
 import { waitForPluginState } from './pluginPolling';
 import { getPluginLogo } from './pluginLogo';
+import { ExtensionsHeader } from './components/ExtensionsHeader';
 import styles from './PluginsPage.module.scss';
 
 type PluginRuntimeWaitStatus = 'ready' | 'globalDisabled' | 'timeout';
@@ -54,6 +55,12 @@ function PluginCardLogo({ src }: { src: string }) {
   );
 }
 
+const FIELD_ROW =
+  'flex items-center justify-between gap-4 rounded-lg bg-kumo-elevated px-4 py-3 ring ring-kumo-hairline';
+const FORM_FIELD = 'flex flex-col gap-1.5';
+const SECTION_TITLE = 'm-0 text-sm font-semibold tracking-wide text-kumo-subtle uppercase';
+const ICON_LINK = buttonVariants({ variant: 'ghost', size: 'sm', shape: 'square' });
+
 const hasStatus = (error: unknown, status: number) => isRecord(error) && error.status === status;
 
 const hasRestartRequired = (value: unknown) => isRecord(value) && value.restart_required === true;
@@ -63,7 +70,6 @@ const hasRestartRequiredError = (error: unknown) =>
 
 export function PluginsPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const apiBase = useAuthStore((state) => state.apiBase);
   const managementKey = useAuthStore((state) => state.managementKey);
@@ -410,11 +416,11 @@ export function PluginsPage() {
 
     if (fieldType === 'boolean') {
       return (
-        <div key={field.name} className={styles.fieldRow}>
-          <div className={styles.fieldText}>
-            <div className={styles.fieldLabel}>{field.name}</div>
+        <div key={field.name} className={FIELD_ROW}>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <div className="text-base font-medium text-kumo-default">{field.name}</div>
             {field.description ? (
-              <div className={styles.fieldDescription}>{field.description}</div>
+              <div className="text-sm text-kumo-subtle">{field.description}</div>
             ) : null}
           </div>
           <ToggleSwitch
@@ -428,8 +434,13 @@ export function PluginsPage() {
 
     if (fieldType === 'enum' && field.enumValues.length > 0) {
       return (
-        <div key={field.name} className={styles.formField}>
-          <label htmlFor={`plugin-field-${field.name}`}>{field.name}</label>
+        <div key={field.name} className={FORM_FIELD}>
+          <label
+            htmlFor={`plugin-field-${field.name}`}
+            className="text-base font-medium text-kumo-default"
+          >
+            {field.name}
+          </label>
           <Select
             id={`plugin-field-${field.name}`}
             value={textValue}
@@ -444,26 +455,36 @@ export function PluginsPage() {
             }
             placeholder={t('plugin_management.select_placeholder')}
           />
-          {field.description ? <div className={styles.fieldHint}>{field.description}</div> : null}
-          {errorText ? <div className={styles.fieldError}>{errorText}</div> : null}
+          {field.description ? (
+            <div className="text-sm text-kumo-subtle">{field.description}</div>
+          ) : null}
+          {errorText ? <div className="text-sm text-kumo-danger">{errorText}</div> : null}
         </div>
       );
     }
 
     if (fieldType === 'array' || fieldType === 'object') {
       return (
-        <div key={field.name} className={styles.formField}>
-          <label htmlFor={`plugin-field-${field.name}`}>{field.name}</label>
-          <textarea
+        <div key={field.name} className={FORM_FIELD}>
+          <label
+            htmlFor={`plugin-field-${field.name}`}
+            className="text-base font-medium text-kumo-default"
+          >
+            {field.name}
+          </label>
+          <InputArea
             id={`plugin-field-${field.name}`}
-            className={styles.textarea}
+            className="min-h-32 w-full font-mono text-sm"
+            variant={errorText ? 'error' : 'default'}
             value={textValue}
             onChange={handleFieldTextChange(field.name)}
             placeholder={fieldType === 'array' ? '[]' : '{}'}
             spellCheck={false}
           />
-          {field.description ? <div className={styles.fieldHint}>{field.description}</div> : null}
-          {errorText ? <div className={styles.fieldError}>{errorText}</div> : null}
+          {field.description ? (
+            <div className="text-sm text-kumo-subtle">{field.description}</div>
+          ) : null}
+          {errorText ? <div className="text-sm text-kumo-danger">{errorText}</div> : null}
         </div>
       );
     }
@@ -486,38 +507,24 @@ export function PluginsPage() {
 
   return (
     <div className={styles.page}>
-      {/* ── Page Header ── */}
-      <div className={styles.pageHeader}>
-        <h1 className={styles.title}>{t('plugin_management.title')}</h1>
-        <p className={styles.description}>{t('plugin_management.description')}</p>
-      </div>
+      <ExtensionsHeader active="plugins" description={t('plugin_management.description')} />
 
-      {/* ── Alerts ── */}
-      {error ? <div className={styles.errorBox}>{error}</div> : null}
+      {error ? <Banner variant="error" description={error} /> : null}
 
       {data && !data.pluginsEnabled ? (
-        <div className={styles.warningBox}>{t('plugin_management.global_disabled_hint')}</div>
+        <Banner variant="alert" description={t('plugin_management.global_disabled_hint')} />
       ) : null}
 
-      {/* ── Status Bar ── */}
       {data ? (
         <div className={styles.statusBar}>
           <div className={styles.statusPill}>
-            <span
-              className={`${styles.statusDot} ${
-                data.pluginsEnabled ? styles.statusDotOn : styles.statusDotOff
-              }`}
-            />
             <span className={styles.statusLabel}>{t('plugin_management.global_status')}</span>
-            <span className={styles.statusValue}>
+            <Badge appearance="dot" variant={data.pluginsEnabled ? 'success' : 'neutral'}>
               {data.pluginsEnabled
                 ? t('plugin_management.global_enabled')
                 : t('plugin_management.global_disabled')}
-            </span>
+            </Badge>
           </div>
-
-          <span className={styles.statusDivider} />
-
           <div className={styles.statusPill}>
             <span className={styles.statusLabel}>{t('plugin_management.plugins_dir')}</span>
             <span
@@ -527,16 +534,10 @@ export function PluginsPage() {
               {data.pluginsDir || 'plugins'}
             </span>
           </div>
-
-          <span className={styles.statusDivider} />
-
           <div className={styles.statusPill}>
             <span className={styles.statusLabel}>{t('plugin_management.discovered')}</span>
             <span className={styles.statusValue}>{pluginStats.discovered}</span>
           </div>
-
-          <span className={styles.statusDivider} />
-
           <div className={styles.statusPill}>
             <span className={styles.statusLabel}>{t('plugin_management.effective')}</span>
             <span className={styles.statusValue}>
@@ -546,7 +547,6 @@ export function PluginsPage() {
         </div>
       ) : null}
 
-      {/* ── Toolbar ── */}
       <div className={styles.toolbar}>
         <Input
           type="search"
@@ -554,50 +554,44 @@ export function PluginsPage() {
           onChange={(event) => setFilter(event.target.value)}
           placeholder={t('plugin_management.search_placeholder')}
           aria-label={t('plugin_management.search_label')}
-          rightElement={<IconSearch size={16} />}
+          rightElement={<IconSearch size={16} className="text-kumo-placeholder" />}
         />
         <Button
           variant="secondary"
-          size="sm"
           onClick={loadPlugins}
           disabled={!connected || loading || Boolean(mutatingID || deletingID)}
           loading={loading}
         >
-          <IconRefreshCw size={16} />
+          {loading ? null : <IconRefreshCw size={16} />}
           {t('plugin_management.refresh')}
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => navigate('/plugin-store')}>
-          <IconSidebarStore size={16} />
-          {t('plugin_store.title')}
         </Button>
       </div>
 
-      {/* ── Plugin List ── */}
       {loading ? (
-        <div className={styles.pluginList}>
+        <LayerCard className={styles.pluginList}>
           {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className={styles.skeletonRow}>
-              <div className={styles.skeletonAvatar} />
-              <div className={styles.skeletonText}>
-                <div className={styles.skeletonLine} />
-                <div className={styles.skeletonLine} />
+            <div key={index} className={styles.pluginRow}>
+              <Skeleton width={40} height={40} rounded={8} />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton height={12} width="40%" />
+                <Skeleton height={12} width="65%" />
               </div>
             </div>
           ))}
-        </div>
+        </LayerCard>
       ) : visiblePlugins.length === 0 ? (
         <EmptyState
           title={t('plugin_management.no_plugins')}
           description={t('plugin_management.no_plugins_desc')}
           action={
-            <Button variant="secondary" size="sm" onClick={loadPlugins} disabled={!connected}>
+            <Button variant="secondary" onClick={loadPlugins} disabled={!connected}>
               <IconRefreshCw size={16} />
               {t('plugin_management.refresh')}
             </Button>
           }
         />
       ) : (
-        <div className={styles.pluginList}>
+        <LayerCard className={styles.pluginList}>
           {visiblePlugins.map((plugin) => {
             const logo = resolvePluginAsset(getPluginLogo(plugin, logoEntries));
             const github = plugin.metadata?.githubRepository.trim();
@@ -609,37 +603,31 @@ export function PluginsPage() {
 
             return (
               <article key={plugin.id} className={styles.pluginRow}>
-                {/* Logo */}
                 <div className={styles.logoBox} aria-hidden="true">
                   <PluginCardLogo key={logo} src={logo} />
                 </div>
 
-                {/* Info */}
                 <div className={styles.pluginInfo}>
                   <div className={styles.pluginName}>
                     <h2>{getPluginTitle(plugin)}</h2>
                     <div className={styles.badgeRow}>
-                      <span
-                        className={
-                          plugin.effectiveEnabled ? styles.badgeSuccess : styles.badgeMuted
-                        }
-                      >
+                      <Badge variant={plugin.effectiveEnabled ? 'success' : 'neutral'}>
                         {plugin.effectiveEnabled
                           ? t('plugin_management.status_effective')
                           : t('plugin_management.status_inactive')}
-                      </span>
-                      <span className={plugin.registered ? styles.badge : styles.badgeWarning}>
+                      </Badge>
+                      <Badge variant={plugin.registered ? 'secondary' : 'warning'}>
                         {plugin.registered
                           ? t('plugin_management.registered')
                           : t('plugin_management.not_registered')}
-                      </span>
-                      <span className={plugin.configured ? styles.badge : styles.badgeMuted}>
+                      </Badge>
+                      <Badge variant={plugin.configured ? 'secondary' : 'neutral'}>
                         {plugin.configured
                           ? t('plugin_management.configured')
                           : t('plugin_management.not_configured')}
-                      </span>
+                      </Badge>
                       {plugin.supportsOAuth ? (
-                        <span className={styles.badge}>{t('plugin_management.oauth')}</span>
+                        <Badge variant="info">{t('plugin_management.oauth')}</Badge>
                       ) : null}
                     </div>
                   </div>
@@ -672,7 +660,6 @@ export function PluginsPage() {
                   ) : null}
                 </div>
 
-                {/* Actions */}
                 <div className={styles.rowActions}>
                   <ToggleSwitch
                     checked={plugin.enabled}
@@ -687,12 +674,13 @@ export function PluginsPage() {
                     disabled={!connected || actionBusy}
                     loading={openingConfig}
                   >
-                    <IconSettings size={14} />
+                    {openingConfig ? null : <IconSettings size={14} />}
                     {t('plugin_management.edit_config')}
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="ghost"
                     size="sm"
+                    className="!text-kumo-danger"
                     onClick={() => handleDeletePlugin(plugin)}
                     disabled={!connected || actionBusy}
                     loading={deletingPlugin}
@@ -700,11 +688,10 @@ export function PluginsPage() {
                     aria-label={t('plugin_management.delete_plugin')}
                   >
                     <IconTrash2 size={14} />
-                    {t('plugin_management.delete_plugin')}
                   </Button>
                   {github ? (
                     <a
-                      className={styles.iconLink}
+                      className={ICON_LINK}
                       href={github}
                       target="_blank"
                       rel="noreferrer"
@@ -718,10 +705,9 @@ export function PluginsPage() {
               </article>
             );
           })}
-        </div>
+        </LayerCard>
       )}
 
-      {/* ── Config Sheet ── */}
       <Sheet
         open={Boolean(editingPlugin && draft)}
         onClose={closeConfigSheet}
@@ -734,24 +720,26 @@ export function PluginsPage() {
         description={editingPlugin?.id}
         closeDisabled={savingConfig}
         footer={
-          <div className={styles.sheetFooter}>
+          <>
             <Button variant="secondary" onClick={closeConfigSheet} disabled={savingConfig}>
               {t('common.cancel')}
             </Button>
             <Button onClick={handleSaveConfig} loading={savingConfig}>
               {t('common.save')}
             </Button>
-          </div>
+          </>
         }
       >
         {draft && editingPlugin ? (
-          <div className={styles.configForm}>
-            <section className={styles.formSection}>
-              <h3>{t('plugin_management.base_settings')}</h3>
-              <div className={styles.fieldRow}>
-                <div className={styles.fieldText}>
-                  <div className={styles.fieldLabel}>{t('plugin_management.enabled')}</div>
-                  <div className={styles.fieldDescription}>
+          <div className="flex flex-col gap-8">
+            <section className="flex flex-col gap-4">
+              <h3 className={SECTION_TITLE}>{t('plugin_management.base_settings')}</h3>
+              <div className={FIELD_ROW}>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <div className="text-base font-medium text-kumo-default">
+                    {t('plugin_management.enabled')}
+                  </div>
+                  <div className="text-sm text-kumo-subtle">
                     {t('plugin_management.enabled_hint')}
                   </div>
                 </div>
@@ -776,12 +764,14 @@ export function PluginsPage() {
               />
             </section>
 
-            <section className={styles.formSection}>
-              <h3>{t('plugin_management.config_fields')}</h3>
+            <section className="flex flex-col gap-4">
+              <h3 className={SECTION_TITLE}>{t('plugin_management.config_fields')}</h3>
               {editingPlugin.configFields.length > 0 ? (
                 editingPlugin.configFields.map((field) => renderFieldEditor(field))
               ) : (
-                <div className={styles.emptyConfig}>{t('plugin_management.no_config_fields')}</div>
+                <div className="rounded-lg bg-kumo-elevated px-4 py-6 text-center text-sm text-kumo-subtle ring ring-kumo-hairline">
+                  {t('plugin_management.no_config_fields')}
+                </div>
               )}
             </section>
           </div>

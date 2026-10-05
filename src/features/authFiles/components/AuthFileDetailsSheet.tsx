@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
+import { Banner, InputArea } from '@cloudflare/kumo';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -23,7 +24,6 @@ import { credentialPolicyError, readCredentialPolicy } from '../credentialPolicy
 import { redactJsonText } from '@/utils/redactSecrets';
 import styles from './AuthFileDetailsSheet.module.scss';
 
-/** API 边界归一化补写的派生字段——INFO 视图里只展示后端原始形状，避免重复噪音。 */
 const DERIVED_INFO_KEYS = [
   'successCount',
   'failureCount',
@@ -32,7 +32,6 @@ const DERIVED_INFO_KEYS = [
   'authIndex',
   'statusMessage',
   'modified',
-  // 'email' 不在此列：后端原始键名与 camelCase 同形，删掉会藏起真实数据。
   'projectId',
 ];
 
@@ -47,10 +46,6 @@ export type AuthFileDetailsSheetProps = {
   onChange: (field: PrefixProxyEditorField, value: PrefixProxyEditorFieldValue) => void;
 };
 
-/**
- * 凭证详情/编辑抽屉：替代旧的居中 Modal，与提供商工作台的 Sheet 模式一致。
- * 脏状态下关闭（Escape/遮罩/×/取消）先走确认对话框。
- */
 export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -117,7 +112,7 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
           : redactJsonText(JSON.stringify(record));
       }
     } catch {
-      /* 非 JSON 原样展示 */
+      return fileInfoText;
     }
     return fileInfoText;
   }, [fileInfoText, revealSecrets]);
@@ -177,10 +172,20 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
             </div>
           ) : (
             <>
-              {editor.error && <div className={styles.error}>{editor.error}</div>}
+              {editor.error && (
+                <Banner variant="error" size="sm" description={editor.error} />
+              )}
               <div className={styles.jsonWrapper}>
-                <label className={styles.label}>{t('auth_files.prefix_proxy_info_label')}</label>
-                <textarea className={styles.textarea} rows={8} readOnly value={displayInfoText} />
+                <label className={styles.label} htmlFor="auth-file-info">
+                  {t('auth_files.prefix_proxy_info_label')}
+                </label>
+                <InputArea
+                  id="auth-file-info"
+                  className={styles.textarea}
+                  rows={8}
+                  readOnly
+                  value={displayInfoText}
+                />
               </div>
               <div className={styles.jsonWrapper}>
                 <label className={styles.label}>
@@ -198,7 +203,13 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
                   ) : null}
                 </label>
                 {editor.json ? (
-                  <textarea className={styles.textarea} rows={10} readOnly value={previewText} />
+                  <InputArea
+                    className={styles.textarea}
+                    rows={10}
+                    readOnly
+                    value={previewText}
+                    aria-label={t('auth_files.prefix_proxy_source_label')}
+                  />
                 ) : (
                   <pre className={styles.invalidPreview}>{invalidContentPreview}</pre>
                 )}
@@ -292,15 +303,19 @@ export function AuthFileDetailsSheet(props: AuthFileDetailsSheetProps) {
                     onChange={(value) => onChange('excludedModelsText', value)}
                   />
                   <div className="form-group">
-                    <label>{t('auth_files.headers_label')}</label>
-                    <textarea
-                      className={`input ${editor.headersError ? styles.textareaInvalid : ''}`}
+                    <label htmlFor="auth-file-headers">{t('auth_files.headers_label')}</label>
+                    <InputArea
+                      id="auth-file-headers"
+                      className="w-full font-mono text-sm"
+                      variant={editor.headersError ? 'error' : 'default'}
                       value={editor.headersText}
                       placeholder={t('auth_files.headers_placeholder')}
                       rows={4}
                       aria-invalid={Boolean(editor.headersError)}
                       disabled={disableControls || editor.saving || !editor.json}
-                      onChange={(e) => onChange('headersText', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        onChange('headersText', e.target.value)
+                      }
                     />
                     {editor.headersError && <div className="error-box">{editor.headersError}</div>}
                     <div className="hint">{t('auth_files.headers_hint')}</div>

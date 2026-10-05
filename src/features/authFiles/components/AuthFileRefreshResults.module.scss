@@ -7,8 +7,9 @@
 .result {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  padding: 12px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -18,18 +19,11 @@
   overflow-wrap: anywhere;
 }
 
-.success {
-  color: var(--success-color);
-}
-
-.failure {
-  color: var(--error-color);
-}
-
 .error {
   width: 100%;
   margin: 0;
-  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-color-kumo-subtle);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { Empty, InputGroup, LayerCard, LinkButton } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
 import { IconExternalLink, IconPlus, IconSearch } from '@/components/ui/icons';
 import type { ProviderRecentUsageMap } from '@/components/providers/utils';
 import { PROVIDER_LOGOS } from '../brandLogos';
@@ -8,8 +10,8 @@ import { getSponsorProviderDefinition } from '../sponsorDefinitions';
 import type { ProviderGroup, ProviderResource } from '../types';
 import { ProviderResourceTable } from './ProviderResourceTable';
 import { ProviderResourceToolbar } from './ProviderResourceToolbar';
+import { ProviderBrandLogo } from './ProviderBrandLogo';
 import type { ProviderSortBy, SortDir } from '../types';
-import styles from './ProviderResourcePanel.module.scss';
 
 export interface ProviderPanelControls {
   sortBy: ProviderSortBy;
@@ -70,47 +72,27 @@ export function ProviderResourcePanel({
   const emptyText = showSponsorRegistrationLink
     ? t('providersPage.sponsor.emptyRegisterHint')
     : t('providersPage.table.empty');
-  const logoClassName = [
-    styles.logo,
-    logo?.themeSurface ? styles.logoThemeSurface : '',
-    logo?.darkSrc ? styles.logoThemeLight : '',
-    logo?.invertOnDark ? styles.logoInvertOnDark : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-  const darkLogoClassName = [
-    styles.logo,
-    logo?.themeSurface ? styles.logoThemeSurface : '',
-    styles.logoThemeDark,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   const titleContent = (
     <>
-      {logo ? (
-        <>
-          <img src={logo.src} alt="" aria-hidden="true" className={logoClassName} />
-          {logo.darkSrc ? (
-            <img src={logo.darkSrc} alt="" aria-hidden="true" className={darkLogoClassName} />
-          ) : null}
-        </>
-      ) : null}
-      <h2 className={styles.title}>{providerTitle}</h2>
+      <ProviderBrandLogo logo={logo} />
+      <h2 className="m-0 text-xl font-semibold text-kumo-default">{providerTitle}</h2>
       {showSponsorDashboardLink ? (
-        <IconExternalLink className={styles.titleExternalIcon} size={16} />
+        <IconExternalLink
+          className="shrink-0 text-kumo-subtle transition-transform group-hover:translate-x-px group-hover:-translate-y-px"
+          size={16}
+        />
       ) : null}
     </>
   );
 
   return (
-    <section className={styles.panel}>
-      <div className={styles.header}>
-        <div className={styles.headerMain}>
-          <div className={styles.titleArea}>
+    <LayerCard className="flex min-w-0 flex-col gap-4 !overflow-visible p-5">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="flex min-w-0 flex-col items-start gap-2">
             {showSponsorDashboardLink ? (
               <a
-                className={`${styles.titleRow} ${styles.titleLink}`}
+                className="group -mx-1.5 -my-1 flex w-fit max-w-full items-center gap-3 rounded-lg px-1.5 py-1 text-inherit no-underline focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none"
                 href={APIKEY_FUN_DASHBOARD_URL}
                 target="_blank"
                 rel="noreferrer"
@@ -119,58 +101,54 @@ export function ProviderResourcePanel({
                 {titleContent}
               </a>
             ) : (
-              <div className={styles.titleRow}>{titleContent}</div>
+              <div className="flex items-center gap-3">{titleContent}</div>
             )}
             {showSponsorDashboardLink ? (
-              <a
-                className={styles.sponsorLink}
+              <LinkButton
                 href={APIKEY_FUN_DASHBOARD_URL}
-                target="_blank"
-                rel="noreferrer"
+                external
+                variant="secondary"
+                size="sm"
+                icon={<IconExternalLink size={14} />}
               >
-                <span className={styles.sponsorLinkText}>
-                  {t('providersPage.sponsor.dashboardLink')}
-                </span>
-                <IconExternalLink className={styles.sponsorLinkIcon} size={14} />
-              </a>
+                {t('providersPage.sponsor.dashboardLink')}
+              </LinkButton>
             ) : registrationUrl ? (
               <>
-                <a
-                  className={[
-                    styles.sponsorLink,
-                    styles.sponsorLinkEmphasis,
-                    group.id === 'kimi' ? styles.sponsorLinkKimi : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
+                <LinkButton
                   href={registrationUrl}
-                  target="_blank"
-                  rel="noreferrer"
+                  external
+                  variant="primary"
+                  size="sm"
+                  icon={<IconExternalLink size={14} />}
                 >
-                  <span className={styles.sponsorLinkText}>{registrationLabel}</span>
-                  <IconExternalLink className={styles.sponsorLinkIcon} size={14} />
-                </a>
+                  {registrationLabel}
+                </LinkButton>
                 {group.id === 'kimi' ? (
-                  <p className={styles.kimiPromo}>{t('providersPage.sponsor.kimiPromo')}</p>
+                  <p className="m-0 text-sm text-kumo-subtle">
+                    {t('providersPage.sponsor.kimiPromo')}
+                  </p>
                 ) : null}
               </>
             ) : null}
           </div>
-          <div className={styles.searchWrap}>
-            <span className={styles.searchIcon} aria-hidden="true">
-              <IconSearch size={16} />
-            </span>
-            <input
-              type="search"
-              className={styles.searchInput}
-              value={filter}
-              onChange={(event) => onFilterChange(event.target.value)}
-              placeholder={t('providersPage.table.filterPlaceholder')}
-            />
+          <div className="w-full min-w-0 md:w-72">
+            <InputGroup>
+              <InputGroup.Addon>
+                <IconSearch size={16} />
+              </InputGroup.Addon>
+              <InputGroup.Input
+                type="search"
+                value={filter}
+                onChange={(event) => onFilterChange(event.target.value)}
+                placeholder={t('providersPage.table.filterPlaceholder')}
+                aria-label={t('providersPage.table.filterPlaceholder')}
+              />
+            </InputGroup>
           </div>
         </div>
         {toolbarControls ? (
-          <div className={styles.headerToolbarRow}>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <ProviderResourceToolbar
               key={group.id}
               sortBy={toolbarControls.sortBy}
@@ -186,27 +164,27 @@ export function ProviderResourcePanel({
       </div>
 
       {filteredResources.length === 0 ? (
-        <div className={styles.empty}>
-          <div>{emptyText}</div>
-          <div className={styles.emptyAction}>
-            {showSponsorRegistrationLink ? (
-              <a
-                className={`${styles.emptyActionButton} ${styles.emptyActionButtonEmphasis}`}
+        <Empty
+          size="sm"
+          title={emptyText}
+          contents={
+            showSponsorRegistrationLink ? (
+              <LinkButton
                 href={APIKEY_FUN_AFFILIATE_URL}
-                target="_blank"
-                rel="noreferrer"
+                external
+                variant="primary"
+                icon={<IconExternalLink size={16} />}
               >
-                <IconExternalLink size={16} />
-                <span>{t('providersPage.sponsor.registerLink')}</span>
-              </a>
+                {t('providersPage.sponsor.registerLink')}
+              </LinkButton>
             ) : (
-              <button type="button" className={styles.emptyActionButton} onClick={onCreate}>
+              <Button variant="secondary" onClick={onCreate}>
                 <IconPlus size={16} />
                 <span>{t('providersPage.actions.new')}</span>
-              </button>
-            )}
-          </div>
-        </div>
+              </Button>
+            )
+          }
+        />
       ) : (
         <ProviderResourceTable
           resources={filteredResources}
@@ -219,6 +197,6 @@ export function ProviderResourcePanel({
           onToggleDisabled={onToggleDisabled}
         />
       )}
-    </section>
+    </LayerCard>
   );
 }

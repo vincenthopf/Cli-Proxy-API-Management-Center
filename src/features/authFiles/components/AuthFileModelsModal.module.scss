@@ -1,11 +1,9 @@
 @use '../../../styles/mixins' as *;
 
-/* 「支持的模型」弹窗：可点击复制的 mono 模型清单 */
-
 .list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   max-height: min(52dvh, 480px);
   overflow-y: auto;
   padding-right: 2px;
@@ -13,27 +11,28 @@
 
 .item {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  width: 100%;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
   cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    border-color $transition-fast,
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+  transition: background-color $transition-fast;
 
-  &:active {
-    transform: scale(0.99);
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--color-kumo-brand);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .item:hover {
-    background: var(--bg-tertiary);
-    border-color: color-mix(in srgb, var(--border-color) 70%, transparent);
+    background: var(--color-kumo-tint);
   }
 }
 
@@ -43,48 +42,25 @@
 
 .modelId {
   font-family: $font-mono;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-color-kumo-default);
   overflow-wrap: anywhere;
 }
 
 .modelDisplayName {
-  font-size: 11.5px;
-  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  color: var(--text-color-kumo-subtle);
   @include text-ellipsis;
-}
-
-.modelType {
-  font-family: $font-mono;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 1px 6px;
-  border-radius: $radius-full;
-  border: 1px solid var(--border-color);
 }
 
 .excludedBadge {
   margin-left: auto;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--failure-badge-text);
-  background: var(--failure-badge-bg);
-  border: 1px solid var(--failure-badge-border);
-  border-radius: $radius-full;
-  padding: 1px 7px;
-  white-space: nowrap;
+  display: inline-flex;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .item {
     transition: none;
-  }
-
-  .item:active {
-    transform: none;
   }
 }

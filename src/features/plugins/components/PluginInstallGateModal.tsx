@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Banner } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -125,24 +126,30 @@ export function PluginInstallGateModal({
     body = (
       <>
         {identity}
-        <div className={styles.warningBanner}>
-          <IconAlertTriangle size={18} />
-          <span>{t('plugin_store.gate_warning')}</span>
-        </div>
+        <Banner
+          className={styles.warningBanner}
+          variant="alert"
+          icon={<IconAlertTriangle size={18} />}
+          title={t('plugin_store.gate_warning')}
+        />
         <ul className={styles.effects}>
           <li>{t('plugin_store.gate_effect_runs_code')}</li>
           <li>{t('plugin_store.gate_effect_no_review')}</li>
           <li>{t('plugin_store.gate_effect_restart')}</li>
         </ul>
-        <div className={styles.untrustedAlert}>
-          <p className={styles.untrustedText}>{t('plugin_store.gate_untrusted_alert')}</p>
-          <dl className={styles.originGrid}>
-            <dt>{t('plugin_store.gate_repository_label')}</dt>
-            <dd>{repoSlug || entry.repository || '—'}</dd>
-            <dt>{t('plugin_store.gate_source_label')}</dt>
-            <dd>{sourceText || '—'}</dd>
-          </dl>
-        </div>
+        <Banner
+          className={styles.untrustedAlert}
+          variant="error"
+          title={t('plugin_store.gate_untrusted_alert')}
+          description={
+            <dl className={styles.originGrid}>
+              <dt>{t('plugin_store.gate_repository_label')}</dt>
+              <dd>{repoSlug || entry.repository || '—'}</dd>
+              <dt>{t('plugin_store.gate_source_label')}</dt>
+              <dd>{sourceText || '—'}</dd>
+            </dl>
+          }
+        />
       </>
     );
     footer = (

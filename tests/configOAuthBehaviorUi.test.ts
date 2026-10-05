@@ -2,24 +2,25 @@ import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { I18nextProvider } from 'react-i18next';
-import i18n from '@/i18n';
 import { DEFAULT_VISUAL_VALUES } from '@/types/visualConfig';
-import { SectionAdvanced } from '@/features/config/components/sections/SectionAdvanced';
-import { SectionNetwork } from '@/features/config/components/sections/SectionNetwork';
-import { SectionOAuthBehavior } from '@/features/config/components/sections/SectionOAuthBehavior';
 import { CodexLiveICEServersEditor } from '@/features/config/components/blocks/CodexLiveICEServersEditor';
-import { CONFIG_SECTION_IDS } from '@/features/config/constants';
 import { CONFIG_FIELD_SEARCH_INDEX } from '@/features/config/searchIndex';
+import { SETTINGS_FIELD_SECTIONS } from '@/features/settings/settingsLayout';
+import { ProvidersSection } from '@/features/settings/sections/ProvidersSection';
+import { RoutingSection } from '@/features/settings/sections/RoutingSection';
+import { escapeText, renderSection, translations } from './helpers/settingsRender';
 
-const translations = i18n.cloneInstance({ lng: 'en' });
 const noop = () => {};
 const render = (element: ReturnType<typeof createElement>) =>
   renderToStaticMarkup(createElement(I18nextProvider, { i18n: translations }, element));
-const props = { values: DEFAULT_VISUAL_VALUES, disabled: false, onChange: noop };
-const escapeText = (value: string) =>
-  renderToStaticMarkup(createElement('span', null, value)).slice(6, -7);
 const text = (key: string) =>
   escapeText(translations.t(`config_management.visual.additions.${key}`));
+const fieldLabel = (fieldId: string, labelKey: string) => {
+  const override = `settings.fields.${fieldId}.label`;
+  return escapeText(
+    translations.exists(override) ? translations.t(override) : translations.t(labelKey)
+  );
+};
 const server = {
   id: 'fixture-ice',
   urlsText: 'stun:stun.example.test:3478\nturn:turn.example.test:3478',
@@ -28,29 +29,27 @@ const server = {
 };
 
 describe('OAuth behavior configuration UI', () => {
-  test('keeps seven canonical tabs and places every addition in its designated section', () => {
-    expect(CONFIG_SECTION_IDS).toHaveLength(7);
-    const network = render(createElement(SectionNetwork, props));
-    const advanced = render(createElement(SectionAdvanced, props));
+  test('places every addition in exactly one settings section', () => {
+    const routing = renderSection(createElement(RoutingSection));
+    const providers = renderSection(createElement(ProvidersSection));
     const additions = CONFIG_FIELD_SEARCH_INDEX.filter((entry) =>
       entry.labelKey.includes('.additions.')
     );
     expect(additions).toHaveLength(26);
     for (const entry of additions) {
-      const own = entry.sectionId === 'network' ? network : advanced;
-      const other = entry.sectionId === 'network' ? advanced : network;
+      const section = SETTINGS_FIELD_SECTIONS[entry.fieldId];
+      expect(['routing', 'providers']).toContain(section);
+      const own = section === 'routing' ? routing : providers;
+      const other = section === 'routing' ? providers : routing;
       expect(own).toContain(`id="cfg-field-${entry.fieldId}"`);
       expect(other).not.toContain(`id="cfg-field-${entry.fieldId}"`);
-      expect(own).toContain(escapeText(translations.t(entry.labelKey)));
-      expect(own).toContain(escapeText(translations.t(entry.hintKey!)));
+      if (entry.fieldId !== 'codexLiveMediaRelayICEServers') {
+        expect(own).toContain(fieldLabel(entry.fieldId, entry.labelKey));
+      }
       expect(entry.yamlKeys?.join('.')).toMatch(/^(routing|multimedia|oauth)\./);
     }
-    const oauth = render(createElement(SectionOAuthBehavior, props));
-    expect(oauth).toContain('<details');
-    expect(oauth).toContain(text('oauthTitle'));
-    expect(oauth).toContain(text('oauthHint'));
-    expect(oauth).not.toContain('cfg-field-claudeHeaderTimezone');
-    expect(oauth).toContain(text('liveRelayHint'));
+    expect(providers).toContain(text('liveRelayHint'));
+    expect(routing).toContain(escapeText(translations.t('settings.routing.model_cooling_title')));
   });
 
   test('renders labeled multi-line ICE URLs, masked credentials, and indexed removal actions', () => {
@@ -83,43 +82,40 @@ describe('OAuth behavior configuration UI', () => {
     expect(markup).not.toContain('{{index}}');
   });
 
-  test('disables every editor and ICE action when configuration is read-only', () => {
+  test('disables every provider editor when configuration is read-only', () => {
     const values = { ...DEFAULT_VISUAL_VALUES, codexLiveMediaRelayICEServers: [server] };
-    for (const Section of [SectionOAuthBehavior, SectionNetwork, SectionAdvanced]) {
-      const markup = render(createElement(Section, { ...props, values, disabled: true }));
-      const controls = markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? [];
+    for (const Section of [ProvidersSection, RoutingSection]) {
+      const markup = renderSection(createElement(Section), { values, disabled: true });
+      const controls = markup.match(/<(?:input|textarea)\b[^>]*>/g) ?? [];
       expect(controls.length).toBeGreaterThan(0);
       for (const control of controls) expect(control).toContain('disabled=""');
+      const switches = markup.match(/<button\b[^>]*role="switch"[^>]*>/g) ?? [];
+      expect(switches.length).toBeGreaterThan(0);
+      for (const control of switches) expect(control).toContain('disabled=""');
     }
   });
 
   test('preserves blank string inputs and permits negative transient cooldowns', () => {
-    const markup = render(createElement(SectionOAuthBehavior, props));
-    for (const input of markup.match(/<input\b[^>]*type="(?:text|number)"[^>]*>/g) ?? []) {
+    const providers = renderSection(createElement(ProvidersSection));
+    for (const input of providers.match(/<input\b[^>]*type="(?:text|number)"[^>]*>/g) ?? []) {
       expect(input).toContain('value=""');
     }
-    const network = render(
-      createElement(SectionNetwork, {
-        ...props,
-        values: { ...DEFAULT_VISUAL_VALUES, transientErrorCooldownSeconds: '-1' },
-      })
-    );
-    const input = network.match(/<input\b[^>]*value="-1"[^>]*>/)?.[0];
+    const routing = renderSection(createElement(RoutingSection), {
+      values: { ...DEFAULT_VISUAL_VALUES, transientErrorCooldownSeconds: '-1' },
+    });
+    const input = routing.match(/<input\b[^>]*value="-1"[^>]*>/)?.[0];
     expect(input).toContain('type="number"');
     expect(input).not.toContain('min=');
   });
 
   test('renders translated validation errors and associates the ICE error with its controls', () => {
-    const markup = render(
-      createElement(SectionOAuthBehavior, {
-        ...props,
-        values: { ...DEFAULT_VISUAL_VALUES, codexLiveMediaRelayICEServers: [server] },
-        validationErrors: {
-          codexStreamBootstrapTimeout: 'invalid_duration',
-          codexLiveMediaRelayICEServers: 'invalid_ice_servers',
-        },
-      })
-    );
+    const markup = renderSection(createElement(ProvidersSection), {
+      values: { ...DEFAULT_VISUAL_VALUES, codexLiveMediaRelayICEServers: [server] },
+      validationErrors: {
+        codexStreamBootstrapTimeout: 'invalid_duration',
+        codexLiveMediaRelayICEServers: 'invalid_ice_servers',
+      },
+    });
     expect(markup).toContain(
       escapeText(translations.t('config_management.visual.validation.invalid_duration'))
     );

@@ -1,7 +1,5 @@
-@use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
-
-// ─── Page Container ─────────────────────────────────────
+@use '../../styles/variables' as *;
 
 .page {
   display: flex;
@@ -10,63 +8,15 @@
   width: 100%;
 }
 
-// ─── Header ─────────────────────────────────────────────
-
-.pageHeader {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-}
-
-.title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.description {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-// ─── Alert Boxes ────────────────────────────────────────
-
-.errorBox,
-.warningBox {
-  padding: $spacing-md;
-  border-radius: $radius-md;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.errorBox {
-  border: 1px solid var(--danger-color);
-  background: rgba($error-color, 0.1);
-  color: var(--danger-color);
-}
-
-.warningBox {
-  border: 1px solid color-mix(in srgb, var(--warning-color, #c65746) 42%, var(--border-color));
-  background: color-mix(in srgb, var(--warning-color, #c65746) 9%, var(--bg-secondary));
-  color: var(--text-primary);
-}
-
-// ─── Status Bar ─────────────────────────────────────────
-
 .statusBar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--color-kumo-elevated);
+  box-shadow: 0 0 0 1px var(--color-kumo-hairline);
 }
 
 .statusPill {
@@ -74,62 +24,29 @@
   min-width: 0;
   max-width: 100%;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: $radius-full;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 56%, transparent);
-  font-size: 12px;
-  font-weight: 600;
+  gap: 8px;
+  font-size: var(--text-sm);
   white-space: nowrap;
 }
 
-.statusDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.statusDotOn {
-  background: $success-color;
-  box-shadow: 0 0 6px rgba($success-color, 0.5);
-}
-
-.statusDotOff {
-  background: var(--text-tertiary);
-}
-
 .statusLabel {
-  color: var(--text-secondary);
+  color: var(--text-color-kumo-subtle);
 }
 
 .statusValue {
-  color: var(--text-primary);
-  font-weight: 700;
+  color: var(--text-color-kumo-default);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .statusPathValue {
   display: block;
   min-width: 0;
   max-width: min(360px, 58vw);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  @include text-ellipsis;
 }
-
-.statusDivider {
-  width: 1px;
-  height: 20px;
-  background: color-mix(in srgb, var(--border-color) 60%, transparent);
-  flex-shrink: 0;
-
-  @include mobile {
-    display: none;
-  }
-}
-
-// ─── Toolbar ────────────────────────────────────────────
 
 .toolbar {
   display: flex;
@@ -142,16 +59,6 @@
     margin: 0;
   }
 
-  :global(.input) {
-    padding-right: 36px;
-  }
-
-  :global(.btn > span) {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
   @include mobile {
     flex-direction: column;
     align-items: stretch;
@@ -162,38 +69,31 @@
   }
 }
 
-// ─── Plugin List ────────────────────────────────────────
-
 .pluginList {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: $radius-lg;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--border-color) 30%, transparent);
 }
-
-// ─── Plugin Row ─────────────────────────────────────────
 
 .pluginRow {
   display: grid;
   grid-template-columns: 40px 1fr auto;
   align-items: center;
   gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  background: var(--bg-primary);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-kumo-hairline);
   transition: background-color $transition-fast;
 
+  &:last-child {
+    border-bottom: 0;
+  }
+
   &:hover {
-    background: var(--bg-hover);
+    background: var(--color-kumo-elevated);
   }
 
   @include mobile {
     grid-template-columns: 36px 1fr;
-    grid-template-rows: auto auto;
     gap: $spacing-sm;
-    padding: $spacing-md;
   }
 }
 
@@ -204,10 +104,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
-  color: var(--text-secondary);
+  border-radius: 8px;
+  background: var(--color-kumo-recessed);
+  box-shadow: 0 0 0 1px var(--color-kumo-hairline);
+  color: var(--text-color-kumo-subtle);
   flex-shrink: 0;
 
   img {
@@ -219,7 +119,6 @@
   @include mobile {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
   }
 }
 
@@ -232,25 +131,32 @@
 
 .pluginName {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 6px $spacing-sm;
   min-width: 0;
 
   h2 {
     min-width: 0;
     margin: 0;
-    color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 650;
+    color: var(--text-color-kumo-default);
+    font-size: var(--text-base);
+    font-weight: 600;
     line-height: 1.3;
     @include text-ellipsis;
   }
 }
 
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .pluginId {
-  color: var(--text-tertiary);
-  font-family: $font-mono;
-  font-size: 12px;
+  color: var(--text-color-kumo-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
   @include text-ellipsis;
 }
 
@@ -259,7 +165,6 @@
   align-items: center;
   gap: $spacing-sm;
   flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .metaItem {
@@ -268,321 +173,40 @@
   max-width: 100%;
   align-items: center;
   gap: 4px;
-  color: var(--text-tertiary);
-  font-size: 12px;
+  color: var(--text-color-kumo-subtle);
+  font-size: var(--text-xs);
   white-space: nowrap;
 
   strong {
-    color: var(--text-secondary);
+    color: var(--text-color-kumo-default);
     font-weight: 600;
   }
 }
 
 .metaPath {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .metaDot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--text-tertiary) 50%, transparent);
+  background: var(--text-color-kumo-placeholder);
   flex-shrink: 0;
 }
-
-// ─── Badges ─────────────────────────────────────────────
-
-.badgeRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.badge,
-.badgeSuccess,
-.badgeWarning,
-.badgeMuted {
-  display: inline-flex;
-  min-height: 22px;
-  align-items: center;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.badge {
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  color: var(--text-secondary);
-}
-
-.badgeSuccess {
-  background: rgba($success-color, 0.1);
-  border: 1px solid rgba($success-color, 0.2);
-  color: var(--success-color);
-}
-
-.badgeWarning {
-  background: rgba($warning-color, 0.1);
-  border: 1px solid rgba($warning-color, 0.2);
-  color: var(--warning-color);
-}
-
-.badgeMuted {
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
-  color: var(--text-tertiary);
-}
-
-// ─── Row Actions ────────────────────────────────────────
 
 .rowActions {
   display: flex;
   min-width: 0;
-  max-width: min(560px, 48vw);
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: $spacing-sm;
   flex-shrink: 0;
 
-  :global(.btn > span) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
   @include mobile {
     grid-column: 1 / -1;
     justify-content: flex-start;
-    max-width: none;
   }
-}
-
-.iconLink {
-  display: inline-flex;
-  min-height: 30px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    border-color $transition-fast,
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover {
-    border-color: var(--primary-color);
-    background: var(--bg-hover);
-    color: var(--primary-color);
-  }
-}
-
-.iconLink {
-  width: 30px;
-  flex: 0 0 auto;
-}
-
-// ─── Skeleton ───────────────────────────────────────────
-
-.skeletonRow {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  background: var(--bg-primary);
-}
-
-.skeletonAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 25%,
-    color-mix(in srgb, var(--bg-hover) 70%, transparent) 37%,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeletonPulse 1.35s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-.skeletonText {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.skeletonLine {
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 25%,
-    color-mix(in srgb, var(--bg-hover) 70%, transparent) 37%,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeletonPulse 1.35s ease-in-out infinite;
-
-  &:first-child {
-    width: 45%;
-  }
-
-  &:last-child {
-    width: 70%;
-    height: 10px;
-  }
-}
-
-// ─── Sheet Config Form ──────────────────────────────────
-
-.sheetFooter {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-sm;
-}
-
-.configForm {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-lg;
-}
-
-.formSection {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-
-  h3 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 16px;
-    font-weight: 700;
-  }
-
-  :global(.form-group) {
-    margin: 0;
-  }
-}
-
-.fieldRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-md;
-  min-height: 52px;
-  padding: $spacing-md;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-}
-
-.fieldText {
-  min-width: 0;
-}
-
-.fieldLabel {
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 650;
-  overflow-wrap: anywhere;
-}
-
-.fieldDescription,
-.fieldHint {
-  margin-top: 4px;
-  color: var(--text-tertiary);
-  font-size: 12px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.formField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-}
-
-.textarea {
-  min-height: 148px;
-  resize: vertical;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  padding: 10px 12px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: $font-mono;
-  font-size: 13px;
-  line-height: 1.5;
-
-  &:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 18%, transparent);
-  }
-}
-
-.fieldError {
-  padding: 8px 10px;
-  border-radius: $radius-sm;
-  background: rgba($error-color, 0.1);
-  color: var(--danger-color);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.emptyConfig {
-  padding: $spacing-md;
-  border: 1px dashed var(--border-color);
-  border-radius: $radius-md;
-  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-// ─── Animation ──────────────────────────────────────────
-
-@keyframes skeletonPulse {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-// ─── Mobile Overrides ───────────────────────────────────
-
-@include mobile {
-  .page {
-    gap: $spacing-md;
-  }
-
-  .sheetFooter {
-    flex-direction: column-reverse;
-
-    :global(.btn) {
-      width: 100%;
-    }
-  }
-
 }

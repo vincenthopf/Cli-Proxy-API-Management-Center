@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { getAuthFileRefreshKey } from '@/features/authFiles/manualRefresh';
 import { useTranslation } from 'react-i18next';
+import { Badge, Banner } from '@cloudflare/kumo';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
@@ -48,7 +49,6 @@ export type AuthFileCardProps = {
   cooldownResetting: Record<string, boolean>;
   quotaFilterType: AuthFileQuotaFilter;
   statusBarCache: Map<string, AuthFileStatusBarData>;
-  /** 首屏一次性级联入场的延迟；null/undefined 表示不做入场动画。 */
   entranceDelayMs?: number | null;
   onShowModels: (file: AuthFileItem) => void;
   onDownload: (name: string) => void;
@@ -111,10 +111,8 @@ export function AuthFileCard(props: AuthFileCardProps) {
   const priorityValue = Number.isSafeInteger(file.priority) ? file.priority : undefined;
   const weightValue = Number.isSafeInteger(file.weight) ? file.weight : undefined;
   const noteValue = typeof file.note === 'string' ? file.note.trim() : '';
-  // 主行显示账号（email/项目 ID），文件名降为满卡宽的 mono 副行
   const identity = deriveAuthFileIdentity(file);
 
-  // 挂载时捕获一次入场延迟：父级随后传 null 也不会中断已开始的动画
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
   const cardClasses = [
     styles.card,
@@ -161,7 +159,9 @@ export function AuthFileCard(props: AuthFileCardProps) {
           </span>
         </h3>
         {isRuntimeOnly && (
-          <span className={styles.runtimeLabel}>{t('auth_files.type_virtual')}</span>
+          <span className={styles.runtimeLabel}>
+            <Badge variant="secondary">{t('auth_files.type_virtual')}</Badge>
+          </span>
         )}
       </header>
 
@@ -179,8 +179,12 @@ export function AuthFileCard(props: AuthFileCardProps) {
 
       {rawStatusMessage && hasStatusWarning && (
         <div className={styles.warning} title={rawStatusMessage}>
-          <IconInfo className={styles.warningIcon} size={14} />
-          <span>{rawStatusMessage}</span>
+          <Banner
+            variant="alert"
+            size="sm"
+            icon={<IconInfo size={14} />}
+            description={rawStatusMessage}
+          />
         </div>
       )}
 
@@ -228,8 +232,10 @@ export function AuthFileCard(props: AuthFileCardProps) {
               ·
             </span>
             <span className={styles.metaPriority} title={t('auth_files.priority_hint')}>
-              <span className={styles.metaMetricLabel}>{t('auth_files.priority_display')}</span>
-              <span>{priorityValue}</span>
+              <Badge variant="secondary">
+                <span className={styles.metaMetricLabel}>{t('auth_files.priority_display')}</span>
+                <span>{priorityValue}</span>
+              </Badge>
             </span>
           </>
         )}
@@ -239,8 +245,10 @@ export function AuthFileCard(props: AuthFileCardProps) {
               ·
             </span>
             <span className={styles.metaWeight} title={t('auth_files.weight_tooltip')}>
-              <span className={styles.metaMetricLabel}>{t('auth_files.weight_display')}</span>
-              <span>{weightValue}</span>
+              <Badge variant="info">
+                <span className={styles.metaMetricLabel}>{t('auth_files.weight_display')}</span>
+                <span>{weightValue}</span>
+              </Badge>
             </span>
           </>
         )}
@@ -268,11 +276,11 @@ export function AuthFileCard(props: AuthFileCardProps) {
             <div className={styles.utilityActions}>
               {showManualRefreshButton && (
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onManualRefresh(file)}
-                  className={styles.iconButton}
                   title={t('auth_files.manual_refresh_button')}
+                  aria-label={t('auth_files.manual_refresh_button')}
                   disabled={
                     disableControls ||
                     file.disabled ||
@@ -284,31 +292,32 @@ export function AuthFileCard(props: AuthFileCardProps) {
                 </Button>
               )}
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 onClick={() => onDownload(file.name)}
-                className={styles.iconButton}
                 title={t('auth_files.download_button')}
+                aria-label={t('auth_files.download_button')}
                 disabled={disableControls}
               >
                 <IconDownload size={15} />
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 onClick={() => onOpenPrefixProxyEditor(file)}
-                className={styles.iconButton}
                 title={t('auth_files.prefix_proxy_button')}
+                aria-label={t('auth_files.prefix_proxy_button')}
                 disabled={disableControls || isManualRefreshing}
               >
                 <IconSettings size={15} />
               </Button>
               <Button
-                variant="danger"
+                variant="ghost"
                 size="sm"
+                className="!text-kumo-danger"
                 onClick={() => onDelete(file.name)}
-                className={styles.iconButton}
                 title={t('auth_files.delete_button')}
+                aria-label={t('auth_files.delete_button')}
                 disabled={disableControls || deleting === file.name || isManualRefreshing}
               >
                 {deleting === file.name ? <LoadingSpinner size={14} /> : <IconTrash2 size={15} />}

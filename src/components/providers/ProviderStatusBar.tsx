@@ -4,26 +4,14 @@ import type { StatusBarData, StatusBlockDetail } from '@/utils/recentRequests';
 
 const defaultStyles: Record<string, string> = {};
 
-/**
- * 根据成功率 (0–1) 在三个色标之间做 RGB 线性插值
- * 0 → 红 (#ef4444)  →  0.5 → 金黄 (#facc15)  →  1 → 绿 (#22c55e)
- */
-const COLOR_STOPS = [
-  { r: 239, g: 68, b: 68 }, // #ef4444
-  { r: 250, g: 204, b: 21 }, // #facc15
-  { r: 34, g: 197, b: 94 }, // #22c55e
-] as const;
-
 function rateToColor(rate: number): string {
   const t = Math.max(0, Math.min(1, rate));
-  const segment = t < 0.5 ? 0 : 1;
-  const localT = segment === 0 ? t * 2 : (t - 0.5) * 2;
-  const from = COLOR_STOPS[segment];
-  const to = COLOR_STOPS[segment + 1];
-  const r = Math.round(from.r + (to.r - from.r) * localT);
-  const g = Math.round(from.g + (to.g - from.g) * localT);
-  const b = Math.round(from.b + (to.b - from.b) * localT);
-  return `rgb(${r}, ${g}, ${b})`;
+  if (t < 0.5) {
+    const pct = Math.round(t * 2 * 100);
+    return `color-mix(in oklch, var(--color-kumo-warning) ${pct}%, var(--color-kumo-danger))`;
+  }
+  const pct = Math.round((t - 0.5) * 2 * 100);
+  return `color-mix(in oklch, var(--color-kumo-success) ${pct}%, var(--color-kumo-warning))`;
 }
 
 function formatTime(timestamp: number): string {
@@ -60,7 +48,6 @@ export function ProviderStatusBar({ statusData, styles: stylesProp }: ProviderSt
         ? s.statusRateMedium
         : s.statusRateLow;
 
-  // 点击外部关闭 tooltip（移动端）
   useEffect(() => {
     if (activeTooltip === null) return;
     const handler = (e: PointerEvent) => {

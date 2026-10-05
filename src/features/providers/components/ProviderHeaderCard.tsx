@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
 import { IconLoader2, IconPlus, IconRefreshCw } from '@/components/ui/icons';
-import styles from './ProviderHeaderCard.module.scss';
 
 interface ProviderHeaderCardProps {
   title?: string;
@@ -34,61 +35,54 @@ export function ProviderHeaderCard({
   onNew,
 }: ProviderHeaderCardProps) {
   const { t } = useTranslation();
-  const cardClassName = [styles.card, variant === 'quickStart' ? styles.quickStartCard : '']
-    .filter(Boolean)
-    .join(' ');
+  const quickStart = variant === 'quickStart';
+  const refreshLabel = isFetching
+    ? t('providersPage.actions.syncing')
+    : t('providersPage.actions.refresh');
 
   return (
-    <section className={cardClassName}>
-      <div className={styles.row}>
-        <div className={styles.titleArea}>
-          <h1 className={styles.title}>{title ?? t('providersPage.header.title')}</h1>
-        </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnOutline}`}
-            onClick={onRefresh}
-            disabled={isFetching}
-            aria-label={
-              isFetching ? t('providersPage.actions.syncing') : t('providersPage.actions.refresh')
-            }
-          >
-            <span className={`${styles.btnIcon} ${isFetching ? styles.spin : ''}`.trim()}>
-              {isFetching ? <IconLoader2 size={16} /> : <IconRefreshCw size={16} />}
-            </span>
-            <span>
-              {isFetching ? t('providersPage.actions.syncing') : t('providersPage.actions.refresh')}
-            </span>
-          </button>
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1
+          className={[
+            'm-0 min-w-0 font-semibold text-kumo-default',
+            quickStart ? 'text-3xl leading-tight' : 'text-xl leading-tight',
+          ].join(' ')}
+        >
+          {title ?? t('providersPage.header.title')}
+        </h1>
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+          <Button variant="secondary" onClick={onRefresh} disabled={isFetching}>
+            {isFetching ? (
+              <IconLoader2 size={16} className="animate-spin motion-reduce:animate-none" />
+            ) : (
+              <IconRefreshCw size={16} />
+            )}
+            <span>{refreshLabel}</span>
+          </Button>
           {showNewAction ? (
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={onNew}
-              disabled={isNewDisabled}
-            >
+            <Button variant="primary" onClick={onNew} disabled={isNewDisabled}>
               <IconPlus size={16} />
               <span>{newLabel ?? t('providersPage.actions.new')}</span>
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
 
       {showSummary ? (
-        <div className={styles.chips}>
-          <span className={`${styles.chip} ${styles.chipPrimary}`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="info">
             {t('providersPage.header.activeResources', {
               active: totalActive,
               total: totalResources,
             })}
-          </span>
-          <span className={styles.chip}>
+          </Badge>
+          <Badge variant="secondary">
             {t('providersPage.header.providerFamilies', { count: providerFamilies })}
-          </span>
-          <span className={styles.chip}>
+          </Badge>
+          <Badge variant="secondary">
             {t('providersPage.header.updatedAt', { time: updatedAtLabel })}
-          </span>
+          </Badge>
         </div>
       ) : null}
     </section>

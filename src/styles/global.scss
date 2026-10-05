@@ -1,7 +1,3 @@
-/**
- * 全局样式
- */
-
 @use './variables.scss' as *;
 @use './mixins.scss' as *;
 @use './reset.scss';
@@ -9,26 +5,16 @@
 @use './components.scss';
 @use './layout.scss';
 
-@font-face {
-  font-family: InterVariable;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('../assets/fonts/InterVariable.woff2') format('woff2');
-}
-
-html {
-  font-feature-settings:
-    'liga' 1,
-    'calt' 1;
-}
-
-body {
-  background-color: var(--chrome);
-  color: var(--text-primary);
-  transition:
-    background-color $transition-normal,
-    color $transition-normal;
+@layer base {
+  body {
+    background-color: var(--color-kumo-canvas);
+    color: var(--text-color-kumo-default);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    transition:
+      background-color $transition-normal,
+      color $transition-normal;
+  }
 }
 
 html.modal-open,
@@ -40,7 +26,6 @@ body.modal-open .content {
   overflow: hidden;
 }
 
-// 滚动条样式
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -51,11 +36,10 @@ body.modal-open .content {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--color-kumo-fill);
   border-radius: $radius-full;
 
   &:hover {
-    background: var(--border-hover);
+    background: var(--color-kumo-interact);
   }
 }
-

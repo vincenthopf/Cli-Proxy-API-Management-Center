@@ -1,9 +1,5 @@
 @use '../../styles/mixins' as *;
 
-/* ============================================================
- * 额度页壳层：纯布局，视觉细节都在各组件的 colocated 模块里。
- * ============================================================ */
-
 .page {
   display: flex;
   flex-direction: column;
@@ -12,16 +8,12 @@
   min-width: 0;
 }
 
-/* ---------- 工作区（tabs + 网格 + 分页） ---------- */
-
 .workbench {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
-
-/* 提供商导航独占一行，保留原生横向滚动。 */
 
 .tabsRow {
   display: flex;
@@ -52,15 +44,14 @@
   flex: 0 1 340px;
   min-width: 0;
   height: 36px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  border-radius: 8px;
+  background: var(--color-kumo-control);
+  color: var(--text-color-kumo-subtle);
+  box-shadow: 0 0 0 1px var(--color-kumo-line);
+  transition: box-shadow 100ms ease;
 
   &:focus-within {
-    border-color: var(--border-hover);
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--color-kumo-focus) 50%, transparent);
   }
 }
 
@@ -74,18 +65,18 @@
   width: 100%;
   min-width: 0;
   height: 100%;
-  padding: 0 42px 0 35px;
+  padding: 0 40px 0 34px;
   border: 0;
   border-radius: inherit;
   outline: none;
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text-color-kumo-default);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-base);
   appearance: none;
 
   &::placeholder {
-    color: var(--text-tertiary);
+    color: var(--text-color-kumo-placeholder);
   }
 
   &::-webkit-search-cancel-button,
@@ -96,22 +87,27 @@
 
 .clearSearch {
   position: absolute;
-  right: 2px;
+  right: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-color-kumo-subtle);
   cursor: pointer;
 
+  &:hover {
+    background: var(--color-kumo-tint);
+    color: var(--text-color-kumo-default);
+  }
+
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-kumo-brand);
   }
 
   &:active {
@@ -121,71 +117,25 @@
 
 .sort {
   flex: 0 0 auto;
-  min-width: 148px;
+  min-width: 180px;
   max-width: 100%;
-
-  button[aria-haspopup='listbox'] {
-    height: 36px;
-    border-color: transparent;
-    border-radius: 10px;
-    background: transparent;
-    box-shadow: none;
-    color: var(--text-secondary);
-
-    &:focus-visible,
-    &[aria-expanded='true'] {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-    }
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .clearSearch:hover,
-  .sort button[aria-haspopup='listbox']:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .clearSearch:active {
     transform: none;
   }
+
+  .search {
+    transition: none;
+  }
 }
 
 @include mobile {
   .search {
     flex: 1 1 220px;
-    height: 40px;
-  }
-
-  .clearSearch {
-    width: 36px;
-    height: 36px;
-  }
-
-  .sort button[aria-haspopup='listbox'] {
-    height: 40px;
   }
 }
-
-.errorBanner {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--danger-color);
-  background: var(--bg-error-light);
-  border: 1px solid var(--warning-border);
-  border-radius: 10px;
-  padding: 9px 12px;
-  overflow-wrap: anywhere;
-}
-
-/* ---------- 卡片网格 ----------
- * 列宽由 CSS 决定（不再用 JS 测量）：额度卡承载水位条，取 340px 下限，
- * 与认证文件页配额模式（.gridQuota）同一档。 */
 
 .grid {
   display: grid;
@@ -194,22 +144,18 @@
   align-items: stretch;
 }
 
-/* ---------- 分页 ---------- */
-
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .pageInfo {
-  font-family: $font-mono;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: var(--text-tertiary);
+  color: var(--text-color-kumo-subtle);
   white-space: nowrap;
 }
 

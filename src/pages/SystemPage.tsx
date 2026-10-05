@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/Card';
+import { Badge, Banner, Empty, LayerCard, Loader } from '@cloudflare/kumo';
+import { CubeIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
@@ -33,7 +34,7 @@ import iconGrok from '@/assets/icons/grok.svg';
 import iconGrokDark from '@/assets/icons/grok-dark.svg';
 import iconDeepseek from '@/assets/icons/deepseek.svg';
 import iconMinimax from '@/assets/icons/minimax.svg';
-import styles from './SystemPage.module.scss';
+import { PageHeader } from '@/features/overview/components/PageHeader';
 
 const MODEL_CATEGORY_ICONS: Record<string, string | { light: string; dark: string }> = {
   devin: { light: iconDevinLight, dark: iconDevinDark },
@@ -293,184 +294,240 @@ export function SystemPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.connectionStatus, auth.apiBase]);
 
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.pageTitle}>{t('system_info.title')}</h1>
-      <div className={styles.content}>
-        <Card className={styles.aboutCard}>
-          <div className={styles.aboutHeader}>
-            <img src={INLINE_LOGO_JPEG} alt="CPAMC" className={styles.aboutLogo} />
-            <div className={styles.aboutTitle}>{t('system_info.about_title')}</div>
-          </div>
+  const connectionBadgeVariant =
+    auth.connectionStatus === 'connected'
+      ? 'success'
+      : auth.connectionStatus === 'error'
+        ? 'error'
+        : auth.connectionStatus === 'connecting'
+          ? 'warning'
+          : 'neutral';
+  const modelBadgeVariant =
+    modelStatus?.type === 'success'
+      ? 'success'
+      : modelStatus?.type === 'warning'
+        ? 'warning'
+        : modelStatus?.type === 'error'
+          ? 'error'
+          : 'neutral';
+  const quickLinks = [
+    {
+      href: 'https://github.com/router-for-me/CLIProxyAPI',
+      icon: <IconGithub size={18} />,
+      title: t('system_info.link_main_repo'),
+      description: t('system_info.link_main_repo_desc'),
+    },
+    {
+      href: 'https://github.com/router-for-me/Cli-Proxy-API-Management-Center',
+      icon: <IconCode size={18} />,
+      title: t('system_info.link_webui_repo'),
+      description: t('system_info.link_webui_repo_desc'),
+    },
+    {
+      href: 'https://help.router-for.me/',
+      icon: <IconBookOpen size={18} />,
+      title: t('system_info.link_docs'),
+      description: t('system_info.link_docs_desc'),
+    },
+  ];
+  const sectionTitleClass = 'm-0 text-base font-semibold text-kumo-default';
+  const tileClass = 'flex min-w-0 flex-col gap-1 bg-kumo-base p-4';
+  const tileLabelClass = 'text-xs font-medium text-kumo-subtle';
+  const tileValueClass = 'truncate text-base font-semibold text-kumo-default tabular-nums';
 
-          <div className={styles.aboutInfoGrid}>
+  return (
+    <div className="flex w-full flex-col gap-8">
+      <PageHeader title={t('system_info.title')} />
+
+      <section className="flex flex-col gap-3" aria-labelledby="system-about-title">
+        <LayerCard>
+          <div className="flex items-center gap-3 border-b border-kumo-hairline px-4 py-3 sm:px-5">
+            <img
+              src={INLINE_LOGO_JPEG}
+              alt="CPAMC"
+              className="size-9 rounded-lg ring ring-kumo-hairline"
+            />
+            <h2 id="system-about-title" className={sectionTitleClass}>
+              {t('system_info.about_title')}
+            </h2>
+          </div>
+          <div className="grid gap-px bg-kumo-hairline sm:grid-cols-2 xl:grid-cols-4">
             <button
               type="button"
-              className={`${styles.infoTile} ${styles.tapTile}`}
+              className={`${tileClass} cursor-default text-left focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none focus-visible:ring-inset`}
               onClick={handleInfoVersionTap}
             >
-              <div className={styles.tileHeader}>
-                <div className={styles.tileLabel}>{t('footer.version')}</div>
-              </div>
-              <div className={styles.tileValue}>{appVersion}</div>
+              <span className={tileLabelClass}>{t('footer.version')}</span>
+              <span className={tileValueClass}>{appVersion}</span>
             </button>
 
-            <div className={styles.infoTile}>
-              <div className={styles.tileHeader}>
-                <div className={styles.tileLabel}>{t('footer.api_version')}</div>
+            <div className={tileClass}>
+              <div className="flex items-center justify-between gap-2">
+                <span className={tileLabelClass}>{t('footer.api_version')}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className={styles.tileAction}
                   onClick={() => void handleVersionCheck()}
                   loading={checkingVersion}
-                  title={t('system_info.version_check_button')}
-                  aria-label={t('system_info.version_check_button')}
+                  className="-my-1"
                 >
                   {t('system_info.version_check_button')}
                 </Button>
               </div>
-              <div className={styles.tileValue}>{apiVersion}</div>
+              <span className={tileValueClass}>{apiVersion}</span>
             </div>
 
-            <div className={styles.infoTile}>
-              <div className={styles.tileLabel}>{t('footer.build_date')}</div>
-              <div className={styles.tileValue}>{buildTime}</div>
+            <div className={tileClass}>
+              <span className={tileLabelClass}>{t('footer.build_date')}</span>
+              <span className={tileValueClass}>{buildTime}</span>
             </div>
 
-            <div className={styles.infoTile}>
-              <div className={styles.tileLabel}>{t('connection.status')}</div>
-              <div className={styles.tileValue}>{t(`common.${auth.connectionStatus}_status`)}</div>
-              <div className={styles.tileSub}>{auth.apiBase || '-'}</div>
+            <div className={tileClass}>
+              <span className={tileLabelClass}>{t('connection.status')}</span>
+              <span>
+                <Badge variant={connectionBadgeVariant} appearance="dot">
+                  {t(`common.${auth.connectionStatus}_status`)}
+                </Badge>
+              </span>
+              <span
+                className="truncate font-mono text-xs text-kumo-subtle"
+                title={auth.apiBase || undefined}
+              >
+                {auth.apiBase || '-'}
+              </span>
             </div>
           </div>
-        </Card>
+        </LayerCard>
+      </section>
 
-        <Card title={t('system_info.quick_links_title')}>
-          <p className={styles.sectionDescription}>{t('system_info.quick_links_desc')}</p>
-          <div className={styles.quickLinks}>
-            <a
-              href="https://github.com/router-for-me/CLIProxyAPI"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.github}`}>
-                <IconGithub size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_main_repo')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_main_repo_desc')}</div>
-              </div>
-            </a>
+      <section className="flex flex-col gap-3" aria-labelledby="system-links-title">
+        <div className="flex flex-col gap-1">
+          <h2 id="system-links-title" className={sectionTitleClass}>
+            {t('system_info.quick_links_title')}
+          </h2>
+          <p className="m-0 text-sm text-kumo-subtle">{t('system_info.quick_links_desc')}</p>
+        </div>
+        <LayerCard>
+          <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
+            {quickLinks.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-3 px-4 py-3 no-underline hover:bg-kumo-tint focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none focus-visible:ring-inset sm:px-5"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated text-kumo-default ring ring-kumo-hairline">
+                    {link.icon}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-base font-medium text-kumo-default">{link.title}</span>
+                    <span className="text-sm text-kumo-subtle">{link.description}</span>
+                  </span>
+                  <IconExternalLink size={14} className="shrink-0 text-kumo-subtle" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </LayerCard>
+      </section>
 
-            <a
-              href="https://github.com/router-for-me/Cli-Proxy-API-Management-Center"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.github}`}>
-                <IconCode size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_webui_repo')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_webui_repo_desc')}</div>
-              </div>
-            </a>
-
-            <a
-              href="https://help.router-for.me/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.docs}`}>
-                <IconBookOpen size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_docs')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_docs_desc')}</div>
-              </div>
-            </a>
+      <section className="flex flex-col gap-3" aria-labelledby="system-models-title">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="system-models-title" className={sectionTitleClass}>
+                {t('system_info.models_title')}
+              </h2>
+              {modelStatus && <Badge variant={modelBadgeVariant}>{modelStatus.message}</Badge>}
+            </div>
+            <p className="m-0 text-sm text-kumo-subtle">{t('system_info.models_desc')}</p>
           </div>
-        </Card>
-
-        <Card
-          title={t('system_info.models_title')}
-          extra={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => fetchModels({ forceRefresh: true })}
-              loading={modelsLoading}
-            >
-              {t('common.refresh')}
-            </Button>
-          }
-        >
-          <p className={styles.sectionDescription}>{t('system_info.models_desc')}</p>
-          {modelStatus && (
-            <div className={`status-badge ${modelStatus.type}`}>{modelStatus.message}</div>
-          )}
-          {modelsError && <div className="error-box">{modelsError}</div>}
-          {modelsLoading ? (
-            <div className="hint">{t('common.loading')}</div>
-          ) : models.length === 0 ? (
-            <div className="hint">{t('system_info.models_empty')}</div>
-          ) : (
-            <div className="item-list">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fetchModels({ forceRefresh: true })}
+            loading={modelsLoading}
+          >
+            {t('common.refresh')}
+          </Button>
+        </div>
+        {modelsError && (
+          <Banner
+            size="sm"
+            variant="error"
+            icon={<WarningCircleIcon weight="fill" />}
+            description={modelsError}
+          />
+        )}
+        {modelsLoading ? (
+          <LayerCard className="flex items-center gap-2 p-4 text-sm text-kumo-subtle">
+            <Loader size="sm" />
+            {t('common.loading')}
+          </LayerCard>
+        ) : models.length === 0 ? (
+          <Empty
+            size="sm"
+            icon={<CubeIcon size={32} className="text-kumo-inactive" />}
+            title={t('system_info.models_empty')}
+          />
+        ) : (
+          <LayerCard>
+            <ul className="m-0 flex list-none flex-col divide-y divide-kumo-hairline p-0">
               {groupedModels.map((group) => {
                 const iconSrc = getIconForCategory(group.id);
                 return (
-                  <div key={group.id} className="item-row">
-                    <div className="item-meta">
-                      <div className={styles.groupTitle}>
-                        {iconSrc && <img src={iconSrc} alt="" className={styles.groupIcon} />}
-                        <span className="item-title">{group.label}</span>
-                      </div>
-                      <div className="item-subtitle">
-                        {t('system_info.models_count', { count: group.items.length })}
-                      </div>
+                  <li
+                    key={group.id}
+                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:px-5"
+                  >
+                    <div className="flex shrink-0 items-center gap-3 sm:w-48">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-kumo-elevated ring ring-kumo-hairline">
+                        {iconSrc ? <img src={iconSrc} alt="" className="size-5" /> : null}
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-base font-medium text-kumo-default">
+                          {group.label}
+                        </span>
+                        <span className="text-xs text-kumo-subtle">
+                          {t('system_info.models_count', { count: group.items.length })}
+                        </span>
+                      </span>
                     </div>
-                    <div className={styles.modelTags}>
+                    <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                       {group.items.map((model) => (
                         <span
                           key={`${model.name}-${model.alias ?? 'default'}`}
-                          className={styles.modelTag}
+                          className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-kumo-recessed px-2 py-0.5 font-mono text-xs text-kumo-default ring ring-kumo-hairline"
                           title={model.description || ''}
                         >
-                          <span className={styles.modelName}>{model.name}</span>
-                          {model.alias && <span className={styles.modelAlias}>{model.alias}</span>}
+                          <span className="truncate">{model.name}</span>
+                          {model.alias && <span className="text-kumo-subtle">{model.alias}</span>}
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
-          )}
-        </Card>
+            </ul>
+          </LayerCard>
+        )}
+      </section>
 
-        <Card title={t('system_info.clear_login_title')}>
-          <p className={styles.sectionDescription}>{t('system_info.clear_login_desc')}</p>
-          <div className={styles.clearLoginActions}>
-            <Button variant="danger" onClick={handleClearLoginStorage}>
-              {t('system_info.clear_login_button')}
-            </Button>
+      <section className="flex flex-col gap-3" aria-labelledby="system-clear-login-title">
+        <LayerCard className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5">
+          <div className="flex min-w-0 flex-1 basis-72 flex-col gap-1">
+            <h2 id="system-clear-login-title" className={sectionTitleClass}>
+              {t('system_info.clear_login_title')}
+            </h2>
+            <p className="m-0 text-sm text-kumo-subtle">{t('system_info.clear_login_desc')}</p>
           </div>
-        </Card>
-      </div>
+          <Button variant="danger" onClick={handleClearLoginStorage}>
+            {t('system_info.clear_login_button')}
+          </Button>
+        </LayerCard>
+      </section>
 
       <Modal
         open={requestLogModalOpen}
@@ -491,8 +548,13 @@ export function SystemPage() {
           </>
         }
       >
-        <div className="request-log-modal">
-          <div className="status-badge warning">{t('basic_settings.request_log_warning')}</div>
+        <div className="flex flex-col gap-4">
+          <Banner
+            size="sm"
+            variant="alert"
+            icon={<WarningIcon weight="fill" />}
+            description={t('basic_settings.request_log_warning')}
+          />
           <ToggleSwitch
             label={t('basic_settings.request_log_enable')}
             labelPosition="left"

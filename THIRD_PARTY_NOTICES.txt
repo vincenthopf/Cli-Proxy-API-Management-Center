@@ -26,4 +26,4 @@ SOFTWARE.
 
 ----
 
-Inter Variable font (https://github.com/rsms/inter), bundled as src/assets/fonts/InterVariable.woff2, licensed under the SIL Open Font License 1.1. Full text: src/assets/fonts/Inter-LICENSE.txt
+Kumo (https://github.com/cloudflare/kumo), @cloudflare/kumo, Copyright (c) Cloudflare, Inc., licensed under the MIT License. Bundled into the production build.

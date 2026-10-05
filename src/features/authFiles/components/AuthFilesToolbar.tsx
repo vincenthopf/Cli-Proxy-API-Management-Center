@@ -1,19 +1,12 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/Input';
+import { Input as KumoInput, InputGroup, Popover, Tabs } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { IconSearch, IconSlidersHorizontal, IconTrash2 } from '@/components/ui/icons';
-import {
-  MAX_CARD_PAGE_SIZE,
-  MIN_CARD_PAGE_SIZE,
-} from '@/features/authFiles/constants';
-import type {
-  AuthFilesSortMode,
-  AuthFilesStatusFilterMode,
-} from '@/features/authFiles/uiState';
-import styles from './AuthFilesToolbar.module.scss';
+import { MAX_CARD_PAGE_SIZE, MIN_CARD_PAGE_SIZE } from '@/features/authFiles/constants';
+import type { AuthFilesSortMode, AuthFilesStatusFilterMode } from '@/features/authFiles/uiState';
 
 export type AuthFilesToolbarProps = {
   search: string;
@@ -35,10 +28,6 @@ export type AuthFilesToolbarProps = {
   onDelete: () => void;
 };
 
-/**
- * 工作区工具栏：搜索 · 状态分段 · 排序 · 显示设置 popover。
- * 「删除筛选结果」放在工具栏最右端——与限定它作用域的过滤器相邻（映射原则）。
- */
 export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
   const {
     search,
@@ -60,112 +49,77 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
     onDelete,
   } = props;
   const { t } = useTranslation();
-  const [displaySettingsOpen, setDisplaySettingsOpen] = useState(false);
-  const displaySettingsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!displaySettingsOpen) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!displaySettingsRef.current?.contains(event.target as Node)) {
-        setDisplaySettingsOpen(false);
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setDisplaySettingsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [displaySettingsOpen]);
 
   return (
-    <div className={styles.toolbar}>
-      <div className={styles.search}>
-        <Input
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+      <InputGroup className="max-w-[340px] min-w-[180px] flex-[1_1_220px] max-[900px]:max-w-none max-[900px]:basis-full">
+        <InputGroup.Addon>
+          <IconSearch size={15} className="text-kumo-subtle" />
+        </InputGroup.Addon>
+        <InputGroup.Input
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
           placeholder={t('auth_files.search_placeholder')}
           aria-label={t('auth_files.search_label')}
-          rightElement={<IconSearch className={styles.searchIcon} size={16} />}
+        />
+      </InputGroup>
+
+      <div role="group" aria-label={t('auth_files.problem_filter_label')} className="max-w-full">
+        <Tabs
+          variant="segmented"
+          value={statusFilterMode}
+          onValueChange={(value) => onStatusFilterChange(value as AuthFilesStatusFilterMode)}
+          tabs={statusFilterOptions.map((option) => ({
+            value: option.value,
+            label: option.label,
+            className: option.value === 'problem' ? 'aria-selected:!text-kumo-danger' : undefined,
+          }))}
         />
       </div>
 
-      <div
-        className={styles.segmented}
-        role="group"
-        aria-label={t('auth_files.problem_filter_label')}
-      >
-        {statusFilterOptions.map((option) => {
-          const isActive = statusFilterMode === option.value;
-          const isProblem = option.value === 'problem';
-          return (
-            <button
-              key={option.value}
-              type="button"
-              className={`${styles.segment} ${isActive ? styles.segmentActive : ''} ${
-                isProblem ? styles.segmentProblem : ''
-              }`}
-              aria-pressed={isActive}
-              onClick={() => onStatusFilterChange(option.value)}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className={styles.sort}>
+      <div className="min-w-36">
         <Select
           value={sortMode}
           options={sortOptions}
           onChange={onSortModeChange}
           ariaLabel={t('auth_files.sort_label')}
-          size="sm"
         />
       </div>
 
-      <div className={styles.display} ref={displaySettingsRef}>
-        <button
-          type="button"
-          className={`${styles.displayButton} ${displaySettingsOpen ? styles.displayButtonActive : ''}`}
-          aria-expanded={displaySettingsOpen}
-          aria-controls="auth-files-display-settings"
-          title={t('auth_files.display_options_label')}
-        onClick={() => setDisplaySettingsOpen((open) => !open)}
-        >
-          <IconSlidersHorizontal size={15} />
-          <span>{t('auth_files.display_options_label')}</span>
-        </button>
-
-        {displaySettingsOpen && (
-          <div id="auth-files-display-settings" className={styles.popover}>
-            <div className={styles.popoverRow}>
+      <Popover>
+        <Popover.Trigger
+          render={
+            <Button variant="secondary" title={t('auth_files.display_options_label')}>
+              <IconSlidersHorizontal size={15} />
+              {t('auth_files.display_options_label')}
+            </Button>
+          }
+        />
+        <Popover.Content align="end" className="min-w-56">
+          <div id="auth-files-display-settings" className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 text-sm text-kumo-subtle">
               <label htmlFor="auth-files-page-size">{t('auth_files.page_size_label')}</label>
-              <input
+              <KumoInput
                 id="auth-files-page-size"
-                className={styles.pageSizeInput}
+                size="sm"
+                className="w-16 text-right font-mono tabular-nums"
                 type="number"
                 min={MIN_CARD_PAGE_SIZE}
                 max={MAX_CARD_PAGE_SIZE}
                 step={1}
                 value={pageSizeInput}
                 onChange={onPageSizeInputChange}
-                onBlur={(e) => onPageSizeCommit(e.currentTarget.value)}
-                onKeyDown={(e) => {
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
+                  onPageSizeCommit(e.currentTarget.value)
+                }
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter') {
                     e.currentTarget.blur();
                   }
                 }}
               />
             </div>
-            <div className={styles.popoverRow}>
+            <div className="flex items-center justify-between gap-3 text-sm text-kumo-subtle">
               <span>{t('auth_files.compact_mode_label')}</span>
               <ToggleSwitch
                 checked={compactMode}
@@ -174,18 +128,19 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
               />
             </div>
           </div>
-        )}
-      </div>
+        </Popover.Content>
+      </Popover>
 
-      <button
-        type="button"
-        className={styles.deleteAction}
+      <Button
+        variant="ghost"
+        className="ml-auto !text-kumo-danger max-[900px]:ml-0"
         onClick={onDelete}
         disabled={deleteDisabled}
+        loading={deleteLoading}
       >
-        {deleteLoading ? <LoadingSpinner size={13} /> : <IconTrash2 size={14} />}
+        {deleteLoading ? null : <IconTrash2 size={14} />}
         {deleteLabel}
-      </button>
+      </Button>
     </div>
   );
 }

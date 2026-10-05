@@ -55,8 +55,8 @@ export function Sparkline({ points, color, ariaLabel, className }: SparklineProp
   }
 
   const strokeColor = geometry.isFlat
-    ? 'var(--text-quaternary)'
-    : (color ?? 'var(--primary-color)');
+    ? 'var(--text-color-kumo-inactive)'
+    : (color ?? 'var(--color-kumo-brand)');
 
   return (
     <svg

@@ -1,3 +1,5 @@
+import { Loader } from '@cloudflare/kumo';
+
 export function LoadingSpinner({
   size = 20,
   className = '',
@@ -6,11 +8,8 @@ export function LoadingSpinner({
   className?: string;
 }) {
   return (
-    <div
-      className={`loading-spinner${className ? ` ${className}` : ''}`}
-      style={{ width: size, height: size, borderWidth: size / 7 }}
-      role="status"
-      aria-live="polite"
-    />
+    <span className={['inline-flex text-kumo-subtle', className].filter(Boolean).join(' ')} aria-live="polite">
+      <Loader size={size} />
+    </span>
   );
 }

@@ -1,229 +1,119 @@
-@mixin light-tokens {
-  --surface: #ffffff;
-  --chrome: #f3f3f3;
-  --well: #f3f3f3;
-  --well-outline: rgb(0 0 0 / 0.05);
-  --well-highlight: rgb(255 255 255 / 0.9);
-  --popover: #ffffff;
-  --popover-translucent: rgb(255 255 255 / 0.88);
-  --foreground: #141414;
-  --foreground-soft: oklch(0.45 0 0);
-  --accent: #e7e8e8;
-  --accent-pressed: #eeeeee;
-  --secondary: oklch(0.96 0 0);
-  --muted: oklch(0.91 0 0);
-  --hairline: rgb(0 0 0 / 0.07);
-  --ring: oklch(0.6 0 0);
-  --raised-shadow: none;
-  --destructive-soft: rgb(220 38 38 / 0.07);
-  --destructive-outline: rgb(220 38 38 / 0.16);
-
-  --bg-secondary: var(--surface);
-  --bg-primary: var(--surface);
-  --bg-tertiary: var(--well);
-  --bg-hover: var(--secondary);
-  --bg-quinary: #fafafa;
-  --bg-error-light: var(--destructive-soft);
-  --floating-surface: var(--popover);
-  --floating-shadow: 0 12px 32px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.06);
-
-  --text-primary: var(--foreground);
-  --text-secondary: oklch(0.45 0 0);
-  --text-tertiary: oklch(0.6 0 0);
-  --text-quaternary: oklch(0.75 0 0);
-  --text-muted: var(--text-tertiary);
-
-  --border-color: var(--hairline);
-  --border-secondary: var(--border-color);
-  --border-primary: rgb(0 0 0 / 0.1);
-  --border-hover: rgb(0 0 0 / 0.16);
-
-  --primary-color: oklch(0.17 0 0);
-  --primary-hover: oklch(0.28 0 0);
-  --primary-active: oklch(0.24 0 0);
-  --primary-contrast: oklch(0.985 0 0);
-
-  --success-color: #1baf7a;
-  --quota-medium-color: #eda100;
-  --warning-color: oklch(0.577 0.245 27.325);
-  --error-color: oklch(0.577 0.245 27.325);
-  --danger-color: var(--error-color);
-  --info-color: #2a78d6;
-
-  --warning-bg: var(--destructive-soft);
-  --warning-border: var(--destructive-outline);
-  --warning-text: var(--warning-color);
-
-  --success-badge-bg: rgb(27 175 122 / 0.1);
-  --success-badge-text: #0f7a54;
-  --success-badge-border: rgb(27 175 122 / 0.25);
-
-  --failure-badge-bg: var(--destructive-soft);
-  --failure-badge-text: #b42318;
-  --failure-badge-border: var(--destructive-outline);
-
-  --count-badge-bg: var(--accent);
-  --count-badge-text: var(--foreground);
-
-  --shadow: none;
-  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.1);
-
-  --radius-md: 12px;
-
-  --primary-8: color-mix(in srgb, var(--primary-color) 6%, transparent);
-  --primary-10: color-mix(in srgb, var(--primary-color) 8%, transparent);
-  --primary-30: color-mix(in srgb, var(--primary-color) 22%, transparent);
-  --amber-color: #eda100;
-  --amber-text: #8a5a00;
-  --amber-10: color-mix(in srgb, var(--amber-color) 12%, transparent);
-  --amber-30: color-mix(in srgb, var(--amber-color) 30%, transparent);
-  --destructive-color: var(--error-color);
-  --destructive-10: var(--destructive-soft);
-  --destructive-30: var(--destructive-outline);
-  --muted-bg: var(--well);
-  --muted-foreground: oklch(0.52 0 0);
-  --accent-bg: var(--accent);
-
-  --glass-bg: var(--popover-translucent);
-  --glass-bg-secondary: rgb(243 243 243 / 0.72);
-  --glass-border: var(--hairline);
-
-  --viz-success: #1baf7a;
-  --viz-failure: #e34948;
-
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
-  --series-5: #e87ba4;
-  --series-6: #008300;
-  --series-7: #4a3aa7;
-  --series-8: #e34948;
-}
-
-@mixin dark-tokens {
-  --surface: #181818;
-  --chrome: #202020;
-  --well: #242424;
-  --well-outline: rgb(255 255 255 / 0.05);
-  --well-highlight: rgb(255 255 255 / 0.12);
-  --popover: #262626;
-  --popover-translucent: rgb(38 38 38 / 0.88);
-  --foreground: #f0f0f0;
-  --foreground-soft: oklch(0.78 0 0);
-  --accent: #313131;
-  --accent-pressed: #2a2a2a;
-  --secondary: #292929;
-  --muted: #303030;
-  --hairline: rgb(255 255 255 / 0.06);
-  --ring: oklch(0.56 0 0);
-  --raised-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06), inset 0 0 0 0.5px rgb(255 255 255 / 0.04);
-  --destructive-soft: rgb(248 113 113 / 0.1);
-  --destructive-outline: rgb(248 113 113 / 0.2);
-
-  --bg-secondary: var(--surface);
-  --bg-primary: var(--surface);
-  --bg-tertiary: var(--well);
-  --bg-hover: var(--secondary);
-  --bg-quinary: #1c1c1c;
-  --bg-error-light: var(--destructive-soft);
-  --floating-surface: var(--popover);
-  --floating-shadow: 0 16px 40px rgb(0 0 0 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.06);
-
-  --text-primary: var(--foreground);
-  --text-secondary: oklch(0.78 0 0);
-  --text-tertiary: oklch(0.62 0 0);
-  --text-quaternary: oklch(0.48 0 0);
-  --text-muted: var(--text-tertiary);
-
-  --border-color: var(--hairline);
-  --border-secondary: var(--border-color);
-  --border-primary: rgb(255 255 255 / 0.1);
-  --border-hover: rgb(255 255 255 / 0.16);
-
-  --primary-color: oklch(0.9 0 0);
-  --primary-hover: oklch(0.95 0 0);
-  --primary-active: oklch(0.85 0 0);
-  --primary-contrast: oklch(0.17 0 0);
-
-  --success-color: #199e70;
-  --quota-medium-color: #c98500;
-  --warning-color: oklch(0.704 0.191 22.216);
-  --error-color: oklch(0.704 0.191 22.216);
-  --danger-color: var(--error-color);
-  --info-color: #3987e5;
-
-  --warning-bg: var(--destructive-soft);
-  --warning-border: var(--destructive-outline);
-  --warning-text: #f1a5a0;
-
-  --success-badge-bg: rgb(25 158 112 / 0.14);
-  --success-badge-text: #6fd8ad;
-  --success-badge-border: rgb(25 158 112 / 0.3);
-
-  --failure-badge-bg: var(--destructive-soft);
-  --failure-badge-text: #f1a5a0;
-  --failure-badge-border: var(--destructive-outline);
-
-  --count-badge-bg: var(--accent);
-  --count-badge-text: var(--foreground);
-
-  --shadow: none;
-  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.45);
-
-  --radius-md: 12px;
-
-  --primary-8: color-mix(in srgb, var(--primary-color) 6%, transparent);
-  --primary-10: color-mix(in srgb, var(--primary-color) 9%, transparent);
-  --primary-30: color-mix(in srgb, var(--primary-color) 24%, transparent);
-  --amber-color: #c98500;
-  --amber-text: #f2c25c;
-  --amber-10: color-mix(in srgb, var(--amber-color) 16%, transparent);
-  --amber-30: color-mix(in srgb, var(--amber-color) 36%, transparent);
-  --destructive-color: var(--error-color);
-  --destructive-10: var(--destructive-soft);
-  --destructive-30: var(--destructive-outline);
-  --muted-bg: var(--well);
-  --muted-foreground: oklch(0.72 0 0);
-  --accent-bg: var(--accent);
-
-  --glass-bg: var(--popover-translucent);
-  --glass-bg-secondary: rgb(36 36 36 / 0.72);
-  --glass-border: var(--hairline);
-
-  --viz-success: #199e70;
-  --viz-failure: #e66767;
-
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
-  --series-6: #008300;
-  --series-7: #9085e9;
-  --series-8: #e66767;
-}
-
 :root {
-  @include light-tokens;
+  --surface: var(--color-kumo-base);
+  --chrome: var(--color-kumo-canvas);
+  --well: var(--color-kumo-recessed);
+  --well-outline: var(--color-kumo-hairline);
+  --well-highlight: color-mix(in oklch, var(--color-kumo-base) 70%, transparent);
+  --popover: var(--color-kumo-base);
+  --popover-translucent: color-mix(in oklch, var(--color-kumo-base) 90%, transparent);
+  --foreground: var(--text-color-kumo-default);
+  --foreground-soft: var(--text-color-kumo-subtle);
+  --accent: var(--color-kumo-tint);
+  --accent-pressed: var(--color-kumo-fill);
+  --secondary: var(--color-kumo-tint);
+  --muted: var(--color-kumo-fill);
+  --hairline: var(--color-kumo-hairline);
+  --ring: var(--color-kumo-brand);
+  --focus-ring-color: var(--color-kumo-brand);
+  --raised-shadow: 0 1px 2px 0 var(--color-kumo-shadow-drop);
+  --destructive-soft: var(--color-kumo-danger-tint);
+  --destructive-outline: color-mix(in oklch, var(--color-kumo-danger) 30%, transparent);
+
+  --bg-primary: var(--color-kumo-base);
+  --bg-secondary: var(--color-kumo-base);
+  --bg-tertiary: var(--color-kumo-recessed);
+  --bg-hover: var(--color-kumo-tint);
+  --bg-quinary: var(--color-kumo-elevated);
+  --bg-error-light: var(--color-kumo-danger-tint);
+  --floating-surface: var(--color-kumo-base);
+  --floating-shadow:
+    0 10px 15px -3px var(--color-kumo-shadow-drop), 0 4px 6px -4px var(--color-kumo-shadow-drop),
+    0 0 0 1px var(--color-kumo-line);
+
+  --text-primary: var(--text-color-kumo-default);
+  --text-secondary: var(--text-color-kumo-subtle);
+  --text-tertiary: color-mix(
+    in oklch,
+    var(--text-color-kumo-subtle) 70%,
+    var(--text-color-kumo-placeholder)
+  );
+  --text-quaternary: var(--text-color-kumo-placeholder);
+  --text-muted: var(--text-tertiary);
+
+  --border-color: var(--color-kumo-hairline);
+  --border-secondary: var(--color-kumo-hairline);
+  --border-primary: var(--color-kumo-line);
+  --border-hover: var(--color-kumo-interact);
+
+  --primary-color: var(--color-kumo-brand);
+  --primary-hover: var(--color-kumo-brand-hover);
+  --primary-active: var(--color-kumo-brand-hover);
+  --primary-contrast: #fff;
+  --accent-color: var(--color-kumo-brand);
+
+  --success-color: var(--color-kumo-success);
+  --quota-medium-color: var(--color-kumo-warning);
+  --warning-color: var(--color-kumo-warning);
+  --error-color: var(--color-kumo-danger);
+  --danger-color: var(--color-kumo-danger);
+  --info-color: var(--color-kumo-info);
+
+  --warning-bg: var(--color-kumo-warning-tint);
+  --warning-border: color-mix(in oklch, var(--color-kumo-warning) 35%, transparent);
+  --warning-text: var(--text-color-kumo-warning);
+
+  --success-badge-bg: var(--color-kumo-success-tint);
+  --success-badge-text: var(--text-color-kumo-success);
+  --success-badge-border: color-mix(in oklch, var(--color-kumo-success) 30%, transparent);
+
+  --failure-badge-bg: var(--color-kumo-danger-tint);
+  --failure-badge-text: var(--text-color-kumo-danger);
+  --failure-badge-border: color-mix(in oklch, var(--color-kumo-danger) 30%, transparent);
+
+  --count-badge-bg: var(--color-kumo-fill);
+  --count-badge-text: var(--text-color-kumo-default);
+
+  --shadow: 0 1px 2px 0 var(--color-kumo-shadow-drop);
+
+  --primary-8: color-mix(in oklch, var(--color-kumo-brand) 7%, transparent);
+  --primary-10: color-mix(in oklch, var(--color-kumo-brand) 10%, transparent);
+  --primary-30: color-mix(in oklch, var(--color-kumo-brand) 30%, transparent);
+  --amber-color: var(--color-kumo-warning);
+  --amber-text: var(--text-color-kumo-warning);
+  --amber-10: var(--color-kumo-warning-tint);
+  --amber-30: color-mix(in oklch, var(--color-kumo-warning) 35%, transparent);
+  --destructive-color: var(--color-kumo-danger);
+  --destructive-10: var(--color-kumo-danger-tint);
+  --destructive-30: color-mix(in oklch, var(--color-kumo-danger) 30%, transparent);
+  --muted-bg: var(--color-kumo-recessed);
+  --muted-foreground: var(--text-color-kumo-subtle);
+  --accent-bg: var(--color-kumo-tint);
 
   --glass-blur: 12px;
   --glass-backdrop-filter: blur(var(--glass-blur));
   --glass-filter: blur(var(--glass-blur));
+  --glass-bg: var(--popover-translucent);
+  --glass-bg-secondary: color-mix(in oklch, var(--color-kumo-elevated) 80%, transparent);
+  --glass-border: var(--color-kumo-line);
+
+  --viz-success: var(--color-kumo-success);
+  --viz-failure: var(--color-kumo-danger);
+
+  --series-1: light-dark(#2a78d6, #3987e5);
+  --series-2: light-dark(#eb6834, #d95926);
+  --series-3: light-dark(#1baf7a, #199e70);
+  --series-4: light-dark(#eda100, #c98500);
+  --series-5: light-dark(#e87ba4, #d55181);
+  --series-6: light-dark(#008300, #008300);
+  --series-7: light-dark(#4a3aa7, #9085e9);
+  --series-8: light-dark(#e34948, #e66767);
 
   --ease-out-strong: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --dur-press: 150ms;
+  --dur-press: 100ms;
   --dur-hover: 150ms;
-  --font-sans: InterVariable, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-}
-
-[data-theme='white'] {
-  @include light-tokens;
 }
 
 [data-theme='dark'] {
-  @include dark-tokens;
   color-scheme: dark;
 }
 
@@ -233,8 +123,8 @@
   :root {
     --glass-backdrop-filter: none;
     --glass-filter: none;
-    --glass-bg: var(--popover);
-    --glass-bg-secondary: var(--well);
-    --glass-border: var(--border-color);
+    --glass-bg: var(--color-kumo-base);
+    --glass-bg-secondary: var(--color-kumo-recessed);
+    --glass-border: var(--color-kumo-hairline);
   }
 }

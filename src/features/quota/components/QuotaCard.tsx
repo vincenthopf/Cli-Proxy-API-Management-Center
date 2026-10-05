@@ -1,14 +1,8 @@
-/**
- * 额度卡片：头部（提供商图标 + mono 文件名）+ 四态 body + 动作 footer。
- *
- * - idle：整个 body 是一个点击加载按钮（上游直连有速率考虑，不自动拉取）；
- * - loading：双幽灵行骨架（aria-busy，文字等价视觉隐藏）；
- * - error：失败色条 + footer 刷新即重试；
- * - success：provider Body（穿 QuotaBody.module.scss 全页外衣）。
- */
-
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LayerCard } from '@cloudflare/kumo';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { IconRefreshCw } from '@/components/ui/icons';
 import type { ResolvedTheme } from '@/types';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
@@ -26,8 +20,9 @@ import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
 
-/** 额度页全页外衣：QuotaBody 模块绑定成类型化契约（缺键在模块初始化即抛）。 */
 const quotaClasses = bindQuotaClasses(bodyStyles, 'QuotaBody.module.scss');
+
+const SPIN_CLASS = 'animate-spin motion-reduce:animate-none';
 
 export type QuotaCardProps = {
   entry: QuotaFileEntry;
@@ -35,7 +30,6 @@ export type QuotaCardProps = {
   resolvedTheme: ResolvedTheme;
   canRefresh: boolean;
   resetting: boolean;
-  /** 首屏级联入场延迟；null = 不入场（切 tab / 翻页 / 刷新新挂载的卡片）。 */
   entranceDelayMs?: number | null;
   onRefresh: () => void;
   onReset: () => void;
@@ -57,7 +51,6 @@ export function QuotaCard(props: QuotaCardProps) {
   const file = entry.file;
   const displayName = getQuotaDisplayName(file);
 
-  // 挂载时捕获一次延迟：后续 props 变 null 不影响本卡（React 19 禁渲染期读 ref）
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
   const entranceStyle =
     mountEntranceDelayMs === null
@@ -87,13 +80,19 @@ export function QuotaCard(props: QuotaCardProps) {
     Boolean(adapter.canResetQuota?.(quota));
 
   return (
-    <article
-      className={`${styles.card} ${mountEntranceDelayMs === null ? '' : styles.cardEnter}`}
+    <LayerCard
+      render={<article />}
+      className={[
+        'flex flex-col gap-3 !overflow-visible p-4',
+        mountEntranceDelayMs === null ? '' : styles.cardEnter,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={entranceStyle}
     >
-      <header className={styles.head}>
+      <header className="flex min-w-0 items-center gap-2.5">
         <span
-          className={styles.iconWrap}
+          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-kumo-recessed ring ring-kumo-hairline"
           title={typeLabel}
           style={
             isThemeSurfaceIconProvider(entry.type)
@@ -102,17 +101,22 @@ export function QuotaCard(props: QuotaCardProps) {
           }
         >
           {iconSrc ? (
-            <img src={iconSrc} alt="" className={styles.icon} />
+            <img src={iconSrc} alt="" className="block size-4 object-contain" />
           ) : (
-            <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
+            <span className="text-xs font-semibold text-kumo-subtle">
+              {typeLabel.slice(0, 1).toUpperCase()}
+            </span>
           )}
         </span>
-        <span className={styles.fileName} title={displayName}>
+        <span
+          className="min-w-0 truncate font-mono text-sm font-medium text-kumo-default"
+          title={displayName}
+        >
           {displayName}
         </span>
       </header>
 
-      <div className={styles.body}>
+      <div className="flex min-w-0 flex-col gap-2.5">
         {entry.type === 'claude' && status === 'success' && (
           <>
             <div className={quotaClasses.codexPlan}>
@@ -131,72 +135,77 @@ export function QuotaCard(props: QuotaCardProps) {
         {status === 'idle' ? (
           <button
             type="button"
-            className={styles.idleBody}
+            className="flex min-h-19 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-kumo-line bg-transparent px-3 py-3 text-kumo-subtle transition-colors hover:border-solid hover:bg-kumo-tint hover:text-kumo-default focus-visible:ring-2 focus-visible:ring-kumo-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onRefresh}
             disabled={!canRefresh}
           >
-            <IconRefreshCw size={15} aria-hidden="true" className={styles.idleGlyph} />
-            <span className={styles.idleHint}>{t(`${adapter.i18nPrefix}.idle`)}</span>
+            <IconRefreshCw size={15} aria-hidden="true" className="shrink-0" />
+            <span className="text-center text-sm">{t(`${adapter.i18nPrefix}.idle`)}</span>
           </button>
         ) : loading ? (
-          <div className={styles.skeleton} aria-busy="true">
-            <span className={styles.srOnly}>{t(`${adapter.i18nPrefix}.loading`)}</span>
+          <div className="flex flex-col gap-3 pt-1" aria-busy="true">
+            <span className="sr-only">{t(`${adapter.i18nPrefix}.loading`)}</span>
             {[0, 1].map((row) => (
-              <div key={row} className={styles.skeletonRow} aria-hidden="true">
-                <span className={styles.skeletonLabel} />
-                <span className={styles.skeletonTrack} />
+              <div key={row} className="flex flex-col gap-1.5" aria-hidden="true">
+                <Skeleton width="40%" height={10} rounded={9999} />
+                <Skeleton width="100%" height={8} rounded={9999} />
               </div>
             ))}
           </div>
         ) : status === 'error' ? (
-          <div className={styles.errorStrip} role="alert">
+          <div
+            className="rounded-lg bg-kumo-danger-tint px-3 py-2 text-sm text-kumo-danger ring ring-kumo-danger/30 [overflow-wrap:anywhere]"
+            role="alert"
+          >
             {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
           </div>
         ) : quota ? (
           <adapter.Body quota={quota} classes={quotaClasses} />
         ) : (
-          <div className={styles.idleHint}>{t(`${adapter.i18nPrefix}.idle`)}</div>
+          <div className="text-center text-sm text-kumo-subtle">
+            {t(`${adapter.i18nPrefix}.idle`)}
+          </div>
         )}
       </div>
 
       {status !== 'idle' && (
-        <footer className={styles.actionRow}>
+        <footer className="mt-auto flex flex-wrap justify-end gap-2 border-t border-kumo-hairline pt-3">
           {entry.type === 'claude' && (
-            <button
-              type="button"
-              className={styles.actionPill}
+            <Button
+              variant="secondary"
+              size="sm"
               disabled={claudeReset.blocked}
               onClick={claudeReset.confirm}
               title={t(`claude_reset.${claudeReset.buttonLabel}`)}
             >
-              <IconRefreshCw size={13} className={claudeReset.busy ? styles.spinning : undefined} />
+              <IconRefreshCw size={13} className={claudeReset.busy ? SPIN_CLASS : undefined} />
               {t(`claude_reset.${claudeReset.buttonLabel}`)}
-            </button>
+            </Button>
           )}
           {showReset && (
-            <button
-              type="button"
-              className={styles.actionPill}
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={onReset}
               disabled={!canRefresh || loading || resetting}
               title={t('codex_quota.reset_button')}
             >
-              <IconRefreshCw size={13} className={resetting ? styles.spinning : undefined} />
+              <IconRefreshCw size={13} className={resetting ? SPIN_CLASS : undefined} />
               {t('codex_quota.reset_button')}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className={styles.actionPill}
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onRefresh}
             disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
             title={t('auth_files.quota_refresh_hint')}
           >
-            <IconRefreshCw size={13} className={loading ? styles.spinning : undefined} />
+            <IconRefreshCw size={13} className={loading ? SPIN_CLASS : undefined} />
             {t('auth_files.quota_refresh_single')}
-          </button>
+          </Button>
         </footer>
       )}
-    </article>
+    </LayerCard>
   );
 }

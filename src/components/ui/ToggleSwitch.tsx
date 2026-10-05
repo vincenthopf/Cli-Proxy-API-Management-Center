@@ -1,5 +1,5 @@
-import type { ChangeEvent, ReactNode } from 'react';
-import styles from './ToggleSwitch.module.scss';
+import type { ReactNode } from 'react';
+import { Switch } from '@cloudflare/kumo';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -18,31 +18,14 @@ export function ToggleSwitch({
   disabled = false,
   labelPosition = 'right',
 }: ToggleSwitchProps) {
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.checked);
-  };
-
-  const className = [
-    styles.root,
-    labelPosition === 'left' ? styles.labelLeft : '',
-    disabled ? styles.disabled : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <label className={className}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={handleChange}
-        disabled={disabled}
-        aria-label={ariaLabel}
-      />
-      <span className={styles.track}>
-        <span className={styles.thumb} />
-      </span>
-      {label && <span className={styles.label}>{label}</span>}
-    </label>
+    <Switch
+      checked={checked}
+      onCheckedChange={(value) => onChange(value)}
+      label={label || undefined}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      controlFirst={labelPosition === 'right'}
+    />
   );
 }

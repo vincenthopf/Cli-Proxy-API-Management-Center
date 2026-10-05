@@ -1,7 +1,6 @@
 @use '../../styles/mixins' as *;
 
 .container {
-  --log-control-height: 40px;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -20,41 +19,18 @@
 
 .pageTitle {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-color-kumo-default);
   font-size: 20px;
   line-height: 1.3;
   font-weight: 600;
-  letter-spacing: -0.025em;
 }
 
 .tabBar {
-  display: inline-flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 10px;
-  background: var(--bg-tertiary);
+  width: auto;
 }
 
-.tabItem {
-  @include button-reset;
-  padding: 8px 14px;
-  border-radius: 7px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.tabActive {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px var(--border-color);
-}
-
-.container button:focus-visible,
-.structuredFilters button:focus-visible,
 .logPanel:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--color-kumo-brand);
   outline-offset: -2px;
 }
 
@@ -76,23 +52,17 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  padding: 0;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--bg-primary);
-  box-shadow: none;
 }
 
 .logCard {
   position: relative;
+}
 
-  > :global(.error-box),
-  > :global(.status-badge) {
-    flex: none;
-    margin: 8px 12px;
-    max-height: 15vh;
-    overflow: auto;
-  }
+.cardNotice {
+  flex: none;
+  margin: 12px 12px 0;
+  max-height: 15vh;
+  overflow: auto;
 }
 
 .filters {
@@ -102,7 +72,7 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-kumo-hairline);
 
   :global(.form-group) {
     margin: 0;
@@ -114,47 +84,12 @@
   min-width: 120px;
 }
 
-.searchInput:global(.input),
-.levelSelect > button,
-.filterPanelToggle:global(.btn),
-.actionButton:global(.btn) {
-  box-sizing: border-box;
-  height: var(--log-control-height);
-  min-height: var(--log-control-height);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  box-shadow: none;
-}
-
-.searchInput:global(.input) {
-  padding: 0 38px 0 12px;
-}
-
-.levelSelect > button,
-.filterPanelToggle:global(.btn) {
-  padding: 0 12px;
-}
-
 .levelSelect {
-  min-width: 110px;
+  min-width: 128px;
 }
 
 .searchIcon {
-  color: var(--text-tertiary);
-}
-
-.searchClear {
-  @include button-reset;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  color: var(--text-secondary);
-  cursor: pointer;
+  color: var(--text-color-kumo-placeholder);
 }
 
 .filterPanelHeader {
@@ -175,14 +110,6 @@
   }
 }
 
-.filterPanelCount {
-  padding: 1px 6px;
-  border-radius: 5px;
-  background: var(--bg-tertiary);
-  color: var(--primary-color);
-  font-size: 11px;
-}
-
 .toolbar {
   display: flex;
   align-items: center;
@@ -192,30 +119,11 @@
   flex: none;
 }
 
-.actionButton:global(.btn) {
-  flex: none;
-  width: var(--log-control-height);
-  padding: 0;
-  > span {
-    display: flex;
-  }
-  &[aria-pressed='true'] {
-    color: var(--primary-color);
-    border-color: var(--primary-color);
-    background: color-mix(in srgb, var(--primary-color) 10%, var(--bg-primary));
-  }
-}
-
-.container :global(.btn) {
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .container :global(.btn) {
-    transition: none;
-  }
+.actionButton[aria-pressed='true'],
+.filterChip[aria-pressed='true'] {
+  background-color: var(--color-kumo-info-tint);
+  color: var(--text-color-kumo-link) !important;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-kumo-brand) 45%, transparent);
 }
 
 .structuredFilters {
@@ -252,25 +160,11 @@
   color: var(--text-secondary);
 }
 .filterChip {
-  @include button-reset;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  cursor: pointer;
   max-width: 100%;
+  height: auto;
+  min-height: 26px;
   overflow-wrap: anywhere;
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-.filterChipActive {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 8%, var(--bg-primary));
+  white-space: normal;
 }
 
 .viewerArea {
@@ -311,16 +205,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-.statusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-  flex: none;
-}
-.readStatus[data-live='true'] .statusDot {
-  background: var(--success-color);
 }
 .bufferStatus {
   text-align: right;
@@ -383,7 +267,7 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-  .copyButton:global(.btn) {
+  .copyButton {
     position: absolute;
     top: 2px;
     right: 4px;
@@ -395,7 +279,7 @@
 .rawLog,
 .logRow,
 .errorLogContent {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.65;
   font-variant-numeric: tabular-nums;
@@ -415,7 +299,7 @@
   border-left: 2px solid transparent;
   color: var(--text-primary);
   &:nth-child(even) {
-    background: color-mix(in srgb, var(--bg-secondary) 20%, transparent);
+    background: var(--color-kumo-elevated);
   }
 }
 .rowWarn {
@@ -460,10 +344,15 @@
 }
 .requestIdBadge {
   font-family: inherit;
-  color: var(--primary-color);
+  color: var(--text-color-kumo-link);
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 0;
+  box-shadow: 0 0 0 1px var(--color-kumo-line);
   cursor: pointer;
+  &:focus-visible {
+    outline: 2px solid var(--color-kumo-brand);
+    outline-offset: 1px;
+  }
 }
 .statusSuccess {
   color: var(--success-badge-text);
@@ -471,8 +360,8 @@
 }
 .statusInfo,
 .levelInfo {
-  color: var(--info-color);
-  background: color-mix(in srgb, var(--info-color) 8%, transparent);
+  color: var(--text-color-kumo-info);
+  background: var(--color-kumo-info-tint);
 }
 .statusWarn,
 .levelWarn {
@@ -486,8 +375,8 @@
 }
 .levelDebug,
 .levelTrace {
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
+  color: var(--text-color-kumo-subtle);
+  background: var(--color-kumo-fill);
 }
 .statusBadge {
   font-variant-numeric: tabular-nums;
@@ -504,23 +393,30 @@
   overflow-wrap: anywhere;
   min-width: 0;
 }
-.copyButton:global(.btn) {
+.copyButton {
   position: sticky;
   right: 4px;
   flex: none;
   margin-left: auto;
-  background: var(--bg-primary);
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  color: var(--text-secondary);
-  > span {
-    display: flex;
-  }
+  background: var(--color-kumo-base);
 }
 
 .errorCard {
   padding: 16px;
+  gap: 12px;
+}
+.errorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+}
+.errorTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-color-kumo-default);
 }
 .errorBody {
   gap: 12px;
@@ -536,7 +432,7 @@
   }
   :global(.item-title) {
     overflow-wrap: anywhere;
-    font-family: ui-monospace, monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
   }
   :global(.item-actions) {
@@ -576,6 +472,7 @@
   height: 100dvh;
   border: none;
   border-radius: 0;
+  box-shadow: none;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
 }
@@ -588,7 +485,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .logRow:hover {
-    background: color-mix(in srgb, var(--primary-color) 5%, var(--bg-primary));
+    background: var(--color-kumo-tint);
   }
   .copyButton {
     opacity: 0;
@@ -596,12 +493,6 @@
   .logRow:hover .copyButton,
   .logRow:focus-within .copyButton {
     opacity: 1;
-  }
-  .tabItem:hover {
-    color: var(--text-primary);
-  }
-  .filterChip:hover:not(:disabled) {
-    border-color: var(--primary-color);
   }
 }
 
@@ -616,7 +507,6 @@
 
 @media (max-width: 768px) {
   .container {
-    --log-control-height: 36px;
     gap: 16px;
   }
   .pageHeader {
@@ -624,10 +514,6 @@
   }
   .pageTitle {
     font-size: 18px;
-  }
-  .tabItem {
-    padding: 6px 8px;
-    font-size: 12px;
   }
   .filters {
     padding: 12px;
@@ -667,7 +553,6 @@
 
 @media (max-height: 480px) {
   .container {
-    --log-control-height: 36px;
     gap: 12px;
   }
   .pageHeader {

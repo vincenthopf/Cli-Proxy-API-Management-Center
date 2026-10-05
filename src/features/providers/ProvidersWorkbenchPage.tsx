@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
+import { Banner } from '@cloudflare/kumo';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { useProviderRecentRequests } from '@/components/providers/hooks/useProviderRecentRequests';
@@ -30,7 +31,10 @@ import {
   type ProvidersWorkbenchUiState,
 } from './uiState';
 import type { ProviderBrand, ProviderResource, ProviderSortBy, SortDir } from './types';
-import styles from './ProvidersWorkbenchPage.module.scss';
+
+const PAGE_CLASS = 'flex w-full flex-col gap-4 p-4 md:gap-5 md:p-6';
+const LAYOUT_CLASS = 'grid grid-cols-1 items-start gap-4 xl:grid-cols-[240px_minmax(0,1fr)]';
+const LAYOUT_SINGLE_CLASS = 'grid grid-cols-1 items-start gap-4';
 
 type SheetMode = 'detail' | 'create' | 'edit';
 
@@ -285,7 +289,7 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
         : t('nav.quick_start')
       : undefined;
   const errorBanner = workbench.errorMessage ? (
-    <div className="error-box">{workbench.errorMessage}</div>
+    <Banner variant="error" title={workbench.errorMessage} />
   ) : null;
 
   const openCreate = useCallback(() => {
@@ -371,12 +375,11 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
     closeSheet();
   }, [closeSheet, showNotification, t]);
 
-  // 加载状态
   if (!workbench.snapshot && workbench.isPending) {
     return (
-      <div className={styles.page}>
+      <div className={PAGE_CLASS}>
         <Skeleton height={120} />
-        <div className={styles.layout}>
+        <div className={LAYOUT_CLASS}>
           <Skeleton height={420} />
           <Skeleton height={420} />
         </div>
@@ -386,7 +389,7 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
 
   if (!activeGroup) {
     return (
-      <div className={styles.page}>
+      <div className={PAGE_CLASS}>
         <ProviderHeaderCard
           title={headerTitle}
           totalActive={0}
@@ -406,7 +409,7 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
   }
 
   return (
-    <div className={styles.page}>
+    <div className={PAGE_CLASS}>
       <ProviderHeaderCard
         title={headerTitle}
         totalActive={totalActive}
@@ -425,7 +428,7 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
 
       {errorBanner}
 
-      <div className={`${styles.layout} ${fixedBrand ? styles.layoutSingle : ''}`.trim()}>
+      <div className={fixedBrand ? LAYOUT_SINGLE_CLASS : LAYOUT_CLASS}>
         {!fixedBrand ? (
           <ProviderCategoryList
             groups={groups}

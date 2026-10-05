@@ -20,8 +20,8 @@
 }
 
 .notification {
-  --notification-accent: var(--text-secondary);
-  --notification-tint: var(--bg-tertiary);
+  --notification-accent: var(--text-color-kumo-info);
+  --notification-tint: var(--color-kumo-info-tint);
 
   position: relative;
   display: flex;
@@ -31,11 +31,14 @@
   width: fit-content;
   max-width: min(26rem, 100%);
   padding: 0.625rem 0.625rem 0.625rem 0.875rem;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  background: var(--floating-surface);
-  box-shadow: var(--shadow-lg), var(--shadow);
-  color: var(--text-primary);
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-kumo-base);
+  box-shadow:
+    0 0 0 1px var(--color-kumo-line),
+    0 10px 15px -3px var(--color-kumo-shadow-drop),
+    0 4px 6px -4px var(--color-kumo-shadow-drop);
+  color: var(--text-color-kumo-default);
   pointer-events: auto;
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -72,7 +75,7 @@
 }
 
 .info {
-  --notification-accent: var(--text-secondary);
+  --notification-accent: var(--text-color-kumo-info);
 }
 
 .icon {
@@ -128,8 +131,8 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-secondary);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-kumo-brand);
   }
 }
 
@@ -176,6 +179,6 @@
 
 @media (prefers-contrast: more) {
   .notification {
-    border-color: var(--text-primary);
+    box-shadow: 0 0 0 1px var(--text-color-kumo-default);
   }
 }
