@@ -1,3 +1,4 @@
+import { TransferPage } from '@/features/sessionGuard/TransferPage';
 import { Navigate, useRoutes, type Location } from 'react-router-dom';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OverviewPage } from '@/features/overview/OverviewPage';
@@ -19,6 +20,7 @@ import { useAuthStore } from '@/stores';
 
 const createMainRoutes = (supportsPlugin: boolean) => [
   { path: '/', element: <OverviewPage /> },
+  { path: '/transfer', element: <TransferPage /> },
   { path: '/usage', element: <UsagePage /> },
   { path: '/routing', element: <RoutingPage /> },
   { path: '/connect', element: <ConnectPage /> },

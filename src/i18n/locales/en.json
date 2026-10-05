@@ -3112,5 +3112,23 @@
     "mode_auto_help": "The conversation moves to the next account in the order.",
     "mode_unavailable": "The session-guard plugin is not running, so conversations move automatically.",
     "mode_error": "Could not change the setting: {{error}}"
+  },
+  "transfer": {
+    "title": "Move this conversation?",
+    "current_account": "Current account",
+    "why": "Why it stopped",
+    "move_to_label": "Continue on",
+    "move_button": "Move conversation",
+    "cache_note": "The conversation keeps its history. Its first message on the new account rebuilds the prompt cache once.",
+    "moved_title": "Conversation moved",
+    "moved_body": "Send your message again in Claude Code. It continues on {{account}} and stays there.",
+    "kept_title": "Conversation kept on its account",
+    "kept_body": "It continues when its account is available again. You can approve a move later from the Overview page.",
+    "missing_session": "This link is missing the conversation ID.",
+    "loading": "Loading conversation…",
+    "not_waiting_title": "This conversation isn't waiting",
+    "not_waiting_body": "It may have already continued, or the request expired after 24 hours.",
+    "already_moved": "It was already moved to {{account}}.",
+    "back": "Back to Overview"
   }
 }
