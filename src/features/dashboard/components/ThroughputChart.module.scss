@@ -300,8 +300,12 @@
 
 /* ---------- 数据表 ---------- */
 
-.tableToggle {
+details.tableToggle {
   font-size: 13px;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  border-radius: 0;
+  background: transparent;
 }
 
 .table {
@@ -339,8 +343,8 @@
   gap: $spacing-xs;
   padding: $spacing-xl;
   border-radius: $radius-lg;
-  border: 1px dashed var(--border-primary);
-  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+  border: 0;
+  background: transparent;
   text-align: center;
 }
 

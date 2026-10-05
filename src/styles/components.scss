@@ -463,10 +463,10 @@ textarea {
 }
 
 .empty-state {
-  border: 1px dashed var(--border-color);
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  background: var(--bg-secondary);
+  border: 0;
+  border-radius: 0;
+  padding: $spacing-md 0;
+  background: transparent;
   display: flex;
   justify-content: space-between;
   gap: $spacing-md;
@@ -529,10 +529,16 @@ textarea {
 }
 
 .item-row {
-  border: 1px solid var(--hairline);
-  border-radius: $radius-md;
-  padding: 14px 16px;
-  background: var(--surface);
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  padding: 12px 0;
+  background: transparent;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
   display: flex;
   align-items: center;
   justify-content: space-between;

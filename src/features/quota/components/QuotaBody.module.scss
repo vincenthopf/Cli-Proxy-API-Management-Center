@@ -240,10 +240,11 @@
   align-items: center;
   justify-content: space-between;
   gap: $spacing-sm;
-  padding: 6px 8px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
-  border-radius: $radius-sm;
-  background-color: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  background-color: transparent;
   font-size: 12px;
   line-height: 1.35;
   min-width: 0;
